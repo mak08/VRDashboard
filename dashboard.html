@@ -1,0 +1,90 @@
+<!--
+	Copyright (c) 2012 The Chromium Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style license that can be
+	found in the LICENSE file.
+  -->
+
+<html>
+  <head>
+    <meta charset="utf-8">
+	<style>
+	  body {
+	  font-family: monospace;
+	  word-wrap: break-word;
+	  }
+
+	  .flexrow {
+	  display: flex;
+	  flex-direction: row;
+	  justify-content: space-between;
+	  flex-grow: 1;
+	  }
+	  
+	  .flexcolumn {
+	  display:inline-flex;
+	  flex-direction: column;
+	  flex-grow: 1;
+	  }
+	  
+	  #container {
+	  white-space: pre;
+	  }
+
+	  table {
+      border: 2px solid grey;
+	  }
+	  th {
+      border-bottom: 2px solid black;
+	  }
+	  td {
+      border-bottom: 1px solid grey;
+	  }
+    </style>
+
+	<script src="dashboard.js"></script>
+  </head>
+
+  <body>
+	<div class="flexrow">
+	<div>
+		<label>Select Router</label>
+		<select id="sel_router" name="router">
+		  <option value="zezo">Zezo</option>
+		  <option value="virtualhelm">VirtualHelm</option>
+		</select>
+	</div>
+	  <div>
+ 	  <label>Select Race</label>
+	  <select id="sel_race" name="race">
+		<option value="vor">VOR</option>
+		<option value="clipper">Clipper</option>
+		<option value="tjv">Transat Jaques Vabre</option>
+		<option value="t650">Mini Transat</option>
+		<option value="vorb" selected>VOR (beta)</option>
+		<option value="clipperb">Clipper (beta)</option>
+	  </select>
+	  <button id="bt_callurl">Go</button>
+	  </div>
+	  <div>
+	  <label>Version</label>
+	  <label id="lb_version"></label>
+	  </div>
+	</div>
+	<div id="position_info">
+	  <label><b>Time</b></label>     <label id="lb_curtime"></label>
+	  <label><b>Position</b></label> <label id="lb_curpos"></label>
+	  <label><b>Heading</b></label>  <label id="lb_heading"></label>
+	  <label><b>TWS</b></label>      <label id="lb_tws"></label>
+	  <label><b>TWD</b></label>      <label id="lb_twd"></label>
+	  <label><b>TWA</b></label>      <label id="lb_twa"></label>
+	  <label><b>Speed(R)</b></label> <label id="lb_curspeed_reported"></label>
+	  <label><b>Speed(C)</b></label> <label id="lb_curspeed_computed"></label>
+	  <label><b>Δd</b></label>       <label id="lb_delta_d"></label>
+	  <label><b>Δt</b></label>       <label id="lb_delta_t"></label>
+	</div>
+	<div id="container">
+	  <div id="recordlog"></div>
+	  <div id="rawlog"></div>
+	</div>
+  </body>
+</html>
