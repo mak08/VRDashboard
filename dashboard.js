@@ -7,7 +7,7 @@ var controller = function () {
 	// Nautical mile in meters
 	var nauticalmile = 1852.0;
 
-	var selRace, selRouter;
+	var selRace;
 	var lbCurTime, lbCurPos, lbHeading, lbTWS, lbTWD, lbTWA, lbPrevPos, lbDeltaD, lbDeltaT, lbSpeedC, lbSpeedR;
 	var divPositionInfo, divRecordLog, divRawLog;
 	var callUrlFunction;
@@ -185,7 +185,6 @@ var controller = function () {
 		document.getElementById("lb_version").innerHTML = manifest.version;
 		
 		selRace = document.getElementById("sel_race");
-		selRouter = document.getElementById("sel_router");
 		lbCurTime = document.getElementById("lb_curtime");
 		lbCurPos = document.getElementById("lb_curpos");
 		lbHeading = document.getElementById("lb_heading");
@@ -210,17 +209,9 @@ var controller = function () {
 		} else if ( curr.pos.lat === undefined ) {
 			alert('No position received yet. Please retry later.');
 		} else if ( callUrlFunction === undefined ) {
-			alert('Please select router')
+			// ?
 		} else {
 			callUrlFunction();
-		}
-	}
-
-	var setRouter = function() {
-		if ( selRouter.value == 'zezo' ) {
-			callUrlFunction = callUrlZezo;
-		} else if (selRouter.value == 'virtualhelm') {
-			callUrlFunction = callUrlVirtualHelm;
 		}
 	}
 
@@ -266,7 +257,6 @@ var controller = function () {
 		initialize: initialize,
 		// Useful functions
 		callUrl: callUrl,
-		setRouter: setRouter,
 		onEvent: onEvent
 	}
 } ();
@@ -279,7 +269,6 @@ window.addEventListener("load", function() {
 	controller.initialize();
 	
 	document.getElementById("bt_callurl").addEventListener("click", controller.callUrl);
-	document.getElementById("sel_router").addEventListener("click", controller.setRouter);
 	
 	chrome.debugger.sendCommand({tabId:tabId}, "Network.enable");
 	chrome.debugger.onEvent.addListener(controller.onEvent);
