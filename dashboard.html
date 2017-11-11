@@ -7,6 +7,8 @@
 <html>
   <head>
     <meta charset="utf-8">
+	<title>VR Dashboard</title>
+	<link rel="icon" href="zicon.png">
 	<style>
 	  body {
 	  font-family: monospace;
@@ -49,6 +51,10 @@
 	  <div>
  	  <label>Select Race</label>
 	  <select id="sel_race" name="race">
+		<option value="333">VOR</option>
+		<option value="329">Clipper</option>
+		<option value="335">Transat Jaques Vabre</option>
+		<option value="328">Mini Transat</option>
 	  </select>
 	  <button id="bt_callurl">Go</button>
 	  </div>
@@ -58,6 +64,7 @@
 	  </div>
 	</div>
 	<div id="position_info">
+	  <label><b>Race</b></label>     <label id="lb_race"></label>
 	  <label><b>Time</b></label>     <label id="lb_curtime"></label>
 	  <label><b>Position</b></label> <label id="lb_curpos"></label>
 	  <label><b>Heading</b></label>  <label id="lb_heading"></label>

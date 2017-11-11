@@ -1,16 +1,16 @@
 {
-	"name": "VR Dashboard",
-	"description": "Monitor boat position",
-	"version": "0.1.2",
-	"permissions": [
-		"debugger"
-	],
-	"background": {
-		"scripts": ["background.js"]
-	},
-	"browser_action": {
-		"default_icon": "zicon.png",
-		"default_title": "VR Dashboard"
-	},
-	"manifest_version": 2
+    "name": "VR Dashboard",
+    "description": "Monitor boat position",
+    "version": "0.1.3",
+    "permissions": [
+        "debugger"
+    ],
+    "background": {
+        "scripts": ["background.js"]
+    },
+    "browser_action": {
+        "default_icon": "zicon.png",
+        "default_title": "VR Dashboard"
+    },
+    "manifest_version": 2
 }
