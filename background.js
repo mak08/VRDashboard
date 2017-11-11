@@ -15,6 +15,6 @@ function onAttach(tabId) {
     return;
   }
 
-  chrome.windows.create(
-      {url: "dashboard.html?" + tabId, type: "popup", width: 1200, height: 720});
+  chrome.tabs.create(
+      {url: "dashboard.html?" + tabId});
 }
