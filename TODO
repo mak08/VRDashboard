@@ -1,9 +1,12 @@
-- Check for zero DeltaT data
+- Add missing E/W indicator
+# fixed - Check for zero DeltaT data
 - Convert to page action
-- Add table with status for all races. Then add funny things to it like penalties and bad sails and barrel status
+- Add table with status for all races. Then add funny things to it 
+	like penalties and bad sails and barrel status and programmer ...
 - Error handling - race list at startup, check for stale positions
 - Handle unknown races (relaod list?)
-- Send current heading/TWA to router so it can deal with the penalty (but not sure the router deals ok) 
+- Send current heading/TWA to router so it can deal with the penalty 
+(but not sure the router deals ok) 
 
 Michael:
 - Create a nice icon to replace the pink 'Z' I made in a hurry

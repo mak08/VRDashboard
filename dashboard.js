@@ -53,7 +53,6 @@ var controller = function () {
         + "<th>" + "TWA" + "</th>"
         + "<th>" + "vR (kts)" + "</th>"
         + "<th>" + "vL (kts)" + "</th>"
-        + "<th>" + "vC (kts)" + "</th>"
         + "<th>" + "Δd (nm)" + "</th>"
         + "<th>" + "Δt (sec)" + "</th>"
         + "<th>" + "AutoSail" + "</th>"
@@ -108,7 +107,6 @@ var controller = function () {
             + "<td>" + roundTo(r.curr.twa, 1) + "</td>"
             + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
             + "<td>" + roundTo(deltaD/deltaT * 3600, 2) + "</td>"
-            + "<td>" + "?" + "</td>"
             + "<td>" + sDeltaD + "</td>"
             + "<td>" + sDeltaT + "</td>"
             + "<td>" + autoSail + "</td>"
@@ -132,6 +130,9 @@ var controller = function () {
     }
     
     function updatePosition (message, r) {
+		if (r.curr !== undefined && r.curr.lastCalcDate == message.lastCalcDate) { // repeated message
+			return;
+		}
         r.prev = r.curr;
         r.curr = message;
         var timeStamp = new Date(r.curr.lastCalcDate);
