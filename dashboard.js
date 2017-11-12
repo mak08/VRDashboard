@@ -19,6 +19,7 @@ var controller = function () {
 				var option = document.createElement("option");
 				option.text =race.name;
 				option.value = race.id;
+				option.betaflag = false;
 				sel_race.appendChild(option);
 					if (race.has_beta) {
 					var optionb = document.createElement("option");
@@ -250,7 +251,7 @@ var controller = function () {
 
         if (typeof raceId === "object") { // button event
             raceId = selRace.value;
-			beta = true;
+			beta = selRace.options[selRace.selectedIndex].betaflag;
         }
         if ( races[raceId].curr === undefined ) {
             alert('No position received yet. Please retry later.');
