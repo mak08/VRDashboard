@@ -38,7 +38,7 @@ var controller = function () {
     // Nautical mile in meters
     var nauticalmile = 1852.0;
 
-    var selRace, cbRouter;
+    var selRace, cbRouter, cbReuseTab;
     var lbRace, lbCurTime, lbCurPos, lbHeading, lbTWS, lbTWD, lbTWA, lbPrevPos, lbDeltaD, lbDeltaT, lbSpeedC, lbSpeedR;
     var divPositionInfo, divRecordLog, divRawLog;
     var callUrlFunction;
@@ -159,7 +159,7 @@ var controller = function () {
         var r = races[raceId];
 
         var url = baseURL + '/' + r.url + (beta?"b":"") + '/chart.pl?lat=' + r.curr.pos.lat + '&lon=' + r.curr.pos.lon;
-        window.open(url, '_blank');
+        window.open(url, cbReuseTab.checked?('zezo_' + url):'_blank');
     }
     
     function callUrlVirtualHelm () {
@@ -223,6 +223,7 @@ var controller = function () {
        
         selRace = document.getElementById("sel_race");
         cbRouter = document.getElementById("auto_router");
+        cbReuseTab = document.getElementById("reuse_tab");
         lbRace = document.getElementById("lb_race");
         lbCurTime = document.getElementById("lb_curtime");
         lbCurPos = document.getElementById("lb_curpos");
