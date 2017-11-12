@@ -6,18 +6,27 @@
 var controller = function () {
     
     var races = [];
-    races[328] = { id: 328, name: "Mini Transat Leg 2", url: "t650", tableLines:[] };
-    races[329] = { id: 329, name: "Clipper Leg 3", url: "clipper",  tableLines:[] };
-    races[333] = { id: 333, name: "VOR Leg 2", url: "vor", tableLines:[]};
-    races[335] = { id: 335, name: "TJV", url: "tjv", tableLines:[]};
 
+	function initRaces() {
+		var xhr = new XMLHttpRequest();
+		xhr.onload = function() {
+    		var json = xhr.responseText;
+    		json = JSON.parse(json);
+			for (var i = 0; i < json.races.length; i++) {
+				races[json.races[i].id] = json.races[i];
+				races[json.races[i].id].tableLines=[];
+			}
+		}
+		xhr.open('GET', 'http://zezo.org/races.json');
+		xhr.send();
+	}
 
     // Earth radius in meters
     var radius =  6371229.0;
     // Nautical mile in meters
     var nauticalmile = 1852.0;
 
-    var selRace;
+    var selRace, cbRouter;
     var lbRace, lbCurTime, lbCurPos, lbHeading, lbTWS, lbTWD, lbTWA, lbPrevPos, lbDeltaD, lbDeltaT, lbSpeedC, lbSpeedR;
     var divPositionInfo, divRecordLog, divRawLog;
     var callUrlFunction;
@@ -199,8 +208,10 @@ var controller = function () {
     var initialize = function () {
         var manifest = chrome.runtime.getManifest();
         document.getElementById("lb_version").innerHTML = manifest.version;
-        
+       
+		initRaces(); 
         selRace = document.getElementById("sel_race");
+        cbRouter = document.getElementById("auto_router");
         lbRace = document.getElementById("lb_race");
         lbCurTime = document.getElementById("lb_curtime");
         lbCurPos = document.getElementById("lb_curpos");
@@ -256,7 +267,9 @@ var controller = function () {
                 // Only accept boatstatepush messages for the same raceId subsequently.
                 raceId = frameData.scriptData.boatState._id.race_id;
                 updatePosition(frameData.scriptData.boatState, races[raceId]);
-                callUrl(raceId);
+                if (cbRouter.checked) {
+					callUrl(raceId);
+				}
             } else if ( frameData != undefined
                         && frameData.data != undefined
                         && frameData.data.pos != undefined ) {
