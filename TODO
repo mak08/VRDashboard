@@ -1,6 +1,7 @@
 - Add missing E/W indicator
 # fixed - Check for zero DeltaT data
-- Convert to page action
+# done - Convert to page action
+- but won't attach when restoring tabs on browser restart. browserAtion also won't
 - Add table with status for all races. Then add funny things to it 
 	like penalties and bad sails and barrel status and programmer ...
 - Error handling - race list at startup, check for stale positions
