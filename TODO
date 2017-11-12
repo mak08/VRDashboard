@@ -1,0 +1,13 @@
+- Check for zero DeltaT data
+- Convert to page action
+- Add table with status for all races. Then add funny things to it like penalties and bad sails and barrel status
+- Error handling - race list at startup, check for stale positions
+- Handle unknown races (relaod list?)
+- Send current heading/TWA to router so it can deal with the penalty (but not sure the router deals ok) 
+
+Michael:
+- Create a nice icon to replace the pink 'Z' I made in a hurry
+- Remove or implement the vC column (supposed to show Computed speed 
+according to options, wind and polars reported in the game)
+- Select boat to get routing for (so you could track your other
+   boats without switching accounts - or spy on your opponents...)
