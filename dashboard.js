@@ -13,8 +13,20 @@ var controller = function () {
     		var json = xhr.responseText;
     		json = JSON.parse(json);
 			for (var i = 0; i < json.races.length; i++) {
-				races[json.races[i].id] = json.races[i];
-				races[json.races[i].id].tableLines=[];
+				var race = json.races[i];
+				races[race.id] = race;
+				races[race.id].tableLines=[];
+				var option = document.createElement("option");
+				option.text =race.name;
+				option.value = race.id;
+				sel_race.appendChild(option);
+					if (race.has_beta) {
+					var optionb = document.createElement("option");
+					optionb.text = race.name + " beta"
+					optionb.value = race.id;
+					optionb.betaflag = true;
+					sel_race.appendChild(optionb);
+				}
 			}
 		}
 		xhr.open('GET', 'http://zezo.org/races.json');
@@ -142,11 +154,11 @@ var controller = function () {
         }
     }
             
-    function callUrlZezo (raceId) {
+    function callUrlZezo (raceId, beta) {
         var baseURL = 'http://zezo.org';
         var r = races[raceId];
 
-        var url = baseURL + '/' + r.url + '/chart.pl?lat=' + r.curr.pos.lat + '&lon=' + r.curr.pos.lon;
+        var url = baseURL + '/' + r.url + (beta?"b":"") + '/chart.pl?lat=' + r.curr.pos.lat + '&lon=' + r.curr.pos.lon;
         window.open(url, '_blank');
     }
     
@@ -209,7 +221,6 @@ var controller = function () {
         var manifest = chrome.runtime.getManifest();
         document.getElementById("lb_version").innerHTML = manifest.version;
        
-		initRaces(); 
         selRace = document.getElementById("sel_race");
         cbRouter = document.getElementById("auto_router");
         lbRace = document.getElementById("lb_race");
@@ -228,20 +239,23 @@ var controller = function () {
         divRecordLog.innerHTML = makeTableHTML();
         divRawLog = document.getElementById("rawlog");
         callUrlFunction = callUrlZezo;
+		initRaces(); 
         initialized = true;
     }
     
     var callUrl = function (raceId) {
+		var beta = false;
 
         if (typeof raceId === "object") { // button event
             raceId = selRace.value;
+			beta = true;
         }
         if ( races[raceId].curr === undefined ) {
             alert('No position received yet. Please retry later.');
         } else if ( callUrlFunction === undefined ) {
             // ?
         } else {
-            callUrlFunction(raceId);
+            callUrlFunction(raceId, beta);
         }
     }
 
