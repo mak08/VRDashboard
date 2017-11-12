@@ -15,3 +15,5 @@ Michael:
 according to options, wind and polars reported in the game)
 - Select boat to get routing for (so you could track your other
    boats without switching accounts - or spy on your opponents...)
+
+- Handle player card in general, even our own - it's a way to refresh position sooner.
