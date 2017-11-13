@@ -7,32 +7,32 @@ var controller = function () {
     
     var races = [];
 
-	function initRaces() {
-		var xhr = new XMLHttpRequest();
-		xhr.onload = function() {
-    		var json = xhr.responseText;
-    		json = JSON.parse(json);
-			for (var i = 0; i < json.races.length; i++) {
-				var race = json.races[i];
-				races[race.id] = race;
-				races[race.id].tableLines=[];
-				var option = document.createElement("option");
-				option.text =race.name;
-				option.value = race.id;
-				option.betaflag = false;
-				sel_race.appendChild(option);
-					if (race.has_beta) {
-					var optionb = document.createElement("option");
-					optionb.text = race.name + " beta"
-					optionb.value = race.id;
-					optionb.betaflag = true;
-					sel_race.appendChild(optionb);
-				}
-			}
-		}
-		xhr.open('GET', 'http://zezo.org/races.json');
-		xhr.send();
-	}
+    function initRaces() {
+        var xhr = new XMLHttpRequest();
+        xhr.onload = function() {
+            var json = xhr.responseText;
+            json = JSON.parse(json);
+            for (var i = 0; i < json.races.length; i++) {
+                var race = json.races[i];
+                races[race.id] = race;
+                races[race.id].tableLines=[];
+                var option = document.createElement("option");
+                option.text =race.name;
+                option.value = race.id;
+                option.betaflag = false;
+                sel_race.appendChild(option);
+                    if (race.has_beta) {
+                    var optionb = document.createElement("option");
+                    optionb.text = race.name + " beta"
+                    optionb.value = race.id;
+                    optionb.betaflag = true;
+                    sel_race.appendChild(optionb);
+                }
+            }
+        }
+        xhr.open('GET', 'http://zezo.org/races.json');
+        xhr.send();
+    }
 
     // Earth radius in meters
     var radius =  6371229.0;
@@ -131,9 +131,9 @@ var controller = function () {
     }
     
     function updatePosition (message, r) {
-		if (r.curr !== undefined && r.curr.lastCalcDate == message.lastCalcDate) { // repeated message
-			return;
-		}
+        if (r.curr !== undefined && r.curr.lastCalcDate == message.lastCalcDate) { // repeated message
+            return;
+        }
         r.prev = r.curr;
         r.curr = message;
         var timeStamp = new Date(r.curr.lastCalcDate);
@@ -159,17 +159,10 @@ var controller = function () {
     function callUrlZezo (raceId, beta) {
         var baseURL = 'http://zezo.org';
         var r = races[raceId];
-		var urlBeta = r.url + (beta?"b":"");
+        var urlBeta = r.url + (beta?"b":"");
 
         var url = baseURL + '/' + urlBeta + '/chart.pl?lat=' + r.curr.pos.lat + '&lon=' + r.curr.pos.lon;
         window.open(url, cbReuseTab.checked?urlBeta:'_blank');
-    }
-    
-    function callUrlVirtualHelm () {
-        var baseURL = 'http://bitweide.de/vh';
-        var r = races[raceId];
-        var url = baseURL + '?race=' + r.url + '&startlat=' + r.curr.pos.lat + '&startlon=' + r.curr.pos.lon;
-        window.open(url, '_blank');
     }
     
     // Greate circle distance in meters
@@ -243,16 +236,16 @@ var controller = function () {
         divRecordLog.innerHTML = makeTableHTML();
         divRawLog = document.getElementById("rawlog");
         callUrlFunction = callUrlZezo;
-		initRaces(); 
+        initRaces(); 
         initialized = true;
     }
     
     var callUrl = function (raceId) {
-		var beta = false;
+        var beta = false;
 
         if (typeof raceId === "object") { // button event
             raceId = selRace.value;
-			beta = selRace.options[selRace.selectedIndex].betaflag;
+            beta = selRace.options[selRace.selectedIndex].betaflag;
         }
         if ( races[raceId].curr === undefined ) {
             alert('No position received yet. Please retry later.');
@@ -273,7 +266,7 @@ var controller = function () {
 
             // Append message to raw log
             // divRawLog.innerHTML = divRawLog.innerHTML + '\n' + params.response.payloadData;
-
+            
             // Check if we got a position report & update lat/lon
             // Oppenent's info is in different message type (using scriptData.legInfos)
             var frameData = JSON.parse(params.response.payloadData);
@@ -286,8 +279,8 @@ var controller = function () {
                 raceId = frameData.scriptData.boatState._id.race_id;
                 updatePosition(frameData.scriptData.boatState, races[raceId]);
                 if (cbRouter.checked) {
-					callUrl(raceId);
-				}
+                    callUrl(raceId);
+                }
             } else if ( frameData != undefined
                         && frameData.data != undefined
                         && frameData.data.pos != undefined ) {
