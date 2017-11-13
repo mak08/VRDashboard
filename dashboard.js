@@ -159,9 +159,10 @@ var controller = function () {
     function callUrlZezo (raceId, beta) {
         var baseURL = 'http://zezo.org';
         var r = races[raceId];
+		var urlBeta = r.url + (beta?"b":"");
 
-        var url = baseURL + '/' + r.url + (beta?"b":"") + '/chart.pl?lat=' + r.curr.pos.lat + '&lon=' + r.curr.pos.lon;
-        window.open(url, cbReuseTab.checked?('zezo_' + url):'_blank');
+        var url = baseURL + '/' + urlBeta + '/chart.pl?lat=' + r.curr.pos.lat + '&lon=' + r.curr.pos.lon;
+        window.open(url, cbReuseTab.checked?urlBeta:'_blank');
     }
     
     function callUrlVirtualHelm () {
