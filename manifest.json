@@ -1,10 +1,10 @@
 {
     "name": "VR Dashboard",
     "description": "Monitor boat position",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "permissions": [
         "debugger",
-		"tabs"
+        "tabs"
     ],
     "background": {
         "scripts": ["background.js"]
