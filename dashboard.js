@@ -1,12 +1,10 @@
 // UI Controller
 
 
-
-
 var controller = function () {
     
     // Polars and other game parameters, indexed by polar._id
-    var polars = [];
+    var polars =  [];
 
     var races = [];
 
@@ -105,7 +103,7 @@ var controller = function () {
             + "<td>" + roundTo(r.curr.twa, 1) + "</td>"
             + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
             + "<td>" + roundTo(r.curr.speedC, 2) + "</td>"
-            + "<td>" + ((isNaN(r.curr.speedT))?r.curr.speedT:roundTo(r.curr.speedT, 2)) + "</td>"
+            + "<td>" + r.curr.speedT + "</td>"
             + "<td>" + roundTo(r.curr.deltaD, 2) + "</td>"
             + "<td>" + roundTo(r.curr.deltaT, 0) + "</td>"
             + "<td>" + autoSail + "</td>"
@@ -145,7 +143,7 @@ var controller = function () {
         lbTWA.innerHTML = ' ' + roundTo(r.curr.twa, 1);
         lbSpeedR.innerHTML = ' ' + roundTo(r.curr.speed, 2);
         r.curr.speedT =  theoreticalSpeed(message);
-        lbSpeedT.innerHTML = roundTo(r.curr.speedT,1);
+        lbSpeedT.innerHTML = r.curr.speedT;
         if ( r.prev != undefined ) {
             r.curr.deltaD = (gcDistance(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon) / nauticalmile);
             // Epoch timestamps are milliseconds since 00:00:00 UTC on 1 January 1970.
@@ -167,27 +165,36 @@ var controller = function () {
             var twd = message.twd;
             var twa = message.twa;
             var options = message.options;
-            var factorF = foilingFactor(tws, twa, boatPolars.foil);
+            var foil = foilingFactor(options, tws, twa, boatPolars.foil);
+            var hull = options.includes("hull")?1.003:1.0;
             var twsLookup = fractionStep(tws, boatPolars.tws);
             var twaLookup = fractionStep(twa, boatPolars.twa);
-            var max = maxSpeed(twsLookup, twaLookup, boatPolars.sail);
-            return max.speed;
+            var speed = maxSpeed(options, twsLookup, twaLookup, boatPolars.sail);
+            return ' ' + roundTo(speed.speed * foil * hull, 2) + '(' + speed.sail + ')';
         }
     }
 
-    function maxSpeed (iS, iA, sailDefs) {
+    function maxSpeed (options, iS, iA, sailDefs) {
         var maxSpeed = 0;
         var maxSail = "";
         for (const sailDef of sailDefs) {
-            var speeds = sailDef.speed;
-            var speed = bilinear(iA.fraction, iS.fraction,
-                                 speeds[iA.index - 1][iS.index - 1],
-                                 speeds[iA.index][iS.index - 1],
-                                 speeds[iA.index - 1][iS.index],
-                                 speeds[iA.index][iS.index]);
-            if ( speed > maxSpeed ) {
-                maxSpeed = speed;
-                maxSail = sailDef.name;
+            if ( sailDef.name === "JIB"
+                 || sailDef.name === "SPI"
+                 || (sailDef.name === "STAYSAIL" && options.includes("heavy"))
+                 || (sailDef.name === "LIGHT_JIB" && options.includes("light"))
+                 || (sailDef.name === "CODE_0" && options.includes("reach"))
+                 || (sailDef.name === "HEAVY_GNK" && options.includes("heavy"))
+                 || (sailDef.name === "LIGHT_GNK" && options.includes("light")) ) {
+                var speeds = sailDef.speed;
+                var speed = bilinear(iA.fraction, iS.fraction,
+                                     speeds[iA.index - 1][iS.index - 1],
+                                     speeds[iA.index][iS.index - 1],
+                                     speeds[iA.index - 1][iS.index],
+                                     speeds[iA.index][iS.index]);
+                if ( speed > maxSpeed ) {
+                    maxSpeed = speed;
+                    maxSail = sailDef.name;
+                }
             }
         }
         return {
@@ -203,11 +210,17 @@ var controller = function () {
             + f11 * x * y;
     }
 
-    function foilingFactor (tws, twa, foil) {
-        if ( tws >= foil.twsMin - foil.twsMerge && tws <= foil.twsMax + foil.twsMerge
-             && twa >= foil.twaMin - foil.twaMerge && twa <= foil.twaMax + foil.twaMerge ) {
-            if ( foil.twsMin - foil.twsMerge && tws <= foil.twsMax
-                 && foil.twaMin - foil.twaMerge && twa <= foil.twaMax ) {
+    function foilingFactor (options, tws, twa, foil) {
+        var absTWA = Math.abs(twa);
+        if ( options.includes("foil")
+             && tws >= foil.twsMin - foil.twsMerge
+             && tws <= foil.twsMax + foil.twsMerge
+             && absTWA >= foil.twaMin - foil.twaMerge
+             && absTWA <= foil.twaMax + foil.twaMerge ) {
+            if ( tws >= foil.twsMin
+                 && tws <= foil.twsMax
+                 && absTWA >= foil.twaMin
+                 && absTWA <= foil.twaMax ) {
                 return foil.speedRatio;
             } else {
                 return 1.0 + (foil.speedRatio - 1.0) / 2.0;
@@ -310,7 +323,11 @@ var controller = function () {
         divRecordLog.innerHTML = makeTableHTML();
         divRawLog = document.getElementById("rawlog");
         callUrlFunction = callUrlZezo;
-        initRaces(); 
+        initRaces();
+        chrome.storage.local.get("polars", function(items) {
+            console.log("Retrieved " + items["polars"].filter(function(value) { return value !== null }).length + " polars."); 
+            polars = items["polars"];
+        });
         initialized = true;
     }
     
@@ -337,7 +354,7 @@ var controller = function () {
         if ( message == "Network.webSocketFrameReceived" ) {
 
             // Append message to raw log
-            divRawLog.innerHTML = divRawLog.innerHTML + '\n' + params.response.payloadData;
+            // divRawLog.innerHTML = divRawLog.innerHTML + '\n' + params.response.payloadData;
             
             // Dispatch on type of message (determined by which fields we find..)
             // Oppenent's info is in different message type (using scriptData.legInfos)
@@ -355,7 +372,11 @@ var controller = function () {
                             callUrl(raceId);
                         }
                     } else if ( message.polar != undefined ) {
-                        polars[message.polar._id] = message.polar;
+                        if ( polars[message.polar._id] === undefined ) {
+                            polars[message.polar._id] = message.polar;
+                            chrome.storage.local.set({"polars": polars});
+                            console.log("Stored "+ polars.filter(function(value) { return value !== undefined }).length + " polars.");
+                        }
                     }
                 } else if ( frameData != undefined
                             && frameData.data != undefined
@@ -394,5 +415,3 @@ window.addEventListener("load", function() {
 window.addEventListener("unload", function() {
     chrome.debugger.detach({tabId:tabId});
 });
-
-
