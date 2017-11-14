@@ -5,6 +5,9 @@
 
 var controller = function () {
     
+    // Polars and other game parameters, indexed by polar._id
+    var polars = [];
+
     var races = [];
 
     function initRaces() {
@@ -40,7 +43,7 @@ var controller = function () {
     var nauticalmile = 1852.0;
 
     var selRace, cbRouter, cbReuseTab;
-    var lbRace, lbCurTime, lbCurPos, lbHeading, lbTWS, lbTWD, lbTWA, lbPrevPos, lbDeltaD, lbDeltaT, lbSpeedC, lbSpeedR;
+    var lbRace, lbCurTime, lbCurPos, lbHeading, lbTWS, lbTWD, lbTWA, lbPrevPos, lbDeltaD, lbDeltaT, lbSpeedC, lbSpeedR, lbSpeedT;
     var divPositionInfo, divRecordLog, divRawLog;
     var callUrlFunction;
     var initialized = false;
@@ -53,7 +56,8 @@ var controller = function () {
         + "<th>" + "TWD" + "</th>"
         + "<th>" + "TWA" + "</th>"
         + "<th>" + "vR (kts)" + "</th>"
-        + "<th>" + "vL (kts)" + "</th>"
+        + "<th>" + "vC (kts)" + "</th>"
+        + "<th>" + "vT (kts)" + "</th>"
         + "<th>" + "Δd (nm)" + "</th>"
         + "<th>" + "Δt (sec)" + "</th>"
         + "<th>" + "AutoSail" + "</th>"
@@ -93,12 +97,6 @@ var controller = function () {
         var gybing = formatSeconds(r.curr.tsEndOfGybe - now);
         var tacking = formatSeconds(r.curr.tsEndOfTack - now);
         
-        var deltaD = (gcDistance(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon) / nauticalmile);
-        // Epoch timestamps are milliseconds since 00:00:00 UTC on 1 January 1970.
-        var deltaT = (r.curr.lastCalcDate - r.prev.lastCalcDate)/1000;
-        var sDeltaD = roundTo(deltaD, 2);
-        var sDeltaT = roundTo(deltaT, 0);
-        var sSpeedC = roundTo(deltaD/deltaT * 3600, 2);
         return "<tr>"
             + "<td>" + new Date(r.curr.lastCalcDate).toGMTString() + "</td>"
             + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
@@ -107,9 +105,10 @@ var controller = function () {
             + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
             + "<td>" + roundTo(r.curr.twa, 1) + "</td>"
             + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
-            + "<td>" + roundTo(deltaD/deltaT * 3600, 2) + "</td>"
-            + "<td>" + sDeltaD + "</td>"
-            + "<td>" + sDeltaT + "</td>"
+            + "<td>" + roundTo(r.curr.speedC, 2) + "</td>"
+            + "<td>" + ((isNaN(r.curr.speedT))?r.curr.speedT:roundTo(r.curr.speedT, 2)) + "</td>"
+            + "<td>" + roundTo(r.curr.deltaD, 2) + "</td>"
+            + "<td>" + roundTo(r.curr.deltaT, 0) + "</td>"
             + "<td>" + autoSail + "</td>"
             + "<td>" + roundTo(r.curr.twaAuto, 1) + "</td>"
             + "<td>" + sailChange + "</td>"
@@ -131,6 +130,7 @@ var controller = function () {
     }
     
     function updatePosition (message, r) {
+        "use strict";
         if (r.curr !== undefined && r.curr.lastCalcDate == message.lastCalcDate) { // repeated message
             return;
         }
@@ -145,17 +145,91 @@ var controller = function () {
         lbTWD.innerHTML = ' ' + roundTo(r.curr.twd, 1);
         lbTWA.innerHTML = ' ' + roundTo(r.curr.twa, 1);
         lbSpeedR.innerHTML = ' ' + roundTo(r.curr.speed, 2);
+        r.curr.speedT =  theoreticalSpeed(message);
+        lbSpeedT.innerHTML = roundTo(r.curr.speedT,1);
         if ( r.prev != undefined ) {
-            saveMessage(r);
-            var deltaD = (gcDistance(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon) / nauticalmile);
+            r.curr.deltaD = (gcDistance(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon) / nauticalmile);
             // Epoch timestamps are milliseconds since 00:00:00 UTC on 1 January 1970.
-            var deltaT = (r.curr.lastCalcDate - r.prev.lastCalcDate)/1000;
-            lbDeltaD.innerHTML = ' ' + roundTo(deltaD, 2) + 'nm' + ' ';
-            lbDeltaT.innerHTML = ' ' + roundTo(deltaT, 0) + 's' + ' ';
-            lbSpeedC.innerHTML = ' ' + roundTo(deltaD/deltaT * 3600, 2) + 'kts' + ' ';
+            r.curr.deltaT = (r.curr.lastCalcDate - r.prev.lastCalcDate)/1000;
+            r.curr.speedC = roundTo(r.curr.deltaD/r.curr.deltaT * 3600, 2);
+            lbDeltaD.innerHTML = ' ' + roundTo(r.curr.deltaD, 2) + 'nm' + ' ';
+            lbDeltaT.innerHTML = ' ' + roundTo(r.curr.deltaT, 0) + 's' + ' ';
+            lbSpeedC.innerHTML = ' ' + r.curr.speedC + 'kts' + ' ';
+            saveMessage(r);
+        }
+    }
+
+    function theoreticalSpeed (message) {
+        var boatPolars = polars[message.boat.polar_id];
+        if ( boatPolars === undefined ) {
+            return '-';
+        } else {
+            var tws = message.tws;
+            var twd = message.twd;
+            var twa = message.twa;
+            var options = message.options;
+            var factorF = foilingFactor(tws, twa, boatPolars.foil);
+            var twsLookup = fractionStep(tws, boatPolars.tws);
+            var twaLookup = fractionStep(twa, boatPolars.twa);
+            var max = maxSpeed(twsLookup, twaLookup, boatPolars.sail);
+            return max.speed;
+        }
+    }
+
+    function maxSpeed (iS, iA, sailDefs) {
+        var maxSpeed = 0;
+        var maxSail = "";
+        for (const sailDef of sailDefs) {
+            var speeds = sailDef.speed;
+            var speed = bilinear(iA.fraction, iS.fraction,
+                                 speeds[iA.index - 1][iS.index - 1],
+                                 speeds[iA.index][iS.index - 1],
+                                 speeds[iA.index - 1][iS.index],
+                                 speeds[iA.index][iS.index]);
+            if ( speed > maxSpeed ) {
+                maxSpeed = speed;
+                maxSail = sailDef.name;
+            }
+        }
+        return {
+            speed: maxSpeed,
+            sail: maxSail
+        }
+    }
+
+    function bilinear (x, y, f00, f10, f01, f11) {
+        return f00 * (1 - x) * (1 - y)
+            + f10 * x * (1 - y)
+            + f01 * (1 - x) * y
+            + f11 * x * y;
+    }
+
+    function foilingFactor (tws, twa, foil) {
+        if ( tws >= foil.twsMin - foil.twsMerge && tws <= foil.twsMax + foil.twsMerge
+             && twa >= foil.twaMin - foil.twaMerge && twa <= foil.twaMax + foil.twaMerge ) {
+            if ( foil.twsMin - foil.twsMerge && tws <= foil.twsMax
+                 && foil.twaMin - foil.twaMerge && twa <= foil.twaMax ) {
+                return foil.speedRatio;
+            } else {
+                return 1.0 + (foil.speedRatio - 1.0) / 2.0;
+            }
+        } else {
+            return 1.0;
         }
     }
             
+    function fractionStep (value, steps) {
+        var absVal = Math.abs(value);
+        var index = 0;
+        while ( index < steps.length && steps[index]<= absVal ) {
+            index++;
+        }
+        return {
+            index: index,
+            fraction: (absVal - steps[index-1]) / (steps[index] - steps[index-1])
+        }
+    }
+    
     function callUrlZezo (raceId, beta) {
         var baseURL = 'http://zezo.org';
         var r = races[raceId];
@@ -231,6 +305,7 @@ var controller = function () {
         lbDeltaT = document.getElementById("lb_delta_t");
         lbSpeedC = document.getElementById("lb_curspeed_computed");
         lbSpeedR = document.getElementById("lb_curspeed_reported");
+        lbSpeedT = document.getElementById("lb_curspeed_theoretical");
         divPositionInfo = document.getElementById("position_info");
         divRecordLog = document.getElementById("recordlog");
         divRecordLog.innerHTML = makeTableHTML();
@@ -260,35 +335,34 @@ var controller = function () {
         if ( tabId != debuggeeId.tabId )
             return;
 
-        var raceId;
-
         if ( message == "Network.webSocketFrameReceived" ) {
 
             // Append message to raw log
-            // divRawLog.innerHTML = divRawLog.innerHTML + '\n' + params.response.payloadData;
+            divRawLog.innerHTML = divRawLog.innerHTML + '\n' + params.response.payloadData;
             
-            // Check if we got a position report & update lat/lon
+            // Dispatch on type of message (determined by which fields we find..)
             // Oppenent's info is in different message type (using scriptData.legInfos)
             var frameData = JSON.parse(params.response.payloadData);
 
-            if ( frameData != undefined
-                 && frameData.scriptData != undefined
-                 && frameData.scriptData.boatState != undefined ) {
-                // Initial boatstate message. Track this race_id.
-                // Only accept boatstatepush messages for the same raceId subsequently.
-                raceId = frameData.scriptData.boatState._id.race_id;
-                updatePosition(frameData.scriptData.boatState, races[raceId]);
-                if (cbRouter.checked) {
-                    callUrl(raceId);
+            if ( frameData != undefined ) {
+
+                if ( frameData.scriptData != undefined ) {
+                    var message = frameData.scriptData;
+                    if ( message.boatState != undefined ) {
+                        // Initial boatstate message.
+                        var raceId = message.boatState._id.race_id;
+                        updatePosition(message.boatState, races[raceId]);
+                        if (cbRouter.checked) {
+                            callUrl(raceId);
+                        }
+                    } else if ( message.polar != undefined ) {
+                        polars[message.polar._id] = message.polar;
+                    }
+                } else if ( frameData != undefined
+                            && frameData.data != undefined
+                            && frameData.data.pos != undefined ) {
+                    updatePosition(frameData.data, races[frameData.data._id.race_id]);
                 }
-            } else if ( frameData != undefined
-                        && frameData.data != undefined
-                        && frameData.data.pos != undefined ) {
-                if ( raceId === undefined ) {
-                    // Plugin re-enabled while logged in to game interface?
-                    raceId = frameData.data._id.race_id
-                }
-                updatePosition(frameData.data, races[raceId]);
             }
         }
     }
