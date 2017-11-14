@@ -84,19 +84,18 @@ var controller = function () {
     }
     
     function makeTableLine (r) {
-        var now = new Date();
 
-        var autoSail = r.curr.tsEndOfAutoSail - now;
+        var autoSail = r.curr.tsEndOfAutoSail - r.curr.lastCalcDate;
         if ( autoSail < 0 ) {
             autoSail = '-';
         } else {
             autoSail = new Date(autoSail).toJSON().substring(11,19);
         }
 
-        var sailChange = formatSeconds(r.curr.tsEndOfSailChange - now);
-        var gybing = formatSeconds(r.curr.tsEndOfGybe - now);
-        var tacking = formatSeconds(r.curr.tsEndOfTack - now);
-        
+        var sailChange = formatSeconds(r.curr.tsEndOfSailChange - r.curr.lastCalcDate);
+        var gybing = formatSeconds(r.curr.tsEndOfGybe - r.curr.lastCalcDate);
+        var tacking = formatSeconds(r.curr.tsEndOfTack - r.curr.lastCalcDate);
+
         return "<tr>"
             + "<td>" + new Date(r.curr.lastCalcDate).toGMTString() + "</td>"
             + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
