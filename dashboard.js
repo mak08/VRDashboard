@@ -35,10 +35,8 @@ var controller = function () {
         xhr.send();
     }
 
-    // Earth radius in nm 
-    var radius =  3437.74683;
-    // Nautical mile in meters
-    var nauticalmile = 1852.0;
+    // Earth radius in nm, 360*60/(2*Pi);
+    var radius =  3437.74683
 
     var selRace, cbRouter, cbReuseTab;
     var lbRace, lbCurTime, lbCurPos, lbHeading, lbTWS, lbTWD, lbTWA, lbPrevPos, lbDeltaD, lbDeltaT, lbSpeedC, lbSpeedR, lbSpeedT;
