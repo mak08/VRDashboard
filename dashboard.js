@@ -212,6 +212,7 @@ var controller = function () {
 
     function foilingFactor (options, tws, twa, foil) {
         var absTWA = Math.abs(twa);
+        var speedSteps = [foil.twsMin - foil.twsMerge, foil.twsMin foil.twsMax,  foil.twsMax + foil.twsMerge
         if ( options.includes("foil")
              && tws >= foil.twsMin - foil.twsMerge
              && tws <= foil.twsMax + foil.twsMerge
