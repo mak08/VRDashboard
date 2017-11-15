@@ -210,20 +210,23 @@ var controller = function () {
 
     function foilingFactor (options, tws, twa, foil) {
         var absTWA = Math.abs(twa);
-        var speedSteps = [foil.twsMin - foil.twsMerge, foil.twsMin foil.twsMax,  foil.twsMax + foil.twsMerge
-        if ( options.includes("foil")
-             && tws >= foil.twsMin - foil.twsMerge
-             && tws <= foil.twsMax + foil.twsMerge
-             && absTWA >= foil.twaMin - foil.twaMerge
-             && absTWA <= foil.twaMax + foil.twaMerge ) {
-            if ( tws >= foil.twsMin
-                 && tws <= foil.twsMax
-                 && absTWA >= foil.twaMin
-                 && absTWA <= foil.twaMax ) {
-                return foil.speedRatio;
-            } else {
-                return 1.0 + (foil.speedRatio - 1.0) / 2.0;
-            }
+        var speedSteps = [0, foil.twsMin - foil.twsMerge, foil.twsMin, foil.twsMax,  foil.twsMax + foil.twsMerge, Infinity];
+        var twaSteps = [0, foil.twaMin - foil.twaMerge, foil.twaMin, foil.twaMax,  foil.twaMax + foil.twaMerge, Infinity];
+        var foilMat = [[1, 1, 1, 1, 1, 1],
+                       [1, 1, 1, 1, 1, 1],
+                       [1, 1, foil.speedRatio, foil.speedRatio, 1, 1],
+                       [1, 1, foil.speedRatio, foil.speedRatio, 1, 1],
+                       [1, 1, 1, 1, 1, 1],
+                       [1, 1, 1, 1, 1, 1]];
+        
+        if ( options.includes("foil") ) {
+            var iS = fractionStep(tws, speedSteps);
+            var iA = fractionStep(twa, twaSteps);
+            return  bilinear(iA.fraction, iS.fraction,
+                             foilMat[iA.index - 1][iS.index - 1],
+                             foilMat[iA.index][iS.index - 1],
+                             foilMat[iA.index - 1][iS.index],
+                             foilMat[iA.index][iS.index]);
         } else {
             return 1.0;
         }
