@@ -35,8 +35,8 @@ var controller = function () {
         xhr.send();
     }
 
-    // Earth radius in meters
-    var radius =  6371229.0;
+    // Earth radius in nm 
+    var radius =  3437.74683;
     // Nautical mile in meters
     var nauticalmile = 1852.0;
 
@@ -145,7 +145,7 @@ var controller = function () {
         r.curr.speedT =  theoreticalSpeed(message);
         lbSpeedT.innerHTML = r.curr.speedT;
         if ( r.prev != undefined ) {
-            r.curr.deltaD = (gcDistance(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon) / nauticalmile);
+            r.curr.deltaD = gcDistance(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon);
             // Epoch timestamps are milliseconds since 00:00:00 UTC on 1 January 1970.
             r.curr.deltaT = (r.curr.lastCalcDate - r.prev.lastCalcDate)/1000;
             r.curr.speedC = roundTo(r.curr.deltaD/r.curr.deltaT * 3600, 2);
