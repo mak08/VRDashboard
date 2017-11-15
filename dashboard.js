@@ -158,7 +158,7 @@ var controller = function () {
 
     function theoreticalSpeed (message) {
         var boatPolars = polars[message.boat.polar_id];
-        if ( boatPolars === undefined ) {
+        if ( boatPolars == undefined ) {
             return '-';
         } else {
             var tws = message.tws;
@@ -372,10 +372,10 @@ var controller = function () {
                             callUrl(raceId);
                         }
                     } else if ( message.polar != undefined ) {
-                        if ( polars[message.polar._id] === undefined ) {
+                        if ( polars[message.polar._id] == undefined ) {
                             polars[message.polar._id] = message.polar;
                             chrome.storage.local.set({"polars": polars});
-                            console.log("Stored "+ polars.filter(function(value) { return value !== undefined }).length + " polars.");
+                            console.log("Stored "+ polars.filter(function(value) { return value != undefined }).length + " polars.");
                         }
                     }
                 } else if ( frameData != undefined
