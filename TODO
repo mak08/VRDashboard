@@ -8,6 +8,7 @@
 - Handle unknown races (relaod list?)
 - Send current heading/TWA to router so it can deal with the penalty 
 (but not sure the router deals ok) 
+- send available options to the (beta) races. Also userid to keep track who's who.
 
 Michael:
 - Create a nice icon to replace the pink 'Z' I made in a hurry
