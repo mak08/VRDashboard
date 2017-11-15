@@ -372,7 +372,7 @@ var controller = function () {
                             callUrl(raceId);
                         }
                     } else if ( message.polar != undefined ) {
-                        if ( polars[message.polar._id] === undefined ) {
+                        if ( polars[message.polar._id] === undefined ||  polars[message.polar._id] === null ) {
                             polars[message.polar._id] = message.polar;
                             chrome.storage.local.set({"polars": polars});
                             console.log("Stored "+ polars.filter(function(value) { return value !== undefined }).length + " polars.");
