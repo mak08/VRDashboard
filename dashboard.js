@@ -158,7 +158,7 @@ var controller = function () {
 
     function theoreticalSpeed (message) {
         var boatPolars = polars[message.boat.polar_id];
-        if ( boatPolars === undefined ) {
+        if ( boatPolars === undefined || boatPolars === null ) {
             return '-';
         } else {
             var tws = message.tws;
