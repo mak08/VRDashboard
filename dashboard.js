@@ -3,6 +3,8 @@
 
 var controller = function () {
     
+    var requests = new Map();
+
     // Polars and other game parameters, indexed by polar._id
     var polars =  [];
 
@@ -353,37 +355,55 @@ var controller = function () {
         if ( tabId != debuggeeId.tabId )
             return;
 
-        if ( message == "Network.webSocketFrameReceived" ) {
-
+        if ( message == "Network.webSocketFrameSent" ) {
             // Append message to raw log
-            // divRawLog.innerHTML = divRawLog.innerHTML + '\n' + params.response.payloadData;
+            // divRawLog.innerHTML = divRawLog.innerHTML + '\n' + '>>> ' + params.response.payloadData;
+
+            // Map to request type via requestId
+            var request = JSON.parse(params.response.payloadData);
+            requests.set(request.requestId, request);
             
+        } else if ( message == "Network.webSocketFrameReceived" ) {
+            // Append message to raw log
+            // divRawLog.innerHTML = divRawLog.innerHTML + '\n' +  '<<< ' + params.response.payloadData;
+             
             // Dispatch on type of message (determined by which fields we find..)
             // Oppenent's info is in different message type (using scriptData.legInfos)
-            var frameData = JSON.parse(params.response.payloadData);
-
-            if ( frameData != undefined ) {
-
-                if ( frameData.scriptData != undefined ) {
-                    var message = frameData.scriptData;
-                    if ( message.boatState != undefined ) {
-                        // Initial boatstate message.
-                        var raceId = message.boatState._id.race_id;
-                        updatePosition(message.boatState, races[raceId]);
+            var response = JSON.parse(params.response.payloadData);
+            if ( response == undefined ) {
+                console.log("Invalid JSON in payload");
+            } else {
+                var responseClass = response["@class"];
+                if ( responseClass == ".LogEventResponse" ) {
+                    // Get the matching request...
+                    var request = requests.get(response.requestId);
+                    
+                    // Dispatch on request type                 
+                    if ( request == undefined ) {
+                        // This DOES happen - sometimes the response is notified before the request!
+                        // -- save and process later?
+                        console.warn(responseClass + " " + response.requestId + " not found");
+                    } else if ( request.eventKey == "Leg_GetList" ) {
+                        // Leg definitions
+                    } else if ( request.eventKey == "Game_GetBoatState" ) {
+                        // First boat state message, only sent for the race the UI is displaying
+                        var raceId = response.scriptData.boatState._id.race_id;
+                        updatePosition(response.scriptData.boatState, races[raceId]);
                         if (cbRouter.checked) {
                             callUrl(raceId);
                         }
-                    } else if ( message.polar != undefined ) {
-                        if ( polars[message.polar._id] == undefined ) {
-                            polars[message.polar._id] = message.polar;
+                    } else if ( request.eventKey == "Meta_GetPolar" ) {
+                        if ( polars[response.scriptData.polar._id] == undefined ) {
+                            polars[response.scriptData.polar._id] = response.scriptData.polar;
                             chrome.storage.local.set({"polars": polars});
-                            console.log("Stored "+ polars.filter(function(value) { return value != undefined }).length + " polars.");
+                            console.info("Stored new polars " + response.scriptData.polar.label);
+                        } else {
+                            console.info("Known polars " + response.scriptData.polar.label);
                         }
                     }
-                } else if ( frameData != undefined
-                            && frameData.data != undefined
-                            && frameData.data.pos != undefined ) {
-                    updatePosition(frameData.data, races[frameData.data._id.race_id]);
+                } else if ( responseClass == ".ScriptMessage" ) {
+                    // The only ScriptMessage is extCode=boatStatePush
+                    updatePosition(response.data, races[response.data._id.race_id]);
                 }
             }
         }
