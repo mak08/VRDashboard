@@ -429,8 +429,16 @@ window.addEventListener("load", function() {
     
     document.getElementById("bt_callurl").addEventListener("click", controller.callUrl);
     document.getElementById("sel_race").addEventListener("change", controller.changeRace);
-    
-    chrome.debugger.sendCommand({tabId:tabId}, "Network.enable");
+  
+    chrome.debugger.sendCommand({tabId:tabId}, "Network.enable", function() {
+		// just close the dashboard window if debugger attach fails
+		// wodks on session restore too
+  
+	  	if (chrome.runtime.lastError) {
+			window.close();
+			return;
+		}
+	});
     chrome.debugger.onEvent.addListener(controller.onEvent);
 });
 

@@ -17,6 +17,16 @@ if (tabInfo.url.indexOf('virtualregatta.com') >= 0) {
 
 chrome.tabs.onUpdated.addListener(checkForValidUrl);
 
+// mostly useful for development - enable page action after 
+// ext reload
+
+chrome.tabs.onActivated.addListener(function(activeInfo) {
+    chrome.tabs.get(activeInfo.tabId, function (tab) {
+        checkForValidUrl(activeInfo.tabId,null,tab);
+    });
+});
+
+
 function onAttach(tabId) {
   if (chrome.runtime.lastError) {
     alert(chrome.runtime.lastError.message);
