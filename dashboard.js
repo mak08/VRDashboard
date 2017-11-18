@@ -16,7 +16,7 @@ var controller = function () {
 		option.value = race.id;
 		option.betaflag = beta;
 		option.disabled = disabled;
-		sel_race.appendChild(option);
+		selRace.appendChild(option);
 	}
 		
     function initRaces() {
@@ -128,9 +128,12 @@ var controller = function () {
     }
 
 	function enableRace(id) {
-		for (var i = 0; i < sel_race.options.length; i++) {
-			if (sel_race.options[i].value == id) {
-				sel_race.options[i].disabled = false;
+		for (var i = 0; i < selRace.options.length; i++) {
+			if (selRace.options[i].value == id) {
+				selRace.options[i].disabled = false;
+				if (selRace.selectedIndex == -1) {
+					selRace.selectedIndex = i;
+				}
 			}
 		}
 	}
@@ -272,7 +275,7 @@ var controller = function () {
     
     function callUrlZezo (raceId, beta) {
         var baseURL = 'http://zezo.org';
-        var r = races[raceId];
+        var r = races[raceId]; 
         var urlBeta = r.url + (beta?"b":"");
 
         var url = baseURL + '/' + urlBeta + '/chart.pl?lat=' + r.curr.pos.lat + '&lon=' + r.curr.pos.lon;
@@ -365,7 +368,12 @@ var controller = function () {
         if (typeof raceId === "object") { // button event
             raceId = selRace.value;
             beta = selRace.options[selRace.selectedIndex].betaflag;
-        }
+        } else { // new tab
+			var race = selRace.options[selRace.selectedIndex];
+			if (race && race.value == raceId) {
+				beta = race.betaflag;
+			}
+		}  
 		if ( races[raceId].url === undefined) {
 			alert('Unknown race #' + raceId);
 		} else if ( races[raceId].curr === undefined ) {
