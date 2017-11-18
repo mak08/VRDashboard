@@ -9,7 +9,16 @@ var controller = function () {
     var polars =  [];
 
     var races = [];
-
+	
+	function addSelOption(race, beta, disabled) {
+		var option = document.createElement("option");
+		option.text =race.name + (beta?" beta":"");
+		option.value = race.id;
+		option.betaflag = beta;
+		option.disabled = disabled;
+		sel_race.appendChild(option);
+	}
+		
     function initRaces() {
         var xhr = new XMLHttpRequest();
         xhr.onload = function() {
@@ -19,18 +28,10 @@ var controller = function () {
                 var race = json.races[i];
                 races[race.id] = race;
                 races[race.id].tableLines=[];
-                var option = document.createElement("option");
-                option.text =race.name;
-                option.value = race.id;
-                option.betaflag = false;
-                sel_race.appendChild(option);
-                    if (race.has_beta) {
-                    var optionb = document.createElement("option");
-                    optionb.text = race.name + " beta"
-                    optionb.value = race.id;
-                    optionb.betaflag = true;
-                    sel_race.appendChild(optionb);
-                }
+				addSelOption(race, false, true);
+                if (race.has_beta) {
+					addSelOption(race, true, true);
+				}
             }
         }
         xhr.open('GET', 'http://zezo.org/races.json');
@@ -125,12 +126,36 @@ var controller = function () {
     function changeRace() {
         divRecordLog.innerHTML = makeTableHTML(races[this.value]);
     }
-    
+
+	function enableRace(id) {
+		for (var i = 0; i < sel_race.options.length; i++) {
+			if (sel_race.options[i].value == id) {
+				sel_race.options[i].disabled = false;
+			}
+		}
+	}
+   
+	function addRace(message) {
+		var raceId = message._id.race_id;
+		var race = { id: raceId, name : "Race #" + raceId};
+		races[raceId] = race;
+		console.log ("added " + raceId);
+		addSelOption(race, false, false); 
+		return races[raceId];
+	}
+		 
     function updatePosition (message, r) {
         "use strict";
+		if (r === undefined) { // race not lsited
+			r = addRace(message);
+		}
+		
         if (r.curr !== undefined && r.curr.lastCalcDate == message.lastCalcDate) { // repeated message
             return;
         }
+		if (!r.curr) {
+			enableRace(r.id);
+		}
         r.prev = r.curr;
         r.curr = message;
         var timeStamp = new Date(r.curr.lastCalcDate);
@@ -342,7 +367,9 @@ var controller = function () {
             raceId = selRace.value;
             beta = selRace.options[selRace.selectedIndex].betaflag;
         }
-        if ( races[raceId].curr === undefined ) {
+		if ( races[raceId].url === undefined) {
+			alert('Unknown race #' + raceId);
+		} else if ( races[raceId].curr === undefined ) {
             alert('No position received yet. Please retry later.');
         } else if ( callUrlFunction === undefined ) {
             // ?
