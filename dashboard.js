@@ -137,9 +137,8 @@ var controller = function () {
    
 	function addRace(message) {
 		var raceId = message._id.race_id;
-		var race = { id: raceId, name : "Race #" + raceId};
+		var race = { id: raceId, name : "Race #" + raceId, tableLines: []};
 		races[raceId] = race;
-		console.log ("added " + raceId);
 		addSelOption(race, false, false); 
 		return races[raceId];
 	}
