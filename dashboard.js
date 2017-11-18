@@ -327,7 +327,7 @@ var controller = function () {
         var lonDMS = toDeg(lon);
         var latString = latDMS.g + "°" + latDMS.m + "'" + latDMS.s + "\"";
         var lonString = lonDMS.g + "°" + lonDMS.m + "'" + lonDMS.s + "\"";
-        return ((lonDMS.u==1)?' E ':' W ') + lonString + ' ' + ((latDMS.u==1)?' N ':' S ') + latString;
+        return  latString + ((latDMS.u==1)?'N':'S') + ' ' + lonString + ((lonDMS.u==1)?'E':'W');
     }
 
     var initialize = function () {
@@ -375,7 +375,7 @@ var controller = function () {
 			}
 		}  
 		if ( races[raceId].url === undefined) {
-			alert('Unknown race #' + raceId);
+			alert('Unsupported race #' + raceId);
 		} else if ( races[raceId].curr === undefined ) {
             alert('No position received yet. Please retry later.');
         } else if ( callUrlFunction === undefined ) {
