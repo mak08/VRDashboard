@@ -3,22 +3,25 @@
 
 var controller = function () {
     
+    var currentUser;
     var requests = new Map();
 
     // Polars and other game parameters, indexed by polar._id
     var polars =  [];
 
     var races = [];
-	
-	function addSelOption(race, beta, disabled) {
-		var option = document.createElement("option");
-		option.text =race.name + (beta?" beta":"");
-		option.value = race.id;
-		option.betaflag = beta;
-		option.disabled = disabled;
-		selRace.appendChild(option);
-	}
-		
+
+    var sailName = [0, "Jib", "Spi", "Staysail", "Light Jib", "Code0", "Heavy Gnk", "Light Gnk", 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+
+    function addSelOption(race, beta, disabled) {
+        var option = document.createElement("option");
+        option.text =race.name + (beta?" beta":"");
+        option.value = race.id;
+        option.betaflag = beta;
+        option.disabled = disabled;
+        selRace.appendChild(option);
+    }
+    
     function initRaces() {
         var xhr = new XMLHttpRequest();
         xhr.onload = function() {
@@ -28,11 +31,13 @@ var controller = function () {
                 var race = json.races[i];
                 races[race.id] = race;
                 races[race.id].tableLines=[];
-				addSelOption(race, false, true);
+                addSelOption(race, false, true);
                 if (race.has_beta) {
-					addSelOption(race, true, true);
-				}
+                    addSelOption(race, true, true);
+                }
             }
+            divRaceStatus = document.getElementById("raceStatus");
+            divRaceStatus.innerHTML = makeRaceStatusHTML();
         }
         xhr.open('GET', 'http://zezo.org/races.json');
         xhr.send();
@@ -42,12 +47,12 @@ var controller = function () {
     var radius =  3437.74683
 
     var selRace, cbRouter, cbReuseTab;
-    var lbRace, lbCurTime, lbCurPos, lbHeading, lbTWS, lbTWD, lbTWA, lbPrevPos, lbDeltaD, lbDeltaT, lbSpeedC, lbSpeedR, lbSpeedT;
+    var lbBoatname, lbRace, lbCurTime, lbCurPos, lbHeading, lbTWS, lbTWD, lbTWA, lbPrevPos, lbDeltaD, lbDeltaT, lbSpeedC, lbSpeedR, lbSpeedT;
     var divPositionInfo, divRecordLog, divRawLog;
     var callUrlFunction;
     var initialized = false;
 
-    var tableHeader =   "<tr>"
+    var tableHeader =  "<tr>"
         + "<th>" + "Time" + "</th>"
         + "<th>" + "Position" + "</th>"
         + "<th>" + "Heading" + "</th>"
@@ -66,6 +71,86 @@ var controller = function () {
         + "<th>" + "Tacking" + "</th>"
         +  "</tr>";
 
+    var raceStatusHeader =  "<tr>"
+        + "<th>" + "Race" + "</th>"
+        + "<th>" + "Position" + "</th>"
+        + "<th>" + "Heading" + "</th>"
+        + "<th>" + "TWS" + "</th>"
+        + "<th>" + "TWD" + "</th>"
+        + "<th>" + "TWA" + "</th>"
+        + "<th>" + "Boat speed" + "</th>"
+        + "<th>" + "AutoTWA" + "</th>"
+        + "<th>" + "DTF" + "</th>"
+        + "<th>" + "Cards" + "</th>"
+        + "<th>" + "Sail" + "</th>" // red if badsail
+        + "<th>" + "aground" + "</th>"
+        + "<th>" + "stealth" + "</th>"
+        + "<th>" + "manoeuvering" + "</th>"
+        + "<th>" + "Last Command" + "</th>"
+        +  "</tr>";
+    
+    function makeRaceStatusLine (r) {
+
+        if ( r.curr == undefined ) {
+            return "<tr>"
+                + "<td>" + r.name + "</td>"
+                + "<td>" + 'Waiting' + "</td>"
+                + "<td>" + 'for' + "</td>"
+                + "<td>" + 'first' + "</td>"
+                + "<td>" + 'update' + "</td>"
+                + "<td>" +  '-' + "</td>"
+                + "<td>" +  '-' + "</td>"
+                + "<td>" +  '-' + "</td>"
+                + "<td>" +  '-' + "</td>"
+                + "<td>" +  '-' + "</td>"
+                + "<td>" +  '-' + "</td>"
+                + "<td>" +  '-' + "</td>"
+                + "<td>" +  '-' + "</td>"
+                + "<td>" +  '-' + "</td>"
+                + "<td>" +  '-' + "</td>"
+                + "</tr>";
+        } else {
+
+            var autoSail = r.curr.tsEndOfAutoSail - r.curr.lastCalcDate;
+            if ( autoSail < 0 ) {
+                autoSail = '-';
+            } else {
+                autoSail = new Date(autoSail).toJSON().substring(11,19);
+            }
+
+            var sailNameBG = r.curr.badSail?"red":"green";
+            var agroundBG = r.curr.aground?"red":"green";
+
+            var manoeuvering = (r.curr.tsEndOfSailChange  > r.curr.lastCalcDate)
+                || (r.curr.tsEndOfGybe  > r.curr.lastCalcDate)
+                || (r.curr.tsEndOfTack > r.curr.lastCalcDate);
+
+            return "<tr>"
+                + "<td>" + r.name + "</td>"
+                + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
+                + "<td>" + roundTo(r.curr.heading, 1) + "</td>"
+                + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
+                + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
+                + "<td>" + roundTo(r.curr.twa, 1) + "</td>"
+                + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
+                + "<td>" + roundTo(r.curr.twaAuto, 1) + "</td>"
+                + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
+                + "<td>" + JSON.stringify(r.curr.cards) + "</td>"
+                + "<td style=\"background-color:" + sailNameBG + ";\">" + sailName[r.curr.sail] + "</td>"
+                + "<td style=\"background-color:" + agroundBG +  ";\">" + ((r.curr.aground)?"AGROUND":"") + "</td>"
+                + "<td>" + ((r.curr.stealthMode > r.curr.lastCalcDate)?"yes":"no") + "</td>"
+                + "<td>" + manoeuvering + "</td>"
+                + "<td>" + r.lastCommand + "</td>"
+                + "</tr>";
+        }
+    }
+
+    function makeRaceStatusHTML () {
+        return "<table style=\"width:100%\">"
+            + raceStatusHeader
+            + races.map(makeRaceStatusLine).join(' ');
+            + "</table>";
+    }
 
     function makeTableHTML (r) {
         return "<table style=\"width:100%\">"
@@ -127,37 +212,37 @@ var controller = function () {
         divRecordLog.innerHTML = makeTableHTML(races[this.value]);
     }
 
-	function enableRace(id) {
-		for (var i = 0; i < selRace.options.length; i++) {
-			if (selRace.options[i].value == id) {
-				selRace.options[i].disabled = false;
-				if (selRace.selectedIndex == -1) {
-					selRace.selectedIndex = i;
-				}
-			}
-		}
-	}
-   
-	function addRace(message) {
-		var raceId = message._id.race_id;
-		var race = { id: raceId, name : "Race #" + raceId, tableLines: []};
-		races[raceId] = race;
-		addSelOption(race, false, false); 
-		return races[raceId];
-	}
-		 
+    function enableRace(id) {
+        for (var i = 0; i < selRace.options.length; i++) {
+            if (selRace.options[i].value == id) {
+                selRace.options[i].disabled = false;
+                if (selRace.selectedIndex == -1) {
+                    selRace.selectedIndex = i;
+                }
+            }
+        }
+    }
+    
+    function addRace(message) {
+        var raceId = message._id.race_id;
+        var race = { id: raceId, name : "Race #" + raceId, tableLines: []};
+        races[raceId] = race;
+        addSelOption(race, false, false); 
+        return races[raceId];
+    }
+    
     function updatePosition (message, r) {
         "use strict";
-		if (r === undefined) { // race not lsited
-			r = addRace(message);
-		}
-		
+        if (r === undefined) { // race not lsited
+            r = addRace(message);
+        }
+        
         if (r.curr !== undefined && r.curr.lastCalcDate == message.lastCalcDate) { // repeated message
             return;
         }
-		if (!r.curr) {
-			enableRace(r.id);
-		}
+        if (!r.curr) {
+            enableRace(r.id);
+        }
         r.prev = r.curr;
         r.curr = message;
         var timeStamp = new Date(r.curr.lastCalcDate);
@@ -181,6 +266,7 @@ var controller = function () {
             lbSpeedC.innerHTML = ' ' + r.curr.speedC + 'kts' + ' ';
             saveMessage(r);
         }
+        divRaceStatus.innerHTML = makeRaceStatusHTML();
     }
 
     function theoreticalSpeed (message) {
@@ -260,7 +346,7 @@ var controller = function () {
             return 1.0;
         }
     }
-            
+    
     function fractionStep (value, steps) {
         var absVal = Math.abs(value);
         var index = 0;
@@ -333,7 +419,8 @@ var controller = function () {
     var initialize = function () {
         var manifest = chrome.runtime.getManifest();
         document.getElementById("lb_version").innerHTML = manifest.version;
-       
+
+        lbBoatname = document.getElementById("lb_boatname");
         selRace = document.getElementById("sel_race");
         cbRouter = document.getElementById("auto_router");
         cbReuseTab = document.getElementById("reuse_tab");
@@ -349,14 +436,14 @@ var controller = function () {
         lbSpeedC = document.getElementById("lb_curspeed_computed");
         lbSpeedR = document.getElementById("lb_curspeed_reported");
         lbSpeedT = document.getElementById("lb_curspeed_theoretical");
-        divPositionInfo = document.getElementById("position_info");
+        divRaceStatus = document.getElementById("raceStatus");
         divRecordLog = document.getElementById("recordlog");
         divRecordLog.innerHTML = makeTableHTML();
         divRawLog = document.getElementById("rawlog");
         callUrlFunction = callUrlZezo;
         initRaces();
         chrome.storage.local.get("polars", function(items) {
-            console.log("Retrieved " + items["polars"].filter(function(value) { return value !== null }).length + " polars."); 
+            console.log("Retrieved " + items["polars"].filter(function(value) { return value != null }).length + " polars."); 
             polars = items["polars"];
         });
         initialized = true;
@@ -369,14 +456,14 @@ var controller = function () {
             raceId = selRace.value;
             beta = selRace.options[selRace.selectedIndex].betaflag;
         } else { // new tab
-			var race = selRace.options[selRace.selectedIndex];
-			if (race && race.value == raceId) {
-				beta = race.betaflag;
-			}
-		}  
-		if ( races[raceId].url === undefined) {
-			alert('Unsupported race #' + raceId);
-		} else if ( races[raceId].curr === undefined ) {
+            var race = selRace.options[selRace.selectedIndex];
+            if (race && race.value == raceId) {
+                beta = race.betaflag;
+            }
+        }  
+        if ( races[raceId].url === undefined) {
+            alert('Unsupported race #' + raceId);
+        } else if ( races[raceId].curr === undefined ) {
             alert('No position received yet. Please retry later.');
         } else if ( callUrlFunction === undefined ) {
             // ?
@@ -391,7 +478,7 @@ var controller = function () {
 
         if ( message == "Network.webSocketFrameSent" ) {
             // Append message to raw log
-            // divRawLog.innerHTML = divRawLog.innerHTML + '\n' + '>>> ' + params.response.payloadData;
+            divRawLog.innerHTML = divRawLog.innerHTML + '\n' + '>>> ' + params.response.payloadData;
 
             // Map to request type via requestId
             var request = JSON.parse(params.response.payloadData);
@@ -399,26 +486,31 @@ var controller = function () {
             
         } else if ( message == "Network.webSocketFrameReceived" ) {
             // Append message to raw log
-            // divRawLog.innerHTML = divRawLog.innerHTML + '\n' +  '<<< ' + params.response.payloadData;
-             
-            // Dispatch on type of message (determined by which fields we find..)
-            // Oppenent's info is in different message type (using scriptData.legInfos)
+            divRawLog.innerHTML = divRawLog.innerHTML + '\n' +  '<<< ' + params.response.payloadData;
+            
             var response = JSON.parse(params.response.payloadData);
             if ( response == undefined ) {
                 console.log("Invalid JSON in payload");
             } else {
                 var responseClass = response["@class"];
                 if ( responseClass == ".LogEventResponse" ) {
-                    // Get the matching request...
+                    // Get the matching request and Dispatch on request type
                     var request = requests.get(response.requestId);
                     
                     // Dispatch on request type                 
                     if ( request == undefined ) {
-                        // This DOES happen - sometimes the response is notified before the request!
+                        // Probably only when debugging.
                         // -- save and process later?
                         console.warn(responseClass + " " + response.requestId + " not found");
+                    } else if ( request.eventKey == "LDB_GetLegRank" ) {
+                        // Use this response to update User/Boat info if the plugin is switched on while already logged in
+                        if ( currentUser != undefined && currentUser._id != response.scriptData.me._id ) {
+                            // ToDo: Re-initialize for new user
+                        };
+                        currentUser = response.scriptData.me;
+                        lbBoatname.innerHTML = response.scriptData.me.displayName;
                     } else if ( request.eventKey == "Leg_GetList" ) {
-                        // Leg definitions
+                        // Contains destination coords, ice limits
                     } else if ( request.eventKey == "Game_GetBoatState" ) {
                         // First boat state message, only sent for the race the UI is displaying
                         var raceId = response.scriptData.boatState._id.race_id;
@@ -436,7 +528,8 @@ var controller = function () {
                         }
                     }
                 } else if ( responseClass == ".ScriptMessage" ) {
-                    // The only ScriptMessage is extCode=boatStatePush
+                    // There is no request for .ScriptMessages.
+                    // The only ScriptMessage type is extCode=boatStatePush
                     updatePosition(response.data, races[response.data._id.race_id]);
                 }
             }
@@ -463,16 +556,16 @@ window.addEventListener("load", function() {
     
     document.getElementById("bt_callurl").addEventListener("click", controller.callUrl);
     document.getElementById("sel_race").addEventListener("change", controller.changeRace);
-  
+    
     chrome.debugger.sendCommand({tabId:tabId}, "Network.enable", function() {
-		// just close the dashboard window if debugger attach fails
-		// wodks on session restore too
-  
-	  	if (chrome.runtime.lastError) {
-			window.close();
-			return;
-		}
-	});
+        // just close the dashboard window if debugger attach fails
+        // wodks on session restore too
+        
+        if (chrome.runtime.lastError) {
+            window.close();
+            return;
+        }
+    });
     chrome.debugger.onEvent.addListener(controller.onEvent);
 });
 
