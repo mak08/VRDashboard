@@ -2,7 +2,8 @@
 
 
 var controller = function () {
-    
+
+    // ToDo: clear stats if user/boat changes
     var currentUser;
     var requests = new Map();
 
@@ -112,6 +113,7 @@ var controller = function () {
             var lastCommand = "";
             var lastCommandBG = "white";
             if ( r.lastCommand != undefined ) {
+                // ToDo: error handling; multiple commands; expiring?
                 var lcTime = new Date(r.lastCommand.request.ts).toJSON().substring(11,19);
                 var lcAction = r.lastCommand.request.actions[0];
                 var lcValue = lcAction.value;
@@ -518,6 +520,7 @@ var controller = function () {
                         lbBoatname.innerHTML = response.scriptData.me.displayName;
                     } else if ( request.eventKey == "Leg_GetList" ) {
                         // Contains destination coords, ice limits
+                        // ToDo: contains Bad Sail warnings. Show in race status table?
                     } else if ( request.eventKey == "Game_GetBoatState" ) {
                         // First boat state message, only sent for the race the UI is displaying
                         var raceId = response.scriptData.boatState._id.race_id;
