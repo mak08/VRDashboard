@@ -11,7 +11,7 @@ var controller = function () {
 
     var races = [];
 
-    var sailName = [0, "Jib", "Spi", "Staysail", "Light Jib", "Code0", "Heavy Gnk", "Light Gnk", 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+    var sailNames = [0, "Jib", "Spi", "Staysail", "Light Jib", "Code0", "Heavy Gnk", "Light Gnk", 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
 
     function addSelOption(race, beta, disabled) {
         var option = document.createElement("option");
@@ -59,9 +59,9 @@ var controller = function () {
         + "<th>" + "TWS" + "</th>"
         + "<th>" + "TWD" + "</th>"
         + "<th>" + "TWA" + "</th>"
-        + "<th>" + "vR (kts)" + "</th>"
-        + "<th>" + "vC (kts)" + "</th>"
-        + "<th>" + "vT (kts)" + "</th>"
+        + "<th>" + "vR (kn)" + "</th>"
+        + "<th>" + "vC (kn)" + "</th>"
+        + "<th>" + "vT (kn)" + "</th>"
         + "<th>" + "Δd (nm)" + "</th>"
         + "<th>" + "Δt (sec)" + "</th>"
         + "<th>" + "AutoSail" + "</th>"
@@ -92,23 +92,7 @@ var controller = function () {
     function makeRaceStatusLine (r) {
 
         if ( r.curr == undefined ) {
-            return "<tr>"
-                + "<td>" + r.name + "</td>"
-                + "<td>" + 'Waiting' + "</td>"
-                + "<td>" + 'for' + "</td>"
-                + "<td>" + 'first' + "</td>"
-                + "<td>" + 'update' + "</td>"
-                + "<td>" +  '-' + "</td>"
-                + "<td>" +  '-' + "</td>"
-                + "<td>" +  '-' + "</td>"
-                + "<td>" +  '-' + "</td>"
-                + "<td>" +  '-' + "</td>"
-                + "<td>" +  '-' + "</td>"
-                + "<td>" +  '-' + "</td>"
-                + "<td>" +  '-' + "</td>"
-                + "<td>" +  '-' + "</td>"
-                + "<td>" +  '-' + "</td>"
-                + "</tr>";
+            return "";
         } else {
 
             var autoSail = r.curr.tsEndOfAutoSail - r.curr.lastCalcDate;
@@ -118,29 +102,51 @@ var controller = function () {
                 autoSail = new Date(autoSail).toJSON().substring(11,19);
             }
 
-            var sailNameBG = r.curr.badSail?"red":"green";
-            var agroundBG = r.curr.aground?"red":"green";
+            var sailNameBG = r.curr.badSail?"red":"lightgreen";
+            var agroundBG = r.curr.aground?"red":"lightgreen";
 
             var manoeuvering = (r.curr.tsEndOfSailChange  > r.curr.lastCalcDate)
                 || (r.curr.tsEndOfGybe  > r.curr.lastCalcDate)
                 || (r.curr.tsEndOfTack > r.curr.lastCalcDate);
 
+            var lastCommand = "";
+            var lastCommandBG = "white";
+            if ( r.lastCommand != undefined ) {
+                var lcTime = new Date(r.lastCommand.request.ts).toJSON().substring(11,19);
+                var lcAction = r.lastCommand.request.actions[0];
+                var lcValue = lcAction.value;
+                if ( lcAction.type == "sail" ) {
+                    lcValue = sailNames[lcValue];
+                }
+                if ( r.lastCommand.rc != "ok" ) {
+                    lastCommandBG = 'red';
+                }
+                lastCommand = lcTime + ' ' + lcAction.type + " = " + lcValue;
+            }
+
+            var cards = "";
+            for ( var key in r.curr.cards ) {
+                cards =  cards + " " + key + ":" + r.curr.cards[key];
+            }
+
+            var twaFG = (r.curr.twa < 0)?"red":"green";
+            
             return "<tr>"
                 + "<td>" + r.name + "</td>"
                 + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
                 + "<td>" + roundTo(r.curr.heading, 1) + "</td>"
                 + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
                 + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
-                + "<td>" + roundTo(r.curr.twa, 1) + "</td>"
+                + "<td style=\"color:" + twaFG + ";\">" + roundTo(Math.abs(r.curr.twa), 1) + "</td>"
                 + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
-                + "<td>" + roundTo(r.curr.twaAuto, 1) + "</td>"
+                + "<td>" + (r.curr.twaAuto==0?"no":"yes") + "</td>"
                 + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
-                + "<td>" + JSON.stringify(r.curr.cards) + "</td>"
-                + "<td style=\"background-color:" + sailNameBG + ";\">" + sailName[r.curr.sail] + "</td>"
-                + "<td style=\"background-color:" + agroundBG +  ";\">" + ((r.curr.aground)?"AGROUND":"") + "</td>"
+                + "<td>" + cards + "</td>"
+                + "<td style=\"background-color:" + sailNameBG + ";\">" + sailNames[r.curr.sail] + "</td>"
+                + "<td style=\"background-color:" + agroundBG +  ";\">" + ((r.curr.aground)?"AGROUND":"no") + "</td>"
                 + "<td>" + ((r.curr.stealthMode > r.curr.lastCalcDate)?"yes":"no") + "</td>"
-                + "<td>" + manoeuvering + "</td>"
-                + "<td>" + r.lastCommand + "</td>"
+                + "<td>" + (manoeuvering?"yes":"no") + "</td>"
+                + "<td style=\"background-color:" + lastCommandBG +  ";\">" + lastCommand + "</td>"
                 + "</tr>";
         }
     }
@@ -180,20 +186,22 @@ var controller = function () {
         var gybing = formatSeconds(r.curr.tsEndOfGybe - r.curr.lastCalcDate);
         var tacking = formatSeconds(r.curr.tsEndOfTack - r.curr.lastCalcDate);
 
+        var twaFG = (r.curr.twa < 0)?"red":"green";
+
         return "<tr>"
             + "<td>" + new Date(r.curr.lastCalcDate).toGMTString() + "</td>"
             + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
             + "<td>" + roundTo(r.curr.heading, 1) + "</td>"
             + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
             + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
-            + "<td>" + roundTo(r.curr.twa, 1) + "</td>"
+            + "<td style=\"color:" + twaFG + ";\">" + roundTo(Math.abs(r.curr.twa), 1) + "</td>"
             + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
             + "<td>" + roundTo(r.curr.speedC, 2) + "</td>"
             + "<td>" + r.curr.speedT + "</td>"
             + "<td>" + roundTo(r.curr.deltaD, 2) + "</td>"
             + "<td>" + roundTo(r.curr.deltaT, 0) + "</td>"
             + "<td>" + autoSail + "</td>"
-            + "<td>" + roundTo(r.curr.twaAuto, 1) + "</td>"
+            + "<td>" + (r.curr.twaAuto==0?"no":"yes") + "</td>"
             + "<td>" + sailChange + "</td>"
             + "<td>" + gybing + "</td>"
             + "<td>" + tacking + "</td>"
@@ -263,7 +271,7 @@ var controller = function () {
             r.curr.speedC = roundTo(r.curr.deltaD/r.curr.deltaT * 3600, 2);
             lbDeltaD.innerHTML = ' ' + roundTo(r.curr.deltaD, 2) + 'nm' + ' ';
             lbDeltaT.innerHTML = ' ' + roundTo(r.curr.deltaT, 0) + 's' + ' ';
-            lbSpeedC.innerHTML = ' ' + r.curr.speedC + 'kts' + ' ';
+            lbSpeedC.innerHTML = ' ' + r.curr.speedC + 'kn' + ' ';
             saveMessage(r);
         }
         divRaceStatus.innerHTML = makeRaceStatusHTML();
@@ -324,7 +332,6 @@ var controller = function () {
     }
 
     function foilingFactor (options, tws, twa, foil) {
-        var absTWA = Math.abs(twa);
         var speedSteps = [0, foil.twsMin - foil.twsMerge, foil.twsMin, foil.twsMax,  foil.twsMax + foil.twsMerge, Infinity];
         var twaSteps = [0, foil.twaMin - foil.twaMerge, foil.twaMin, foil.twaMax,  foil.twaMax + foil.twaMerge, Infinity];
         var foilMat = [[1, 1, 1, 1, 1, 1],
@@ -517,6 +524,14 @@ var controller = function () {
                         updatePosition(response.scriptData.boatState, races[raceId]);
                         if (cbRouter.checked) {
                             callUrl(raceId);
+                        }
+                    } else if ( request.eventKey == "Game_AddBoatAction" ) {
+                        // First boat state message, only sent for the race the UI is displaying
+                        var raceId = request.race_id;
+                        var race = races[raceId];
+                        if ( race != undefined ) {
+                            race.lastCommand = {request: request, rc: response.scriptData.rc};
+                            divRaceStatus.innerHTML = makeRaceStatusHTML();
                         }
                     } else if ( request.eventKey == "Meta_GetPolar" ) {
                         if ( polars[response.scriptData.polar._id] == undefined ) {
