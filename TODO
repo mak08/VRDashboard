@@ -15,12 +15,10 @@
 
 Michael:
 
-- The 'Last command' columns is not filled yet; I'm not sure what is the 
-best way to display them (if we want them at all).
+# done - The 'Last command' columns is not filled yet; I'm not sure what is the best way to display them (if we want them at all).
 - Race rank should be included
 - The single status line should be removed.
 
-- Create a nice icon to replace the pink 'Z' I made in a hurry
 # done -vT - Remove or implement the vC column (supposed to show Computed speed 
 # according to options, wind and polars reported in the game)
 - Select boat to get routing for (so you could track your other
