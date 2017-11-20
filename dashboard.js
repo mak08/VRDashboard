@@ -12,7 +12,7 @@ var controller = function () {
 
     var races = [];
 
-    var sailNames = [0, "Jib", "Spi", "Staysail", "Light Jib", "Code0", "Heavy Gnk", "Light Gnk", 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+    var sailNames = [0, "Jib", "Spi", "Staysail", "Light Jib", "Code0", "Heavy Gnk", "Light Gnk", 8, 9, "Auto", "Jib(Auto)", "Spi(Auto)", "Staysail(Auto)", "Light Jib(Auto)", "Code0(Auto)", "Heavy Gnk(Auto)", "Light Gnk(Auto)"];
 
     function addSelOption(race, beta, disabled) {
         var option = document.createElement("option");
