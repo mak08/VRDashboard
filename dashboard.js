@@ -4,7 +4,7 @@
 var controller = function () {
 
     // ToDo: clear stats if user/boat changes
-    var currentUser;
+    var currentUserId;
     var requests = new Map();
 
     // Polars and other game parameters, indexed by polar._id
@@ -74,6 +74,7 @@ var controller = function () {
 
     var raceStatusHeader =  "<tr>"
         + "<th>" + "Race" + "</th>"
+        + "<th>" + "Rank" + "</th>"
         + "<th>" + "Position" + "</th>"
         + "<th>" + "Heading" + "</th>"
         + "<th>" + "TWS" + "</th>"
@@ -82,6 +83,7 @@ var controller = function () {
         + "<th>" + "Boat speed" + "</th>"
         + "<th>" + "AutoTWA" + "</th>"
         + "<th>" + "DTF" + "</th>"
+        + "<th>" + "Options" + "</th>"
         + "<th>" + "Cards" + "</th>"
         + "<th>" + "Sail" + "</th>" // red if badsail
         + "<th>" + "aground" + "</th>"
@@ -135,6 +137,7 @@ var controller = function () {
             
             return "<tr>"
                 + "<td>" + r.name + "</td>"
+                + "<td>" + r.rank + "</td>"
                 + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
                 + "<td>" + roundTo(r.curr.heading, 1) + "</td>"
                 + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
@@ -143,6 +146,7 @@ var controller = function () {
                 + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
                 + "<td>" + (r.curr.twaAuto==0?"no":"yes") + "</td>"
                 + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
+                + "<td>" + r.curr.options + "</td>"
                 + "<td>" + cards + "</td>"
                 + "<td style=\"background-color:" + sailNameBG + ";\">" + sailNames[r.curr.sail] + "</td>"
                 + "<td style=\"background-color:" + agroundBG +  ";\">" + ((r.curr.aground)?"AGROUND":"no") + "</td>"
@@ -481,6 +485,20 @@ var controller = function () {
         }
     }
 
+    function reInitUI (newId) {
+        if ( currentUserId != undefined && currentUserId != newId ) {
+            // Re-initialize statistics
+            races.map(function (race) {
+                race.tableLines = [];
+                race.lastCommand = undefined;
+                race.rank = undefined;
+            });
+            divRaceStatus.innerHTML = makeRaceStatusHTML();
+            divRecordLog.innerHTML = makeTableHTML();
+        };
+    }
+    
+
     var onEvent = function (debuggeeId, message, params) {
         if ( tabId != debuggeeId.tabId )
             return;
@@ -502,7 +520,11 @@ var controller = function () {
                 console.log("Invalid JSON in payload");
             } else {
                 var responseClass = response["@class"];
-                if ( responseClass == ".LogEventResponse" ) {
+                if ( responseClass == ".AuthenticationResponse" ) {
+                    reInitUI(response.userId);
+                    currentUserId = response.userId;
+                    lbBoatname.innerHTML = response.displayName;
+                } else if ( responseClass == ".LogEventResponse" ) {
                     // Get the matching request and Dispatch on request type
                     var request = requests.get(response.requestId);
                     
@@ -513,14 +535,30 @@ var controller = function () {
                         console.warn(responseClass + " " + response.requestId + " not found");
                     } else if ( request.eventKey == "LDB_GetLegRank" ) {
                         // Use this response to update User/Boat info if the plugin is switched on while already logged in
-                        if ( currentUser != undefined && currentUser._id != response.scriptData.me._id ) {
-                            // ToDo: Re-initialize for new user
-                        };
-                        currentUser = response.scriptData.me;
+                        reInitUI(response.scriptData.me._id );
+                        currentUserId = response.scriptData.me._id;
                         lbBoatname.innerHTML = response.scriptData.me.displayName;
+                        // Retrieve rank in current race
+                        var raceId = request.race_id;
+                        var race = races[raceId];
+                        if ( race != undefined ) {
+                            race.rank = response.scriptData.me.rank;
+                            divRaceStatus.innerHTML = makeRaceStatusHTML();
+                        }
                     } else if ( request.eventKey == "Leg_GetList" ) {
                         // Contains destination coords, ice limits
                         // ToDo: contains Bad Sail warnings. Show in race status table?
+                        var legInfos = response.scriptData.res;
+                        legInfos.map(function (legInfo) {
+                            var race = races[legInfo.raceId];
+                            if ( race != undefined ) {
+                                race.rank = legInfo.rank;
+                                if ( legInfo.problem == "badSail" ) {
+                                } else if ( legInfo.problem == "..." ) {
+                                }
+                            }
+                        });
+                        divRaceStatus.innerHTML = makeRaceStatusHTML();
                     } else if ( request.eventKey == "Game_GetBoatState" ) {
                         // First boat state message, only sent for the race the UI is displaying
                         var raceId = response.scriptData.boatState._id.race_id;
