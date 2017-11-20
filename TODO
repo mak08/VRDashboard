@@ -2,11 +2,11 @@
 # fixed - Check for zero DeltaT data
 # done - Convert to page action
 # close window - but won't attach when restoring tabs on browser restart. browserAtion also won't
-- Add table with status for all races. Then add funny things to it 
-	like penalties and bad sails and barrel status and programmer ...
+# done - Add table with status for all races.
+- Then add funny things to it like penalties and bad sails and barrel status and programmer ...
 
 - Error handling - race list at startup, check for stale positionsa
-- Handle Auth and rank messages. Reset races on user change
+# done - Handle Auth and rank messages. Reset races on user change
 
 #add race by id and show alert- Handle unknown races (relaod list?)
 - Send current heading/TWA to router so it can deal with the penalty 
@@ -14,9 +14,9 @@
 - send available options to the (beta) races. Also userid to keep track who's who.
 
 Michael:
-
 # done - The 'Last command' columns is not filled yet; I'm not sure what is the best way to display them (if we want them at all).
-- Race rank should be included
+- Last Command: handle prog commands
+# done - Race rank should be included
 - The single status line should be removed.
 
 # done -vT - Remove or implement the vC column (supposed to show Computed speed 
