@@ -458,6 +458,7 @@ var controller = function () {
         divRaceStatus = document.getElementById("raceStatus");
         divRecordLog = document.getElementById("recordlog");
         divRecordLog.innerHTML = makeTableHTML();
+        cbRawLog =  document.getElementById("cb_rawlog");
         divRawLog = document.getElementById("rawlog");
         callUrlFunction = callUrlZezo;
         initRaces();
@@ -514,7 +515,9 @@ var controller = function () {
 
         if ( message == "Network.webSocketFrameSent" ) {
             // Append message to raw log
-            divRawLog.innerHTML = divRawLog.innerHTML + '\n' + '>>> ' + params.response.payloadData;
+            if ( cbRawLog.checked ) {
+                divRawLog.innerHTML = divRawLog.innerHTML + '\n' + '>>> ' + params.response.payloadData;
+            }
 
             // Map to request type via requestId
             var request = JSON.parse(params.response.payloadData);
@@ -522,7 +525,9 @@ var controller = function () {
             
         } else if ( message == "Network.webSocketFrameReceived" ) {
             // Append message to raw log
-            divRawLog.innerHTML = divRawLog.innerHTML + '\n' +  '<<< ' + params.response.payloadData;
+            if ( cbRawLog.checked ) {
+                divRawLog.innerHTML = divRawLog.innerHTML + '\n' +  '<<< ' + params.response.payloadData;
+            }
             
             var response = JSON.parse(params.response.payloadData);
             if ( response == undefined ) {
