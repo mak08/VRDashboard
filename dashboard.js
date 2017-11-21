@@ -117,15 +117,27 @@ var controller = function () {
             if ( r.lastCommand != undefined ) {
                 // ToDo: error handling; multiple commands; expiring?
                 var lcTime = new Date(r.lastCommand.request.ts).toJSON().substring(11,19);
-                var lcAction = r.lastCommand.request.actions[0];
-                var lcValue = lcAction.value;
-                if ( lcAction.type == "sail" ) {
-                    lcValue = sailNames[lcValue];
-                }
+                var lcActions = r.lastCommand.request.actions;
+                lcActions.map( function (action) {
+                    if ( action.type == "heading" ) {
+                        lastCommand +=  (action.autoTwa?"TWA":"Heading") + '=' + roundTo(action.value, 1);
+                    } else if ( action.type == "sail" ) {
+                        lastCommand += 'Sail=' + sailNames[action.value];
+                    } else if ( action.type == "prog" ) {
+                        action.values.map(function ( progCmd ) {
+                            var progTime = new Date(progCmd.ts).toJSON().substring(0,19);
+                            lastCommand += (progCmd.autoTwa?"TWA":"Heading") + "=" + roundTo(progCmd.heading, 1) + ' @ ' + progTime + "; ";
+                        });
+                    } else if ( action.type == "wp" ) {
+                        action.values.map(function (waypoint) {
+                            lastCommand += "WP: " + formatPosition(waypoint.lat, waypoint.lon) + "; ";
+                        });
+                    }
+                });
+                lastCommand = "Time: " + lcTime + ' Actions: ' + lastCommand;
                 if ( r.lastCommand.rc != "ok" ) {
                     lastCommandBG = 'red';
                 }
-                lastCommand = lcTime + ' ' + lcAction.type + " = " + lcValue;
             }
 
             var cards = "";
@@ -137,7 +149,7 @@ var controller = function () {
             
             return "<tr>"
                 + "<td>" + r.name + "</td>"
-                + "<td>" + r.rank + "</td>"
+                + "<td>" + ((r.rank)?r.rank:"-") + "</td>"
                 + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
                 + "<td>" + roundTo(r.curr.heading, 1) + "</td>"
                 + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
