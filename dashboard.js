@@ -236,6 +236,13 @@ var controller = function () {
             }
         }
     }
+
+    function disableRaces() {
+        for (var i = 0; i < selRace.options.length; i++) {
+            selRace.options[i].disabled = true;
+        }
+        selRace.selectedIndex == -1;
+    }
     
     function addRace(message) {
         var raceId = message._id.race_id;
@@ -488,8 +495,11 @@ var controller = function () {
     function reInitUI (newId) {
         if ( currentUserId != undefined && currentUserId != newId ) {
             // Re-initialize statistics
+            disableRaces();
             races.map(function (race) {
                 race.tableLines = [];
+                race.curr = undefined;
+                race.prev = undefined;
                 race.lastCommand = undefined;
                 race.rank = undefined;
             });
