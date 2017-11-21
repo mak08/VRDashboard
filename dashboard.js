@@ -134,15 +134,17 @@ var controller = function () {
                         });
                     }
                 });
-                lastCommand = "Time: " + lcTime + ' Actions: ' + lastCommand;
+                lastCommand = "T: " + lcTime + ' Actions: ' + lastCommand;
                 if ( r.lastCommand.rc != "ok" ) {
                     lastCommandBG = 'red';
                 }
             }
 
             var cards = "";
-            for ( var key in r.curr.cards ) {
-                cards =  cards + " " + key + ":" + r.curr.cards[key];
+			var showCards = ["PR","WP"];
+  //          for ( var key in r.curr.cards ) {
+            for ( var key in showCards) {
+                cards =  cards + " " + showCards[key] + ":" + r.curr.cards[showCards[key]];
             }
 
             var twaFG = (r.curr.twa < 0)?"red":"green";
@@ -158,7 +160,7 @@ var controller = function () {
                 + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
                 + "<td>" + (r.curr.twaAuto?"no":"yes") + "</td>"
                 + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
-                + "<td>" + r.curr.options + "</td>"
+                + "<td>" + ((r.curr.options.length == 8)?'Full pack':r.curr.options) + "</td>"
                 + "<td>" + cards + "</td>"
                 + "<td style=\"background-color:" + sailNameBG + ";\">" + sailNames[r.curr.sail] + "</td>"
                 + "<td style=\"background-color:" + agroundBG +  ";\">" + ((r.curr.aground)?"AGROUND":"no") + "</td>"
