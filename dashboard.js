@@ -48,7 +48,7 @@ var controller = function () {
     var radius =  3437.74683
 
     var selRace, cbRouter, cbReuseTab;
-    var lbBoatname, lbRace, lbCurTime, lbCurPos, lbHeading, lbTWS, lbTWD, lbTWA, lbPrevPos, lbDeltaD, lbDeltaT, lbSpeedC, lbSpeedR, lbSpeedT;
+    var lbBoatname;
     var divPositionInfo, divRecordLog, divRawLog;
     var callUrlFunction;
     var initialized = false;
@@ -278,25 +278,12 @@ var controller = function () {
         }
         r.prev = r.curr;
         r.curr = message;
-        var timeStamp = new Date(r.curr.lastCalcDate);
-        lbRace.innerHTML = ' ' + r.name;
-        lbCurTime.innerHTML = ' ' + timeStamp.toGMTString();
-        lbCurPos.innerHTML = ' ' + formatPosition(r.curr.pos.lat, r.curr.pos.lon);
-        lbHeading.innerHTML = ' ' + roundTo(r.curr.heading, 1);
-        lbTWS.innerHTML = ' ' + roundTo(r.curr.tws, 1);
-        lbTWD.innerHTML = ' ' + roundTo(r.curr.twd, 1);
-        lbTWA.innerHTML = ' ' + roundTo(r.curr.twa, 1);
-        lbSpeedR.innerHTML = ' ' + roundTo(r.curr.speed, 2);
         r.curr.speedT =  theoreticalSpeed(message);
-        lbSpeedT.innerHTML = r.curr.speedT;
         if ( r.prev != undefined ) {
             r.curr.deltaD = gcDistance(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon);
             // Epoch timestamps are milliseconds since 00:00:00 UTC on 1 January 1970.
             r.curr.deltaT = (r.curr.lastCalcDate - r.prev.lastCalcDate)/1000;
             r.curr.speedC = roundTo(r.curr.deltaD/r.curr.deltaT * 3600, 2);
-            lbDeltaD.innerHTML = ' ' + roundTo(r.curr.deltaD, 2) + 'nm' + ' ';
-            lbDeltaT.innerHTML = ' ' + roundTo(r.curr.deltaT, 0) + 's' + ' ';
-            lbSpeedC.innerHTML = ' ' + r.curr.speedC + 'kn' + ' ';
             saveMessage(r);
         }
         divRaceStatus.innerHTML = makeRaceStatusHTML();
