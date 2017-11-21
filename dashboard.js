@@ -141,7 +141,7 @@ var controller = function () {
             }
 
             var cards = "";
-			var showCards = ["PR","WP"];
+            var showCards = ["PR","WP"];
   //          for ( var key in r.curr.cards ) {
             for ( var key in showCards) {
                 cards =  cards + " " + showCards[key] + ":" + r.curr.cards[showCards[key]];
@@ -158,7 +158,7 @@ var controller = function () {
                 + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
                 + "<td style=\"color:" + twaFG + ";\">" + roundTo(Math.abs(r.curr.twa), 1) + "</td>"
                 + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
-                + "<td>" + (r.curr.twaAuto?"no":"yes") + "</td>"
+                + "<td>" + (r.curr.twaAuto?"yes":"no") + "</td>"
                 + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
                 + "<td>" + ((r.curr.options.length == 8)?'Full pack':r.curr.options) + "</td>"
                 + "<td>" + cards + "</td>"
@@ -221,7 +221,7 @@ var controller = function () {
             + "<td>" + roundTo(r.curr.deltaD, 2) + "</td>"
             + "<td>" + roundTo(r.curr.deltaT, 0) + "</td>"
             + "<td>" + autoSail + "</td>"
-            + "<td>" + (r.curr.twaAuto?"no":"yes") + "</td>"
+            + "<td>" + (r.curr.twaAuto?"yes":"no") + "</td>"
             + "<td>" + sailChange + "</td>"
             + "<td>" + gybing + "</td>"
             + "<td>" + tacking + "</td>"

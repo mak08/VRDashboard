@@ -1,7 +1,7 @@
 {
     "name": "VR Dashboard",
     "description": "Monitor boat position",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "permissions": [
         "debugger",
         "tabs",
