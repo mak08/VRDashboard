@@ -86,12 +86,34 @@ var controller = function () {
         + "<th>" + "Options" + "</th>"
         + "<th>" + "Cards" + "</th>"
         + "<th>" + "Sail" + "</th>" // red if badsail
-        + "<th>" + "aground" + "</th>"
-        + "<th>" + "stealth" + "</th>"
-        + "<th>" + "manoeuvering" + "</th>"
+        + "<th>" + "gnd" + "</th>"
+        + "<th>" + "stlt" + "</th>"
+        + "<th>" + "slow" + "</th>"
         + "<th>" + "Last Command" + "</th>"
         +  "</tr>";
-    
+   
+	function printLastCommand(lcActions) {
+		var lastCommand = "";
+			
+		lcActions.map( function (action) {
+			if ( action.type == "heading" ) {
+				lastCommand +=  (action.autoTwa?"TWA":"Heading") + '=' + roundTo(action.value, 1);
+			} else if ( action.type == "sail" ) {
+				lastCommand += 'Sail=' + sailNames[action.value];
+			} else if ( action.type == "prog" ) {
+				action.values.map(function ( progCmd ) {
+					var progTime = new Date(progCmd.ts).toJSON().substring(0,19);
+					lastCommand += (progCmd.autoTwa?"TWA":"Heading") + "=" + roundTo(progCmd.heading, 1) + ' @ ' + progTime + "; ";
+				});
+			} else if ( action.type == "wp" ) {
+				action.values.map(function (waypoint) {
+					lastCommand += "WP: " + formatPosition(waypoint.lat, waypoint.lon) + "; ";
+				});
+			}
+		});
+		return lastCommand;
+	}
+
     function makeRaceStatusLine (r) {
 
         if ( r.curr == undefined ) {
@@ -117,23 +139,7 @@ var controller = function () {
             if ( r.lastCommand != undefined ) {
                 // ToDo: error handling; multiple commands; expiring?
                 var lcTime = new Date(r.lastCommand.request.ts).toJSON().substring(11,19);
-                var lcActions = r.lastCommand.request.actions;
-                lcActions.map( function (action) {
-                    if ( action.type == "heading" ) {
-                        lastCommand +=  (action.autoTwa?"TWA":"Heading") + '=' + roundTo(action.value, 1);
-                    } else if ( action.type == "sail" ) {
-                        lastCommand += 'Sail=' + sailNames[action.value];
-                    } else if ( action.type == "prog" ) {
-                        action.values.map(function ( progCmd ) {
-                            var progTime = new Date(progCmd.ts).toJSON().substring(0,19);
-                            lastCommand += (progCmd.autoTwa?"TWA":"Heading") + "=" + roundTo(progCmd.heading, 1) + ' @ ' + progTime + "; ";
-                        });
-                    } else if ( action.type == "wp" ) {
-                        action.values.map(function (waypoint) {
-                            lastCommand += "WP: " + formatPosition(waypoint.lat, waypoint.lon) + "; ";
-                        });
-                    }
-                });
+				lastCommand = printLastCommand(r.lastCommand.request.actions);
                 lastCommand = "T: " + lcTime + ' Actions: ' + lastCommand;
                 if ( r.lastCommand.rc != "ok" ) {
                     lastCommandBG = 'red';
@@ -160,7 +166,7 @@ var controller = function () {
                 + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
                 + "<td>" + (r.curr.twaAuto?"yes":"no") + "</td>"
                 + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
-                + "<td>" + ((r.curr.options.length == 8)?'Full pack':r.curr.options) + "</td>"
+                + "<td>" + ((r.curr.options.length == 8)?'Full':r.curr.options) + "</td>"
                 + "<td>" + cards + "</td>"
                 + "<td style=\"background-color:" + sailNameBG + ";\">" + sailNames[r.curr.sail] + "</td>"
                 + "<td style=\"background-color:" + agroundBG +  ";\">" + ((r.curr.aground)?"AGROUND":"no") + "</td>"
@@ -192,6 +198,18 @@ var controller = function () {
             return roundTo(value/1000, 0);
         }
     }
+		
+	function addTableCommandLine(r) {
+		r.tableLines.unshift(
+		  "<tr>"
+		+ "<td>" + new Date(r.lastCommand.request.ts).toGMTString() + "</td>" 
+		+ '<td colspan="2">Command @' + new Date().toJSON().substring(11,19) + "</td>" 
+		+ '<td colspan="13">Actions: ' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
+		+ "</tr>");
+        if (r.id == selRace.value) {
+            divRecordLog.innerHTML = makeTableHTML(r);
+        }
+	}
     
     function makeTableLine (r) {
 
@@ -588,6 +606,7 @@ var controller = function () {
                         var race = races[raceId];
                         if ( race != undefined ) {
                             race.lastCommand = {request: request, rc: response.scriptData.rc};
+							addTableCommandLine(race);
                             divRaceStatus.innerHTML = makeRaceStatusHTML();
                         }
                     } else if ( request.eventKey == "Meta_GetPolar" ) {
