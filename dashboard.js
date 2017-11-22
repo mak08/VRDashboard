@@ -483,8 +483,10 @@ var controller = function () {
         callUrlFunction = callUrlZezo;
         initRaces();
         chrome.storage.local.get("polars", function(items) {
-            console.log("Retrieved " + items["polars"].filter(function(value) { return value != null }).length + " polars."); 
-            polars = items["polars"];
+			if (items["polars"] !== undefined) {
+            	console.log("Retrieved " + items["polars"].filter(function(value) { return value != null }).length + " polars."); 
+            	polars = items["polars"];
+			}
         });
         initialized = true;
     }

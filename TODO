@@ -1,3 +1,6 @@
+BUG: sail time wraps around when yu select more than 24h auto sail
+FIX: Index polars by polar id, not race id
+
 # fixed - proper E/W indicator
 # fixed - Check for zero DeltaT data
 # done - Convert to page action
