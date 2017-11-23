@@ -4,13 +4,8 @@
 
 var version = "1.0";
 
-var dashboardTabId;
-
 chrome.pageAction.onClicked.addListener(function(tab) {
     chrome.debugger.attach({tabId:tab.id}, version, onAttach.bind(null, tab.id));
-    chrome.debugger.onDetach.addListener( function (debuggee, reason) {
-        chrome.tabs.remove(dashboardTabId);
-    });
 });
 
 function checkForValidUrl(tabId, changeInfo, tabInfo) {
@@ -39,8 +34,5 @@ function onAttach(tabId) {
     }
 
     chrome.tabs.create(
-        {url: "dashboard.html?" + tabId},
-        function (tab) {
-            dashboardTabId = tab.id;
-        });
+        {url: "dashboard.html?" + tabId});
 }
