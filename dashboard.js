@@ -97,17 +97,17 @@ var controller = function () {
 			
 		lcActions.map( function (action) {
 			if ( action.type == "heading" ) {
-				lastCommand +=  (action.autoTwa?"TWA":"Heading") + '=' + roundTo(action.value, 1);
+				lastCommand +=  (action.autoTwa?" TWA":" Heading") + '=' + roundTo(action.value, 1);
 			} else if ( action.type == "sail" ) {
-				lastCommand += 'Sail=' + sailNames[action.value];
+				lastCommand += ' Sail=' + sailNames[action.value];
 			} else if ( action.type == "prog" ) {
 				action.values.map(function ( progCmd ) {
 					var progTime = new Date(progCmd.ts).toJSON().substring(0,19);
-					lastCommand += (progCmd.autoTwa?"TWA":"Heading") + "=" + roundTo(progCmd.heading, 1) + ' @ ' + progTime + "; ";
+					lastCommand += (progCmd.autoTwa?" TWA":" Heading") + "=" + roundTo(progCmd.heading, 1) + ' @ ' + progTime + "; ";
 				});
 			} else if ( action.type == "wp" ) {
 				action.values.map(function (waypoint) {
-					lastCommand += "WP: " + formatPosition(waypoint.lat, waypoint.lon) + "; ";
+					lastCommand += " WP: " + formatPosition(waypoint.lat, waypoint.lon) + "; ";
 				});
 			}
 		});
@@ -140,7 +140,7 @@ var controller = function () {
                 // ToDo: error handling; multiple commands; expiring?
                 var lcTime = new Date(r.lastCommand.request.ts).toJSON().substring(11,19);
 				lastCommand = printLastCommand(r.lastCommand.request.actions);
-                lastCommand = "T: " + lcTime + ' Actions: ' + lastCommand;
+                lastCommand = "T: " + lcTime + ' Actions:' + lastCommand;
                 if ( r.lastCommand.rc != "ok" ) {
                     lastCommandBG = 'red';
                 }
@@ -204,7 +204,7 @@ var controller = function () {
 		  "<tr>"
 		+ "<td>" + new Date(r.lastCommand.request.ts).toGMTString() + "</td>" 
 		+ '<td colspan="2">Command @' + new Date().toJSON().substring(11,19) + "</td>" 
-		+ '<td colspan="13">Actions: ' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
+		+ '<td colspan="13">Actions:' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
 		+ "</tr>");
         if (r.id == selRace.value) {
             divRecordLog.innerHTML = makeTableHTML(r);
