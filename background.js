@@ -2,17 +2,22 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-chrome.pageAction.onClicked.addListener(function(tab) {
-  chrome.debugger.attach({tabId:tab.id}, version, onAttach.bind(null, tab.id));
-});
-
 var version = "1.0";
+
+var dashboardTabId;
+
+chrome.pageAction.onClicked.addListener(function(tab) {
+    chrome.debugger.attach({tabId:tab.id}, version, onAttach.bind(null, tab.id));
+    chrome.debugger.onDetach.addListener( function (debuggee, reason) {
+        chrome.tabs.remove(dashboardTabId);
+    });
+});
 
 function checkForValidUrl(tabId, changeInfo, tabInfo) {
 
-if (tabInfo.url.indexOf('virtualregatta.com') >= 0) {
-                chrome.pageAction.show(tabId);
-        }
+    if (tabInfo.url.indexOf('virtualregatta.com') >= 0) {
+        chrome.pageAction.show(tabId);
+    }
 };
 
 chrome.tabs.onUpdated.addListener(checkForValidUrl);
@@ -28,11 +33,14 @@ chrome.tabs.onActivated.addListener(function(activeInfo) {
 
 
 function onAttach(tabId) {
-  if (chrome.runtime.lastError) {
-    alert(chrome.runtime.lastError.message);
-    return;
-  }
+    if (chrome.runtime.lastError) {
+        alert(chrome.runtime.lastError.message);
+        return;
+    }
 
-  chrome.tabs.create(
-      {url: "dashboard.html?" + tabId});
+    chrome.tabs.create(
+        {url: "dashboard.html?" + tabId},
+        function (tab) {
+            dashboardTabId = tab.id;
+        });
 }
