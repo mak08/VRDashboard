@@ -19,9 +19,9 @@ ADD: Button to clear the raw messages
 
 Michael:
 # done - The 'Last command' columns is not filled yet; I'm not sure what is the best way to display them (if we want them at all).
-- Last Command: handle prog commands
+# done - Last Command: handle prog commands
 # done - Race rank should be included
-- The single status line should be removed.
+# done - The single status line should be removed.
 
 # done -vT - Remove or implement the vC column (supposed to show Computed speed 
 # according to options, wind and polars reported in the game)
