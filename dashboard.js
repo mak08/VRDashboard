@@ -80,7 +80,7 @@ var controller = function () {
         + "<th>" + "TWS" + "</th>"
         + "<th>" + "TWD" + "</th>"
         + "<th>" + "TWA" + "</th>"
-        + "<th>" + "SOG" + "</th>"
+        + "<th>" + "Speed" + "</th>"
         + "<th>" + "AutoTWA" + "</th>"
         + "<th>" + "DTF" + "</th>"
         + "<th>" + "Options" + "</th>"
@@ -196,6 +196,18 @@ var controller = function () {
             return roundTo(value/1000, 0);
         }
     }
+
+	function formatHMS(seconds) {
+		seconds = Math.floor(seconds/1000);
+
+		var hours = Math.floor(seconds/3600);
+		seconds -= 3600 * hours;
+
+		var minutes = Math.floor(seconds/60);
+		seconds -= minutes * 60;
+
+		return hours + 'h' + minutes + 'm'; // + seconds + 's';
+	}
 		
 	function formatDate(ts) {
 		if (cbLocalTime.checked) {
@@ -223,7 +235,7 @@ var controller = function () {
         if ( autoSail < 0 ) {
             autoSail = '-';
         } else {
-            autoSail = new Date(autoSail).toJSON().substring(11,19);
+            autoSail = formatHMS(autoSail);
         }
 
         var sailChange = formatSeconds(r.curr.tsEndOfSailChange - r.curr.lastCalcDate);
@@ -320,6 +332,16 @@ var controller = function () {
     }
 
     function theoreticalSpeed (message) {
+		var shortNames = {
+			"JIB" : "Jib",
+			"SPI" : "Spi",
+			"STAYSAIL" : "Stay",
+			"LIGHT_JIB" : "LJ",
+			"CODE_0" : "C0",
+			"HEAVY_GNK" : "HG",
+			"LIGHT_GNK" : "LG"
+		}
+
         var boatPolars = polars[message.boat.polar_id];
         if ( boatPolars == undefined ) {
             return '-';
@@ -333,7 +355,7 @@ var controller = function () {
             var twsLookup = fractionStep(tws, boatPolars.tws);
             var twaLookup = fractionStep(twa, boatPolars.twa);
             var speed = maxSpeed(options, twsLookup, twaLookup, boatPolars.sail);
-            return ' ' + roundTo(speed.speed * foil * hull, 2) + '(' + speed.sail + ')';
+            return ' ' + roundTo(speed.speed * foil * hull, 2) + ' (' + shortNames[speed.sail] + ')';
         }
     }
 
