@@ -401,11 +401,22 @@ var controller = function () {
     }
     
     function callUrlZezo (raceId, beta) {
+		var optionBits = { "foil" : 16, "winch" : 4, "reach": 64, "heavy":128, "light" : 32 }; 
+
         var baseURL = 'http://zezo.org';
-        var r = races[raceId]; 
+        var r = races[raceId];
+		
+		var options = 0;
+		for (var key in r.curr.options) {
+			if (optionBits[r.curr.options[key]]) {
+				options |= optionBits[r.curr.options[key]];
+			}
+		}
         var urlBeta = r.url + (beta?"b":"");
 
-        var url = baseURL + '/' + urlBeta + '/chart.pl?lat=' + r.curr.pos.lat + '&lon=' + r.curr.pos.lon;
+        var url = baseURL + '/' + urlBeta + '/chart.pl?lat=' + r.curr.pos.lat + '&lon=' + r.curr.pos.lon + 
+				'&options=' + options + '&twa=' + r.curr.twa;
+				 // +  '&userid=' + r.curr._id.user_id; Not yer
         window.open(url, cbReuseTab.checked?urlBeta:'_blank');
     }
     
