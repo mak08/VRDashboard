@@ -47,7 +47,7 @@ var controller = function () {
     // Earth radius in nm, 360*60/(2*Pi);
     var radius =  3437.74683
 
-    var selRace, cbRouter, cbReuseTab;
+    var selRace, cbRouter, cbReuseTab, cbLocalTime;
     var lbBoatname;
     var divPositionInfo, divRecordLog, divRawLog;
     var callUrlFunction;
@@ -67,9 +67,9 @@ var controller = function () {
         + "<th>" + "Δt (sec)" + "</th>"
         + "<th>" + "AutoSail" + "</th>"
         + "<th>" + "AutoTWA" + "</th>"
-        + "<th>" + "Sail chng" + "</th>"
-        + "<th>" + "Gybing" + "</th>"
-        + "<th>" + "Tacking" + "</th>"
+        + "<th>" + "Sail" + "</th>"
+        + "<th>" + "Gybe" + "</th>"
+        + "<th>" + "Tack" + "</th>"
         +  "</tr>";
 
     var raceStatusHeader =  "<tr>"
@@ -80,14 +80,14 @@ var controller = function () {
         + "<th>" + "TWS" + "</th>"
         + "<th>" + "TWD" + "</th>"
         + "<th>" + "TWA" + "</th>"
-        + "<th>" + "Boat speed" + "</th>"
+        + "<th>" + "SOG" + "</th>"
         + "<th>" + "AutoTWA" + "</th>"
         + "<th>" + "DTF" + "</th>"
         + "<th>" + "Options" + "</th>"
         + "<th>" + "Cards" + "</th>"
         + "<th>" + "Sail" + "</th>" // red if badsail
-        + "<th>" + "gnd" + "</th>"
-        + "<th>" + "stlt" + "</th>"
+        + "<th>" + "GND" + "</th>"
+        + "<th>" + "Stlth" + "</th>"
         + "<th>" + "slow" + "</th>"
         + "<th>" + "Last Command" + "</th>"
         +  "</tr>";
@@ -140,7 +140,7 @@ var controller = function () {
                 // ToDo: error handling; multiple commands; expiring?
                 var lcTime = new Date(r.lastCommand.request.ts).toJSON().substring(11,19);
 				lastCommand = printLastCommand(r.lastCommand.request.actions);
-                lastCommand = "T: " + lcTime + ' Actions:' + lastCommand;
+                lastCommand = "T: " + lcTime + 'Z Actions:' + lastCommand;
                 if ( r.lastCommand.rc != "ok" ) {
                     lastCommandBG = 'red';
                 }
@@ -197,11 +197,19 @@ var controller = function () {
         }
     }
 		
+	function formatDate(ts) {
+		if (cbLocalTime.checked) {
+			return new Date(ts).toString().replace(/GMT.[0-9]{4}/,'');
+		} else {
+			return new Date(ts).toUTCString();
+		}
+	}
+		
 	function addTableCommandLine(r) {
 		r.tableLines.unshift(
 		  "<tr>"
-		+ "<td>" + new Date(r.lastCommand.request.ts).toGMTString() + "</td>" 
-		+ '<td colspan="2">Command @' + new Date().toJSON().substring(11,19) + "</td>" 
+		+ "<td>" + formatDate(r.lastCommand.request.ts) + "</td>" 
+		+ '<td colspan="2">Command @' + new Date().toJSON().substring(11,19) + "Z</td>" 
 		+ '<td colspan="13">Actions:' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
 		+ "</tr>");
         if (r.id == selRace.value) {
@@ -225,7 +233,7 @@ var controller = function () {
         var twaFG = (r.curr.twa < 0)?"red":"green";
 
         return "<tr>"
-            + "<td>" + new Date(r.curr.lastCalcDate).toGMTString() + "</td>"
+            + "<td>" + formatDate(r.curr.lastCalcDate) + "</td>"
             + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
             + "<td>" + roundTo(r.curr.heading, 1) + "</td>"
             + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
@@ -476,6 +484,7 @@ var controller = function () {
         selRace = document.getElementById("sel_race");
         cbRouter = document.getElementById("auto_router");
         cbReuseTab = document.getElementById("reuse_tab");
+        cbLocalTime = document.getElementById("local_time");
         lbRace = document.getElementById("lb_race");
         lbCurTime = document.getElementById("lb_curtime");
         lbCurPos = document.getElementById("lb_curpos");

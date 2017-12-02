@@ -1,6 +1,6 @@
-BUG: sail time wraps around when yu select more than 24h auto sail
+BUG: sail time wraps around when you select more than 24h auto sail
 FIX: Index polars by polar id, not race id
-ADD: Button to clear the raw messages
+#ADD: Button to clear the raw messages
 
 references.bin mtime
 
@@ -15,9 +15,9 @@ references.bin mtime
 # done - Handle Auth and rank messages. Reset races on user change
 
 #add race by id and show alert- Handle unknown races (relaod list?)
-- Send current heading/TWA to router so it can deal with the penalty 
-(but not sure the router deals ok) 
-- send available options to the (beta) races. Also userid to keep track who's who.
+#- Send current heading/TWA to router so it can deal with the penalty 
+#(but not sure the router deals ok) 
+#- send available options to the (beta) races. Also userid to keep track who's who.
 
 Michael:
 # done - The 'Last command' columns is not filled yet; I'm not sure what is the best way to display them (if we want them at all).
