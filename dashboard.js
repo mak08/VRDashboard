@@ -256,6 +256,10 @@ var controller = function () {
         divRecordLog.innerHTML = makeTableHTML(races[this.value]);
     }
 
+	function clearLog() {
+		divRawLog.innerHTML = "";
+	}
+
     function enableRace(id) {
         for (var i = 0; i < selRace.options.length; i++) {
             if (selRace.options[i].value == id) {
@@ -633,7 +637,9 @@ var controller = function () {
         // Useful functions
         callUrl: callUrl,
         changeRace: changeRace,
-        onEvent: onEvent
+        onEvent: onEvent,
+		clearLog: clearLog
+
     }
 } ();
 
@@ -647,6 +653,7 @@ window.addEventListener("load", function() {
     
     document.getElementById("bt_callurl").addEventListener("click", controller.callUrl);
     document.getElementById("sel_race").addEventListener("change", controller.changeRace);
+    document.getElementById("bt_clear").addEventListener("click", controller.clearLog);
     
     chrome.debugger.sendCommand({tabId:tabId}, "Network.enable", function() {
         // just close the dashboard window if debugger attach fails
