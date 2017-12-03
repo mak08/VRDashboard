@@ -85,9 +85,10 @@ var controller = function () {
         + "<th>" + "DTF" + "</th>"
         + "<th>" + "Options" + "</th>"
         + "<th>" + "Cards" + "</th>"
+        + "<th>" + "Pack" + "</th>"
         + "<th>" + "Sail" + "</th>" // red if badsail
         + "<th>" + "GND" + "</th>"
-        + "<th>" + "Stlth" + "</th>"
+        + "<th>" + "Stlt" + "</th>"
         + "<th>" + "slow" + "</th>"
         + "<th>" + "Last Command" + "</th>"
         +  "</tr>";
@@ -151,6 +152,24 @@ var controller = function () {
                 cards =  cards + " " + key + ":" + r.curr.cards[key];
             }
 
+			var regPack = "";
+			var regColor = "";
+			if (r.curr.regPack) { 
+				if (r.curr.regPack.tsNext > r.curr.lastCalcDate) {	
+					regPack = formatHMS(r.curr.regPack.tsNext - r.curr.lastCalcDate);
+				} else {
+					regPack = "Ready";
+					regColor = ' style="background-color: lightgreen;"';
+				} 
+			}
+			if (r.curr.soloCard) {
+				regPack += "<br>Solo: ";
+				if (r.curr.soloCard.ts > r.curr.lastCalcDate) {
+					regPack += r.curr.soloCard.code + ":" + formatMS(r.curr.soloCard.ts - r.curr.lastCalcDate);
+				} else {
+					regPack += "???";
+				}
+			}
             var twaFG = (r.curr.twa < 0)?"red":"green";
             
             return "<tr>"
@@ -160,30 +179,31 @@ var controller = function () {
                 + "<td>" + roundTo(r.curr.heading, 1) + "</td>"
                 + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
                 + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
-                + "<td style=\"color:" + twaFG + ";\">" + roundTo(Math.abs(r.curr.twa), 1) + "</td>"
+                + '<td style="color:' + twaFG + ';">'+ roundTo(Math.abs(r.curr.twa), 1) + "</td>"
                 + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
                 + "<td>" + (r.curr.twaAuto?"yes":"no") + "</td>"
                 + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
-                + "<td>" + ((r.curr.options.length == 8)?'Full':r.curr.options.join(', ')) + "</td>"
+                + "<td>" + ((r.curr.options.length == 8)?'Full':r.curr.options.join(' ')) + "</td>"
                 + "<td>" + cards + "</td>"
-                + "<td style=\"background-color:" + sailNameBG + ";\">" + sailNames[r.curr.sail] + "</td>"
-                + "<td style=\"background-color:" + agroundBG +  ";\">" + ((r.curr.aground)?"AGROUND":"no") + "</td>"
+				+ "<td" + regColor + ">" + regPack + "</td>"
+                + '<td style="background-color:' + sailNameBG + ';">' + sailNames[r.curr.sail] + "</td>"
+                + '<td style="background-color:' + agroundBG +  ';">' + ((r.curr.aground)?"AGROUND":"no") + "</td>"
                 + "<td>" + ((r.curr.stealthMode > r.curr.lastCalcDate)?"yes":"no") + "</td>"
                 + "<td>" + (manoeuvering?"yes":"no") + "</td>"
-                + "<td style=\"background-color:" + lastCommandBG +  ";\">" + lastCommand + "</td>"
+                + '<td style="background-color:' + lastCommandBG +  ';">' + lastCommand + "</td>"
                 + "</tr>";
         }
     }
 
     function makeRaceStatusHTML () {
-        return "<table style=\"width:100%\">"
+        return '<table style="width:100%">'
             + raceStatusHeader
             + races.map(makeRaceStatusLine).join(' ');
             + "</table>";
     }
 
     function makeTableHTML (r) {
-        return "<table style=\"width:100%\">"
+        return '<table style="width:100%">'
             + tableHeader
             + (r === undefined?"":r.tableLines.join(' '))
             + "</table>";
@@ -207,6 +227,15 @@ var controller = function () {
 		seconds -= minutes * 60;
 
 		return hours + 'h' + minutes + 'm'; // + seconds + 's';
+	}
+
+	function formatMS(seconds) {
+		seconds = Math.floor(seconds/1000);
+
+		var minutes = Math.floor(seconds/60);
+		seconds -= minutes * 60;
+
+		return  minutes + 'm' + seconds + 's';
 	}
 		
 	function formatDate(ts) {
@@ -250,7 +279,7 @@ var controller = function () {
             + "<td>" + roundTo(r.curr.heading, 1) + "</td>"
             + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
             + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
-            + "<td style=\"color:" + twaFG + ";\">" + roundTo(Math.abs(r.curr.twa), 1) + "</td>"
+            + '<td style="color:' + twaFG + ';">' + roundTo(Math.abs(r.curr.twa), 1) + "</td>"
             + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
             + "<td>" + roundTo(r.curr.speedC, 2) + "</td>"
             + "<td>" + r.curr.speedT + "</td>"
@@ -355,7 +384,7 @@ var controller = function () {
             var twsLookup = fractionStep(tws, boatPolars.tws);
             var twaLookup = fractionStep(twa, boatPolars.twa);
             var speed = maxSpeed(options, twsLookup, twaLookup, boatPolars.sail);
-            return ' ' + roundTo(speed.speed * foil * hull, 2) + ' (' + shortNames[speed.sail] + ')';
+            return ' ' + roundTo(speed.speed * foil * hull, 2) + '&nbsp;(' + shortNames[speed.sail] + ')';
         }
     }
 
@@ -493,8 +522,8 @@ var controller = function () {
     function formatPosition (lat, lon) {
         var latDMS = toDeg(lat);
         var lonDMS = toDeg(lon);
-        var latString = latDMS.g + "°" + latDMS.m + "'" + latDMS.s + "\"";
-        var lonString = lonDMS.g + "°" + lonDMS.m + "'" + lonDMS.s + "\"";
+        var latString = latDMS.g + "°" + latDMS.m + "'" + latDMS.s + '"';
+        var lonString = lonDMS.g + "°" + lonDMS.m + "'" + lonDMS.s + '"';
         return  latString + ((latDMS.u==1)?'N':'S') + ' ' + lonString + ((lonDMS.u==1)?'E':'W');
     }
 
