@@ -163,11 +163,11 @@ var controller = function () {
                 } 
             }
             if (r.curr.soloCard) {
-                regPack += "<br>Solo: ";
+                regPack += "<br>Solo:";
                 if (r.curr.soloCard.ts > r.curr.lastCalcDate) {
                     regPack += r.curr.soloCard.code + ":" + formatMS(r.curr.soloCard.ts - r.curr.lastCalcDate);
                 } else {
-                    regPack += "???";
+                    regPack += "?";
                 }
             }
             var twaFG = (r.curr.twa < 0)?"red":"green";
