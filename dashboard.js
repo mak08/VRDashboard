@@ -93,27 +93,27 @@ var controller = function () {
         + "<th>" + "Last Command" + "</th>"
         +  "</tr>";
    
-	function printLastCommand(lcActions) {
-		var lastCommand = "";
-			
-		lcActions.map( function (action) {
-			if ( action.type == "heading" ) {
-				lastCommand +=  (action.autoTwa?" TWA":" Heading") + '=' + roundTo(action.value, 1);
-			} else if ( action.type == "sail" ) {
-				lastCommand += ' Sail=' + sailNames[action.value];
-			} else if ( action.type == "prog" ) {
-				action.values.map(function ( progCmd ) {
-					var progTime = new Date(progCmd.ts).toJSON().substring(0,19);
-					lastCommand += (progCmd.autoTwa?" TWA":" Heading") + "=" + roundTo(progCmd.heading, 1) + ' @ ' + progTime + "; ";
-				});
-			} else if ( action.type == "wp" ) {
-				action.values.map(function (waypoint) {
-					lastCommand += " WP: " + formatPosition(waypoint.lat, waypoint.lon) + "; ";
-				});
-			}
-		});
-		return lastCommand;
-	}
+    function printLastCommand(lcActions) {
+        var lastCommand = "";
+            
+        lcActions.map( function (action) {
+            if ( action.type == "heading" ) {
+                lastCommand +=  (action.autoTwa?" TWA":" Heading") + '=' + roundTo(action.value, 1);
+            } else if ( action.type == "sail" ) {
+                lastCommand += ' Sail=' + sailNames[action.value];
+            } else if ( action.type == "prog" ) {
+                action.values.map(function ( progCmd ) {
+                    var progTime = formatDate(progCmd.ts);
+                    lastCommand += (progCmd.autoTwa?" TWA":" Heading") + "=" + roundTo(progCmd.heading, 1) + ' @ ' + progTime + "; ";
+                });
+            } else if ( action.type == "wp" ) {
+                action.values.map(function (waypoint) {
+                    lastCommand += " WP: " + formatPosition(waypoint.lat, waypoint.lon) + "; ";
+                });
+            }
+        });
+        return lastCommand;
+    }
 
     function makeRaceStatusLine (r) {
 
@@ -125,7 +125,7 @@ var controller = function () {
             if ( autoSail < 0 ) {
                 autoSail = '-';
             } else {
-                autoSail = new Date(autoSail).toJSON().substring(11,19);
+                autoSail = formatTime(autoSail);
             }
 
             var sailNameBG = r.curr.badSail?"red":"lightgreen";
@@ -139,37 +139,37 @@ var controller = function () {
             var lastCommandBG = "white";
             if ( r.lastCommand != undefined ) {
                 // ToDo: error handling; multiple commands; expiring?
-                var lcTime = new Date(r.lastCommand.request.ts).toJSON().substring(11,19);
-				lastCommand = printLastCommand(r.lastCommand.request.actions);
-                lastCommand = "T: " + lcTime + 'Z Actions:' + lastCommand;
+                var lcTime = formatTime(r.lastCommand.request.ts);
+                lastCommand = printLastCommand(r.lastCommand.request.actions);
+                lastCommand = "T: " + lcTime + ' Actions:' + lastCommand;
                 if ( r.lastCommand.rc != "ok" ) {
                     lastCommandBG = 'red';
                 }
             }
 
             var cards = "";
-          	for ( var key in r.curr.cards ) {
+            for ( var key in r.curr.cards ) {
                 cards =  cards + " " + key + ":" + r.curr.cards[key];
             }
 
-			var regPack = "";
-			var regColor = "";
-			if (r.curr.regPack) { 
-				if (r.curr.regPack.tsNext > r.curr.lastCalcDate) {	
-					regPack = formatHMS(r.curr.regPack.tsNext - r.curr.lastCalcDate);
-				} else {
-					regPack = "Ready";
-					regColor = ' style="background-color: lightgreen;"';
-				} 
-			}
-			if (r.curr.soloCard) {
-				regPack += "<br>Solo:";
-				if (r.curr.soloCard.ts > r.curr.lastCalcDate) {
-					regPack += r.curr.soloCard.code + ":" + formatMS(r.curr.soloCard.ts - r.curr.lastCalcDate);
-				} else {
-					regPack += "?";
-				}
-			}
+            var regPack = "";
+            var regColor = "";
+            if (r.curr.regPack) { 
+                if (r.curr.regPack.tsNext > r.curr.lastCalcDate) {  
+                    regPack = formatHMS(r.curr.regPack.tsNext - r.curr.lastCalcDate);
+                } else {
+                    regPack = "Ready";
+                    regColor = ' style="background-color: lightgreen;"';
+                } 
+            }
+            if (r.curr.soloCard) {
+                regPack += "<br>Solo:";
+                if (r.curr.soloCard.ts > r.curr.lastCalcDate) {
+                    regPack += r.curr.soloCard.code + ":" + formatMS(r.curr.soloCard.ts - r.curr.lastCalcDate);
+                } else {
+                    regPack += "?";
+                }
+            }
             var twaFG = (r.curr.twa < 0)?"red":"green";
             
             return "<tr>"
@@ -185,7 +185,7 @@ var controller = function () {
                 + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
                 + "<td>" + ((r.curr.options.length == 8)?'Full':r.curr.options.join(' ')) + "</td>"
                 + "<td>" + cards + "</td>"
-				+ "<td" + regColor + ">" + regPack + "</td>"
+                + "<td" + regColor + ">" + regPack + "</td>"
                 + '<td style="background-color:' + sailNameBG + ';">' + sailNames[r.curr.sail] + "</td>"
                 + '<td style="background-color:' + agroundBG +  ';">' + ((r.curr.aground)?"AGROUND":"no") + "</td>"
                 + "<td>" + ((r.curr.stealthMode > r.curr.lastCalcDate)?"yes":"no") + "</td>"
@@ -217,46 +217,59 @@ var controller = function () {
         }
     }
 
-	function formatHMS(seconds) {
-		seconds = Math.floor(seconds/1000);
+    function formatHMS(seconds) {
+        seconds = Math.floor(seconds/1000);
 
-		var hours = Math.floor(seconds/3600);
-		seconds -= 3600 * hours;
+        var hours = Math.floor(seconds/3600);
+        seconds -= 3600 * hours;
 
-		var minutes = Math.floor(seconds/60);
-		seconds -= minutes * 60;
+        var minutes = Math.floor(seconds/60);
+        seconds -= minutes * 60;
 
-		return hours + 'h' + minutes + 'm'; // + seconds + 's';
-	}
+        return hours + 'h' + minutes + 'm'; // + seconds + 's';
+    }
 
-	function formatMS(seconds) {
-		seconds = Math.floor(seconds/1000);
+    function formatMS(seconds) {
+        seconds = Math.floor(seconds/1000);
 
-		var minutes = Math.floor(seconds/60);
-		seconds -= minutes * 60;
+        var minutes = Math.floor(seconds/60);
+        seconds -= minutes * 60;
 
-		return  minutes + 'm' + seconds + 's';
-	}
-		
-	function formatDate(ts) {
-		if (cbLocalTime.checked) {
-			return new Date(ts).toString().replace(/GMT.[0-9]{4}/,'');
-		} else {
-			return new Date(ts).toUTCString();
-		}
-	}
-		
-	function addTableCommandLine(r) {
-		r.tableLines.unshift(
-		  "<tr>"
-		+ "<td>" + formatDate(r.lastCommand.request.ts) + "</td>" 
-		+ '<td colspan="2">Command @' + new Date().toJSON().substring(11,19) + "Z</td>" 
-		+ '<td colspan="13">Actions:' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
-		+ "</tr>");
+        return  minutes + 'm' + seconds + 's';
+    }
+        
+    function formatDate(ts) {
+        var tsOptions = { year: 'numeric', month: 'numeric', day: 'numeric',
+                          hour: 'numeric', minute: 'numeric', second: 'numeric'};
+        var d = (ts)?(new Date(ts)):(new Date());
+        if (cbLocalTime.checked) {
+        } else {
+            tsOptions.timeZone = 'UTC';
+        }
+        return new Intl.DateTimeFormat("lookup", tsOptions).format(d);
+    }
+        
+    function formatTime(ts) {
+        var tsOptions = { hour: 'numeric', minute: 'numeric', second: 'numeric'};
+        var d = (ts)?(new Date(ts)):(new Date());
+        if (cbLocalTime.checked) {
+        } else {
+            tsOptions.timeZone = 'UTC';
+        }
+        return new Intl.DateTimeFormat("lookup", tsOptions).format(d);
+    }
+        
+    function addTableCommandLine(r) {
+        r.tableLines.unshift(
+          "<tr>"
+        + "<td>" + formatDate(r.lastCommand.request.ts) + "</td>" 
+                + '<td colspan="2">Command @' + formatTime() + "</td>" 
+        + '<td colspan="13">Actions:' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
+        + "</tr>");
         if (r.id == selRace.value) {
             divRecordLog.innerHTML = makeTableHTML(r);
         }
-	}
+    }
     
     function makeTableLine (r) {
 
@@ -305,9 +318,9 @@ var controller = function () {
         divRecordLog.innerHTML = makeTableHTML(races[this.value]);
     }
 
-	function clearLog() {
-		divRawLog.innerHTML = "";
-	}
+    function clearLog() {
+        divRawLog.innerHTML = "";
+    }
 
     function enableRace(id) {
         for (var i = 0; i < selRace.options.length; i++) {
@@ -361,15 +374,15 @@ var controller = function () {
     }
 
     function theoreticalSpeed (message) {
-		var shortNames = {
-			"JIB" : "Jib",
-			"SPI" : "Spi",
-			"STAYSAIL" : "Stay",
-			"LIGHT_JIB" : "LJ",
-			"CODE_0" : "C0",
-			"HEAVY_GNK" : "HG",
-			"LIGHT_GNK" : "LG"
-		}
+        var shortNames = {
+            "JIB" : "Jib",
+            "SPI" : "Spi",
+            "STAYSAIL" : "Stay",
+            "LIGHT_JIB" : "LJ",
+            "CODE_0" : "C0",
+            "HEAVY_GNK" : "HG",
+            "LIGHT_GNK" : "LG"
+        }
 
         var boatPolars = polars[message.boat.polar_id];
         if ( boatPolars == undefined ) {
@@ -460,22 +473,22 @@ var controller = function () {
     }
     
     function callUrlZezo (raceId, beta) {
-		var optionBits = { "foil" : 16, "winch" : 4, "reach": 64, "heavy":128, "light" : 32 }; 
+        var optionBits = { "foil" : 16, "winch" : 4, "reach": 64, "heavy":128, "light" : 32 }; 
 
         var baseURL = 'http://zezo.org';
         var r = races[raceId];
-		
-		var options = 0;
-		for (var key in r.curr.options) {
-			if (optionBits[r.curr.options[key]]) {
-				options |= optionBits[r.curr.options[key]];
-			}
-		}
+        
+        var options = 0;
+        for (var key in r.curr.options) {
+            if (optionBits[r.curr.options[key]]) {
+                options |= optionBits[r.curr.options[key]];
+            }
+        }
         var urlBeta = r.url + (beta?"b":"");
 
         var url = baseURL + '/' + urlBeta + '/chart.pl?lat=' + r.curr.pos.lat + '&lon=' + r.curr.pos.lon + 
-				'&options=' + options + '&twa=' + r.curr.twa;
-				 // +  '&userid=' + r.curr._id.user_id; Not yer
+                '&options=' + options + '&twa=' + r.curr.twa;
+                 // +  '&userid=' + r.curr._id.user_id; Not yer
         window.open(url, cbReuseTab.checked?urlBeta:'_blank');
     }
     
@@ -556,10 +569,10 @@ var controller = function () {
         callUrlFunction = callUrlZezo;
         initRaces();
         chrome.storage.local.get("polars", function(items) {
-			if (items["polars"] !== undefined) {
-            	console.log("Retrieved " + items["polars"].filter(function(value) { return value != null }).length + " polars."); 
-            	polars = items["polars"];
-			}
+            if (items["polars"] !== undefined) {
+                console.log("Retrieved " + items["polars"].filter(function(value) { return value != null }).length + " polars."); 
+                polars = items["polars"];
+            }
         });
         initialized = true;
     }
@@ -681,7 +694,7 @@ var controller = function () {
                         var race = races[raceId];
                         if ( race != undefined ) {
                             race.lastCommand = {request: request, rc: response.scriptData.rc};
-							addTableCommandLine(race);
+                            addTableCommandLine(race);
                             divRaceStatus.innerHTML = makeRaceStatusHTML();
                         }
                     } else if ( request.eventKey == "Meta_GetPolar" ) {
@@ -709,7 +722,7 @@ var controller = function () {
         callUrl: callUrl,
         changeRace: changeRace,
         onEvent: onEvent,
-		clearLog: clearLog
+        clearLog: clearLog
 
     }
 } ();
