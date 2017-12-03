@@ -240,7 +240,8 @@ var controller = function () {
         
     function formatDate(ts) {
         var tsOptions = { year: 'numeric', month: 'numeric', day: 'numeric',
-                          hour: 'numeric', minute: 'numeric', second: 'numeric'};
+                          hour: 'numeric', minute: 'numeric', second: 'numeric',
+                          hour12: false, timeZoneName: 'short'};
         var d = (ts)?(new Date(ts)):(new Date());
         if (cbLocalTime.checked) {
         } else {
@@ -250,7 +251,8 @@ var controller = function () {
     }
         
     function formatTime(ts) {
-        var tsOptions = { hour: 'numeric', minute: 'numeric', second: 'numeric'};
+        var tsOptions = { hour: 'numeric', minute: 'numeric', second: 'numeric',
+                          hour12: false, timeZoneName: 'short'};
         var d = (ts)?(new Date(ts)):(new Date());
         if (cbLocalTime.checked) {
         } else {
