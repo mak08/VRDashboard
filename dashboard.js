@@ -12,7 +12,7 @@ var controller = function () {
 
     var races = [];
 
-    var sailNames = [0, "Jib", "Spi", "Staysail", "Light Jib", "Code0", "Heavy Gnk", "Light Gnk", 8, 9, "Auto", "Jib(Auto)", "Spi(Auto)", "Staysail(Auto)", "Light Jib(Auto)", "Code0(Auto)", "Heavy Gnk(Auto)", "Light Gnk(Auto)"];
+    var sailNames = [0, "Jib", "Spi", "Staysail", "Light Jib", "Code0", "Heavy Gnk", "Light Gnk", 8, 9, "Auto", "Jib (Auto)", "Spi (Auto)", "Staysail (Auto)", "Light Jib (Auto)", "Code0 (Auto)", "Heavy Gnk (Auto)", "Light Gnk (Auto)"];
 
     function addSelOption(race, beta, disabled) {
         var option = document.createElement("option");
@@ -141,7 +141,7 @@ var controller = function () {
                 // ToDo: error handling; multiple commands; expiring?
                 var lcTime = formatTime(r.lastCommand.request.ts);
                 lastCommand = printLastCommand(r.lastCommand.request.actions);
-                lastCommand = "T: " + lcTime + ' Actions:' + lastCommand;
+                lastCommand = "T:" + lcTime + ' Actions:' + lastCommand;
                 if ( r.lastCommand.rc != "ok" ) {
                     lastCommandBG = 'red';
                 }
@@ -252,7 +252,7 @@ var controller = function () {
         
     function formatTime(ts) {
         var tsOptions = { hour: 'numeric', minute: 'numeric', second: 'numeric',
-                          hour12: false, timeZoneName: 'short'};
+                          hour12: false};
         var d = (ts)?(new Date(ts)):(new Date());
         if (cbLocalTime.checked) {
         } else {
