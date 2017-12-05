@@ -1,15 +1,15 @@
-BUG: sail time wraps around when you select more than 24h auto sail
-FIX: Index polars by polar id, not race id
+#BUG: sail time wraps around when you select more than 24h auto sail
 #ADD: Button to clear the raw messages
 
 references.bin mtime?
+FIX?: Index polars by polar id, not race id
 
 # fixed - proper E/W indicator
 # fixed - Check for zero DeltaT data
 # done - Convert to page action
 # close window - but won't attach when restoring tabs on browser restart. browserAtion also won't
 # done - Add table with status for all races.
-- Then add funny things to it like penalties and bad sails and barrel status and programmer ...
+# - Then add funny things to it like penalties and bad sails and barrel status and programmer ...
 
 - Error handling - race list at startup, check for stale positionsa
 # done - Handle Auth and rank messages. Reset races on user change
