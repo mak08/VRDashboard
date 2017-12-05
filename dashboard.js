@@ -85,7 +85,7 @@ var controller = function () {
         + '<th title="Distance to finish">' + 'DTF' + '</th>'
         + '<th>' + 'Options' + '</th>'
         + '<th>' + 'Cards' + '</th>'
-        + '<th title="Time to next battel">' + 'Pack' + '</th>'
+        + '<th title="Time to next barrel">' + 'Pack' + '</th>'
         + '<th>' + 'Sail' + '</th>' // red if badsail
         + '<th title="Boat is aground">' + 'Agnd' + '</th>'
         + '<th title="Stealth mode">' + 'Stlt' + '</th>'
