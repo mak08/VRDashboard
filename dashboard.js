@@ -38,7 +38,7 @@ var controller = function () {
                 }
             }
             divRaceStatus = document.getElementById("raceStatus");
-            divRaceStatus.innerHTML = makeRaceStatusHTML();
+            makeRaceStatusHTML();
         }
         xhr.open('GET', 'http://zezo.org/races.json');
         xhr.send();
@@ -54,44 +54,44 @@ var controller = function () {
     var initialized = false;
 
     var tableHeader =  "<tr>"
-        + "<th>" + "Time" + "</th>"
-        + "<th>" + "Position" + "</th>"
-        + "<th>" + "Heading" + "</th>"
-        + "<th>" + "TWS" + "</th>"
-        + "<th>" + "TWD" + "</th>"
-        + "<th>" + "TWA" + "</th>"
-        + "<th>" + "vR (kn)" + "</th>"
-        + "<th>" + "vC (kn)" + "</th>"
-        + "<th>" + "vT (kn)" + "</th>"
-        + "<th>" + "Δd (nm)" + "</th>"
-        + "<th>" + "Δt (sec)" + "</th>"
-        + "<th>" + "AutoSail" + "</th>"
-        + "<th>" + "AutoTWA" + "</th>"
-        + "<th>" + "Sail" + "</th>"
-        + "<th>" + "Gybe" + "</th>"
-        + "<th>" + "Tack" + "</th>"
-        +  "</tr>";
+        + '<th>' + 'Time' + '</th>'
+        + '<th>' + 'Position' + '</th>'
+        + '<th>' + 'Heading' + '</th>'
+        + '<th>' + 'TWS' + '</th>'
+        + '<th>' + 'TWD' + '</th>'
+        + '<th>' + 'TWA' + '</th>'
+        + '<th>' + 'vR (kn)' + '</th>'
+        + '<th>' + 'vC (kn)' + '</th>'
+        + '<th>' + 'vT (kn)' + '</th>'
+        + '<th>' + 'Δd (nm)' + '</th>'
+        + '<th>' + 'Δt (sec)' + '</th>'
+        + '<th tutle="Auto Sail">' + 'AS' + '</th>'
+        + '<th>' + 'A&#8209;TWA' + '</th>'
+        + '<th>' + 'Sail' + '</th>'
+        + '<th>' + 'Gybe' + '</th>'
+        + '<th>' + 'Tack' + '</th>'
+        + '</tr>';
 
     var raceStatusHeader =  "<tr>"
-        + "<th>" + "Race" + "</th>"
-        + "<th>" + "Rank" + "</th>"
-        + "<th>" + "Position" + "</th>"
-        + "<th>" + "Heading" + "</th>"
-        + "<th>" + "TWS" + "</th>"
-        + "<th>" + "TWD" + "</th>"
-        + "<th>" + "TWA" + "</th>"
-        + '<th title="Boat speed">' + "Speed" + "</th>"
-        + '<th title="Auto TWA activated">AutoTWA' + "</th>"
-        + "<th>" + "DTF" + "</th>"
-        + "<th>" + "Options" + "</th>"
-        + "<th>" + "Cards" + "</th>"
-        + "<th>" + "Pack" + "</th>"
-        + "<th>" + "Sail" + "</th>" // red if badsail
-        + "<th>" + "GND" + "</th>"
-        + "<th>" + "Stlt" + "</th>"
-        + "<th>" + "slow" + "</th>"
-        + "<th>" + "Last Command" + "</th>"
-        +  "</tr>";
+        + '<th>' + 'Race' + '</th>'
+        + '<th>' + 'Rank' + '</th>'
+        + '<th>' + 'Position' + '</th>'
+        + '<th>' + 'Heading' + '</th>'
+        + '<th title="True Wind Speed">' + 'TWS' + '</th>'
+        + '<th title="True wind direction"> ' + 'TWD' + '</th>'
+        + '<th title="True wind angle">' + 'TWA' + '</th>'
+        + '<th title="Boat speed">' + 'SOG' + '</th>'
+        + '<th title="Auto TWA activated">A&#8209;TWA' + "</th>"
+        + '<th>' + 'DTF' + '</th>'
+        + '<th>' + 'Options' + '</th>'
+        + '<th>' + 'Cards' + '</th>'
+        + '<th>' + 'Pack' + '</th>'
+        + '<th>' + 'Sail' + '</th>' // red if badsail
+        + '<th title="Boat is aground">' + 'Agnd' + '</th>'
+        + '<th title="Stealth mode">' + 'Stlt' + '</th>'
+        + '<th "Boat is maneuvering, half speed">' + 'Mnvr' + '</th>'
+        + '<th>' + 'Last Command' + '</th>'
+        +  '</tr>';
    
     function printLastCommand(lcActions) {
         var lastCommand = "";
@@ -163,7 +163,7 @@ var controller = function () {
                 } 
             }
             if (r.curr.soloCard) {
-                regPack += "<br>Solo:";
+                regPack += "<br>Solo: ";
                 if (r.curr.soloCard.ts > r.curr.lastCalcDate) {
                     regPack += r.curr.soloCard.code + ":" + formatMS(r.curr.soloCard.ts - r.curr.lastCalcDate);
                 } else {
@@ -181,22 +181,22 @@ var controller = function () {
                 + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
                 + '<td style="color:' + twaFG + ';">'+ roundTo(Math.abs(r.curr.twa), 1) + "</td>"
                 + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
-                + "<td>" + (r.curr.twaAuto?"yes":"no") + "</td>"
+                + "<td>" + (r.curr.twaAuto?"Yes":"No") + "</td>"
                 + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
                 + "<td>" + ((r.curr.options.length == 8)?'Full':r.curr.options.join(' ')) + "</td>"
                 + "<td>" + cards + "</td>"
                 + "<td" + regColor + ">" + regPack + "</td>"
                 + '<td style="background-color:' + sailNameBG + ';">' + sailNames[r.curr.sail] + "</td>"
-                + '<td style="background-color:' + agroundBG +  ';">' + ((r.curr.aground)?"AGROUND":"no") + "</td>"
-                + "<td>" + ((r.curr.stealthMode > r.curr.lastCalcDate)?"yes":"no") + "</td>"
-                + "<td>" + (manoeuvering?"yes":"no") + "</td>"
+                + '<td style="background-color:' + agroundBG +  ';">' + ((r.curr.aground)?"AGROUND":"No") + "</td>"
+                + "<td>" + ((r.curr.stealthMode > r.curr.lastCalcDate)?"Yes":"No") + "</td>"
+                + "<td>" + (manoeuvering?"Yes":"No") + "</td>"
                 + '<td style="background-color:' + lastCommandBG +  ';">' + lastCommand + "</td>"
                 + "</tr>";
         }
     }
 
     function makeRaceStatusHTML () {
-        return '<table style="width:100%">'
+         divRaceStatus.innerHTML = '<table style="width:100%">'
             + raceStatusHeader
             + races.map(makeRaceStatusLine).join(' ');
             + "</table>";
@@ -301,7 +301,7 @@ var controller = function () {
             + "<td>" + roundTo(r.curr.deltaD, 2) + "</td>"
             + "<td>" + roundTo(r.curr.deltaT, 0) + "</td>"
             + "<td>" + autoSail + "</td>"
-            + "<td>" + (r.curr.twaAuto?"yes":"no") + "</td>"
+            + "<td>" + (r.curr.twaAuto?"Yes":"No") + "</td>"
             + "<td>" + sailChange + "</td>"
             + "<td>" + gybing + "</td>"
             + "<td>" + tacking + "</td>"
@@ -372,7 +372,7 @@ var controller = function () {
             r.curr.speedC = roundTo(r.curr.deltaD/r.curr.deltaT * 3600, 2);
             saveMessage(r);
         }
-        divRaceStatus.innerHTML = makeRaceStatusHTML();
+        makeRaceStatusHTML();
     }
 
     function theoreticalSpeed (message) {
@@ -620,7 +620,7 @@ var controller = function () {
                 race.lastCommand = undefined;
                 race.rank = undefined;
             });
-            divRaceStatus.innerHTML = makeRaceStatusHTML();
+            makeRaceStatusHTML();
             divRecordLog.innerHTML = makeTableHTML();
         };
     }
@@ -674,7 +674,7 @@ var controller = function () {
                         var race = races[raceId];
                         if ( race != undefined ) {
                             race.rank = response.scriptData.me.rank;
-                            divRaceStatus.innerHTML = makeRaceStatusHTML();
+                            makeRaceStatusHTML();
                         }
                     } else if ( request.eventKey == "Leg_GetList" ) {
                         // Contains destination coords, ice limits
@@ -689,7 +689,7 @@ var controller = function () {
                                 }
                             }
                         });
-                        divRaceStatus.innerHTML = makeRaceStatusHTML();
+                        makeRaceStatusHTML();
                     } else if ( request.eventKey == "Game_GetBoatState" ) {
                         // First boat state message, only sent for the race the UI is displaying
                         var raceId = response.scriptData.boatState._id.race_id;
@@ -704,7 +704,7 @@ var controller = function () {
                         if ( race != undefined ) {
                             race.lastCommand = {request: request, rc: response.scriptData.rc};
                             addTableCommandLine(race);
-                            divRaceStatus.innerHTML = makeRaceStatusHTML();
+                            makeRaceStatusHTML();
                         }
                     } else if ( request.eventKey == "Meta_GetPolar" ) {
                         if ( polars[response.scriptData.polar._id] == undefined ) {
@@ -714,7 +714,12 @@ var controller = function () {
                         } else {
                             console.info("Known polars " + response.scriptData.polar.label);
                         }
-                    }
+                    } else if ( request.eventKey == "Shop_GetCardsPack" ) {
+						var card = races[request.race_id].curr.soloCard;
+						card.code = response.scriptData.packs[0].code;
+						card.ts = response.scriptData.tsSoloCard;
+						makeRaceStatusHTML();
+					}
                 } else if ( responseClass == ".ScriptMessage" ) {
                     // There is no request for .ScriptMessages.
                     // The only ScriptMessage type is extCode=boatStatePush
