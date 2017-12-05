@@ -1,0 +1,15 @@
+1) Install the extension
+2) Go to the game home page
+3) Click the Z extension icon in the toolbar
+4) DO NOT close the debugger warning banner
+5) Enter a race to force update of boat position
+6) Wait few minutes to get the second table populated with new data
+
+How to deal with the debugging banner:
+
+It can be disabled, but that may not be good idea from privacy/security standpoint.
+Not because we'll steal your data, but because some other extension you install could do it
+Ideally tou should be running second Chrome instance (or Opera with "Download Chrome Extension" installed)
+and only disable the warning there.
+
+To disable the warning go to chrome://flags/#silent-debugger-extension-api
