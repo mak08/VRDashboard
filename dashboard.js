@@ -526,20 +526,24 @@ var controller = function () {
     }
     
     function roundTo (number, digits) {
-        var scale = Math.pow(10, digits);
-        return Math.round(number * scale) / scale;
+        if (number) {
+            var scale = Math.pow(10, digits);
+            return Math.round(number * scale) / scale;
+        } else {
+            return '-';
+        }
     }
 
     function sign (x) {
         return (x < 0)? -1: 1;
     }
 
-	function pad0(val) {
-		if (val < 10) {
-			val = "0" + val;
-		}
-		return val;
-	}
+    function pad0(val) {
+        if (val < 10) {
+            val = "0" + val;
+        }
+        return val;
+    }
 
     function formatPosition (lat, lon) {
         var latDMS = toDeg(lat);
@@ -715,11 +719,11 @@ var controller = function () {
                             console.info("Known polars " + response.scriptData.polar.label);
                         }
                     } else if ( request.eventKey == "Shop_GetCardsPack" ) {
-						var card = races[request.race_id].curr.soloCard;
-						card.code = response.scriptData.packs[0].code;
-						card.ts = response.scriptData.tsSoloCard;
-						makeRaceStatusHTML();
-					}
+                        var card = races[request.race_id].curr.soloCard;
+                        card.code = response.scriptData.packs[0].code;
+                        card.ts = response.scriptData.tsSoloCard;
+                        makeRaceStatusHTML();
+                    }
                 } else if ( responseClass == ".ScriptMessage" ) {
                     // There is no request for .ScriptMessages.
                     // The only ScriptMessage type is extCode=boatStatePush
