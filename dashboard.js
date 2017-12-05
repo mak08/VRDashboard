@@ -80,8 +80,8 @@ var controller = function () {
         + "<th>" + "TWS" + "</th>"
         + "<th>" + "TWD" + "</th>"
         + "<th>" + "TWA" + "</th>"
-        + "<th>" + "Speed" + "</th>"
-        + "<th>" + "AutoTWA" + "</th>"
+        + '<th title="Boat speed">' + "Speed" + "</th>"
+        + '<th title="Auto TWA activated">AutoTWA' + "</th>"
         + "<th>" + "DTF" + "</th>"
         + "<th>" + "Options" + "</th>"
         + "<th>" + "Cards" + "</th>"
@@ -226,7 +226,7 @@ var controller = function () {
         var minutes = Math.floor(seconds/60);
         seconds -= minutes * 60;
 
-        return hours + 'h' + minutes + 'm'; // + seconds + 's';
+        return hours + 'h' + pad0(minutes) + 'm'; // + seconds + 's';
     }
 
     function formatMS(seconds) {
@@ -235,7 +235,7 @@ var controller = function () {
         var minutes = Math.floor(seconds/60);
         seconds -= minutes * 60;
 
-        return  minutes + 'm' + seconds + 's';
+        return  minutes + 'm' + pad0(seconds) + 's';
     }
         
     function formatDate(ts) {
@@ -534,11 +534,18 @@ var controller = function () {
         return (x < 0)? -1: 1;
     }
 
+	function pad0(val) {
+		if (val < 10) {
+			val = "0" + val;
+		}
+		return val;
+	}
+
     function formatPosition (lat, lon) {
         var latDMS = toDeg(lat);
         var lonDMS = toDeg(lon);
-        var latString = latDMS.g + "°" + latDMS.m + "'" + latDMS.s + '"';
-        var lonString = lonDMS.g + "°" + lonDMS.m + "'" + lonDMS.s + '"';
+        var latString = latDMS.g + "°" + pad0(latDMS.m) + "'" + pad0(latDMS.s) + '"';
+        var lonString = lonDMS.g + "°" + pad0(lonDMS.m) + "'" + pad0(lonDMS.s) + '"';
         return  latString + ((latDMS.u==1)?'N':'S') + ' ' + lonString + ((lonDMS.u==1)?'E':'W');
     }
 
