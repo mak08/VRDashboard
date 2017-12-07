@@ -649,8 +649,9 @@ var controller = function () {
             if ( cbRawLog.checked ) {
                 divRawLog.innerHTML = divRawLog.innerHTML + '\n' +  '<<< ' + params.response.payloadData;
             }
-            
-            var response = JSON.parse(params.response.payloadData);
+            // Work around broken message
+            var jsonString = params.response.payloadData.replace(/\bNaN\b/g, "null");
+            var response = JSON.parse(jsonString);
             if ( response == undefined ) {
                 console.log("Invalid JSON in payload");
             } else {
