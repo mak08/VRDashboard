@@ -53,36 +53,36 @@ var controller = function () {
     var callUrlFunction;
     var initialized = false;
 
-    var tableHeader =  "<tr>"
+    var tableHeader =  '<tr>'
         + '<th>' + 'Time' + '</th>'
         + '<th>' + 'Position' + '</th>'
         + '<th>' + 'Heading' + '</th>'
-        + '<th title="True wind speed">' + 'TWS' + '</th>'
-        + '<th title="True wind direction">' + 'TWD' + '</th>'
-        + '<th title="True wind angle">' + 'TWA' + '</th>'
+        + '<th title="True Wind Speed">' + 'TWS' + '</th>'
+        + '<th title="True Wind Direction">' + 'TWD' + '</th>'
+        + '<th title="True Wind Angle">' + 'TWA' + '</th>'
         + '<th title="Reported speed">' + 'vR (kn)' + '</th>'
         + '<th title="Calculated speed (Δd/Δt)">' + 'vC (kn)' + '</th>'
         + '<th title="Polar-derived speed">' + 'vT (kn)' + '</th>'
         + '<th title="Calculated distance">' + 'Δd (nm)' + '</th>'
         + '<th title="Time between positions">' + 'Δt (s)' + '</th>'
-        + '<th title="Auto Sail">' + 'AS' + '</th>'
-        + '<th title="Auto TWA activated">' + 'A&#8209;TWA' + '</th>'
-        + '<th>' + 'Sail' + '</th>'
-        + '<th>' + 'Gybe' + '</th>'
-        + '<th>' + 'Tack' + '</th>'
+        + '<th title="Auto Sail time remaining">' + 'AutoSail' + '</th>'
+        + '<th title="Auto TWA activated">' + 'AutoTWA' + '</th>'
+        + '<th title="Sail change time remaining">' + 'Sail' + '</th>'
+        + '<th title="Gybing time remaining">' + 'Gybe' + '</th>'
+        + '<th title="Tacking time remaining">' + 'Tack' + '</th>'
         + '</tr>';
 
-    var raceStatusHeader =  "<tr>"
+    var raceStatusHeader =  '<tr>'
         + '<th>' + 'Race' + '</th>'
         + '<th>' + 'Rank' + '</th>'
         + '<th>' + 'Position' + '</th>'
         + '<th>' + 'Heading' + '</th>'
-        + '<th title="True wind speed">' + 'TWS' + '</th>'
-        + '<th title="True wind direction"> ' + 'TWD' + '</th>'
-        + '<th title="True wind angle">' + 'TWA' + '</th>'
-        + '<th title="Boat speed">' + 'SOG' + '</th>'
-        + '<th title="Auto TWA activated">A&#8209;TWA' + "</th>"
-        + '<th title="Distance to finish">' + 'DTF' + '</th>'
+        + '<th title="True Wind Speed">' + 'TWS' + '</th>'
+        + '<th title="True Wind Direction"> ' + 'TWD' + '</th>'
+        + '<th title="True Wind Angle">' + 'TWA' + '</th>'
+        + '<th title="Boat speed">' + 'Speed' + '</th>'
+        + '<th title="Auto TWA activated">' + 'AutoTWA' + '</th>'
+        + '<th title="Distance To Finish">' + 'DTF' + '</th>'
         + '<th>' + 'Options' + '</th>'
         + '<th>' + 'Cards' + '</th>'
         + '<th title="Time to next barrel">' + 'Pack' + '</th>'
@@ -98,13 +98,13 @@ var controller = function () {
             
         lcActions.map( function (action) {
             if ( action.type == "heading" ) {
-                lastCommand +=  (action.autoTwa?" TWA":" Heading") + '=' + roundTo(action.value, 1);
+                lastCommand +=  (action.autoTwa?" TWA":" HDG") + '=' + roundTo(action.value, 1);
             } else if ( action.type == "sail" ) {
                 lastCommand += ' Sail=' + sailNames[action.value];
             } else if ( action.type == "prog" ) {
                 action.values.map(function ( progCmd ) {
                     var progTime = formatDate(progCmd.ts);
-                    lastCommand += (progCmd.autoTwa?" TWA":" Heading") + "=" + roundTo(progCmd.heading, 1) + ' @ ' + progTime + "; ";
+                    lastCommand += (progCmd.autoTwa?" TWA":" HDG") + "=" + roundTo(progCmd.heading, 1) + ' @ ' + progTime + "; ";
                 });
             } else if ( action.type == "wp" ) {
                 action.values.map(function (waypoint) {
@@ -226,7 +226,7 @@ var controller = function () {
         var minutes = Math.floor(seconds/60);
         seconds -= minutes * 60;
 
-        return hours + 'h' + pad0(minutes) + 'm'; // + seconds + 's';
+        return pad0(hours) + 'h' + pad0(minutes) + 'm'; // + seconds + 's';
     }
 
     function formatMS(seconds) {
@@ -235,7 +235,7 @@ var controller = function () {
         var minutes = Math.floor(seconds/60);
         seconds -= minutes * 60;
 
-        return  minutes + 'm' + pad0(seconds) + 's';
+        return  pad0(minutes) + 'm' + pad0(seconds) + 's';
     }
         
     function formatDate(ts) {
