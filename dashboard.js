@@ -387,7 +387,7 @@ var controller = function () {
         }
 
         var boatPolars = polars[message.boat.polar_id];
-        if ( boatPolars == undefined ) {
+        if ( boatPolars == undefined || message.options == undefined || message.tws == undefined) {
             return '-';
         } else {
             var tws = message.tws;
@@ -669,7 +669,7 @@ var controller = function () {
                         // Probably only when debugging.
                         // -- save and process later?
                         console.warn(responseClass + " " + response.requestId + " not found");
-                    } else if ( request.eventKey == "LDB_GetLegRank" ) {
+                    } else if ( request.eventKey == "LDB_GetLegRank"  && response.scriptData.me !== null) {
                         // Use this response to update User/Boat info if the plugin is switched on while already logged in
                         reInitUI(response.scriptData.me._id );
                         currentUserId = response.scriptData.me._id;
