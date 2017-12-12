@@ -1,5 +1,6 @@
 #BUG: sail time wraps around when you select more than 24h auto sail
 #ADD: Button to clear the raw messages
+bold or othwerwise show twa/heading setting
 
 references.bin mtime?
 FIX?: Index polars by polar id, not race id
