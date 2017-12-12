@@ -612,63 +612,6 @@ var controller = function () {
             callUrlFunction(raceId, beta);
         }
     }
-
-    var htmlTags = {
-        "prolog": '<!DOCTYPE html><html lang="en"><head><title>Polars</title></head><body>',
-        "epilog": '</body></html>\n',
-        "tableStart": '<table>',
-        "tableEnd": '</table>\n',
-        "rowStart": '<tr>',
-        "rowEnd": '</tr>\n',
-        "hStart": '<th>',
-        "hEnd": '</th>',
-        "cStart": '<td>',
-        "cEnd": '</td>'
-    }
-
-    var csvTags = {
-        "prolog": '',
-        "epilog": '',
-        "tableStart": '\n',
-        "tableEnd": '\n',
-        "rowStart": '',
-        "rowEnd": '\n',
-        "hStart": '',
-        "hEnd": ';',
-        "cStart": '',
-        "cEnd": ';'
-    }
-    
-    var getPolars = function() {
-        var tags = csvTags;
-        var raceId = selRace.value;
-        var race = races[raceId];
-        var currPolars = polars[race.curr.boat.polar_id];
-        var sails = currPolars.sail;
-        var csv = tags.prolog;
-        for (var s = 0; s < sails.length; s++ ){
-            var sail = sails[s];
-            csv = csv + tags.tableStart;
-            csv = csv + tags.rowStart;
-            csv = csv + tags.hStart + sail.name + tags.hEnd;
-            for (var spd = 0; spd < currPolars.tws.length; spd++ ) {
-                csv = csv + tags.hStart + currPolars.tws[spd] + tags.hEnd;
-            }
-            csv = csv + tags.rowEnd;
-            for (var r = 0; r < currPolars.twa.length; r++ ) {
-                csv = csv + tags.rowStart;
-                csv = csv + tags.cStart + currPolars.twa[r] + tags.cEnd;
-                var row = sail.speed[r];
-                for (var c = 0; c < currPolars.tws.length; c++ ) {
-                    csv = csv + tags.cStart  + row[c] + tags.cEnd;
-                }
-                csv = csv + tags.rowEnd;
-            }
-            csv = csv + tags.tableEnd;
-        }
-        csv = csv + tags.epilog;
-        window.open('data:text/csv;charset=utf-8,' + encodeURI(csv));
-    }
     
     function reInitUI (newId) {
         if ( currentUserId != undefined && currentUserId != newId ) {
@@ -796,7 +739,6 @@ var controller = function () {
         initialize: initialize,
         // Useful functions
         callUrl: callUrl,
-        getPolars: getPolars,
         changeRace: changeRace,
         onEvent: onEvent,
         clearLog: clearLog
@@ -813,7 +755,6 @@ window.addEventListener("load", function() {
     controller.initialize();
     
     document.getElementById("bt_callurl").addEventListener("click", controller.callUrl);
-    document.getElementById("bt_polars").addEventListener("click", controller.getPolars);
     document.getElementById("sel_race").addEventListener("change", controller.changeRace);
     document.getElementById("bt_clear").addEventListener("click", controller.clearLog);
     
