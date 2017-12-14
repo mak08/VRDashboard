@@ -10,7 +10,7 @@ var controller = function () {
     // Polars and other game parameters, indexed by polar._id
     var polars =  [];
 
-    var races = [];
+    var races = new Map();
 
     var sailNames = [0, "Jib", "Spi", "Staysail", "Light Jib", "Code0", "Heavy Gnk", "Light Gnk", 8, 9, "Auto", "Jib (Auto)", "Spi (Auto)", "Staysail (Auto)", "Light Jib (Auto)", "Code0 (Auto)", "Heavy Gnk (Auto)", "Light Gnk (Auto)"];
 
@@ -30,15 +30,15 @@ var controller = function () {
             json = JSON.parse(json);
             for (var i = 0; i < json.races.length; i++) {
                 var race = json.races[i];
-                races[race.id] = race;
-                races[race.id].tableLines=[];
+                race.tableLines=[];
+                races.set(race.id, race);
                 addSelOption(race, false, true);
                 if (race.has_beta) {
                     addSelOption(race, true, true);
                 }
             }
             divRaceStatus = document.getElementById("raceStatus");
-            makeRaceStatusHTML();
+            divRaceStatus.innerHTML = makeRaceStatusHTML();
         }
         xhr.open('GET', 'http://zezo.org/races.json');
         xhr.send();
@@ -115,8 +115,8 @@ var controller = function () {
         return lastCommand;
     }
 
-    function makeRaceStatusLine (r) {
-
+    function makeRaceStatusLine (pair) {
+        var r = pair[1];
         if ( r.curr == undefined ) {
             return "";
         } else {
@@ -196,9 +196,9 @@ var controller = function () {
     }
 
     function makeRaceStatusHTML () {
-         divRaceStatus.innerHTML = '<table style="width:100%">'
+        return "<table style=\"width:100%\">"
             + raceStatusHeader
-            + races.map(makeRaceStatusLine).join(' ');
+            + Array.from(races||[]).map(makeRaceStatusLine).join(' ');
             + "</table>";
     }
 
@@ -317,7 +317,7 @@ var controller = function () {
     }
 
     function changeRace() {
-        divRecordLog.innerHTML = makeTableHTML(races[this.value]);
+        divRecordLog.innerHTML = makeTableHTML(races.get(this.value));
     }
 
     function getRaceLegId (id) {
@@ -353,13 +353,12 @@ var controller = function () {
     function addRace(message) {
         var raceId = getRaceLegId(message._id);
         var race = { id: raceId, name : "Race #" + raceId, tableLines: []};
-        races[raceId] = race;
+        races.set(raceId, race);
         addSelOption(race, false, false); 
-        return races[raceId];
+        return race;
     }
     
     function updatePosition (message, r) {
-        "use strict";
         if (r === undefined) { // race not lsited
             r = addRace(message);
         }
@@ -380,7 +379,7 @@ var controller = function () {
             r.curr.speedC = roundTo(r.curr.deltaD/r.curr.deltaT * 3600, 2);
             saveMessage(r);
         }
-        makeRaceStatusHTML();
+        divRaceStatus.innerHTML = makeRaceStatusHTML();
     }
 
     function theoreticalSpeed (message) {
@@ -486,7 +485,7 @@ var controller = function () {
         var optionBits = { "foil" : 16, "winch" : 4, "reach": 64, "heavy":128, "light" : 32 }; 
 
         var baseURL = 'http://zezo.org';
-        var r = races[raceId];
+        var r = races.get(raceId);
         
         var options = 0;
         for (var key in r.curr.options) {
@@ -494,12 +493,25 @@ var controller = function () {
                 options |= optionBits[r.curr.options[key]];
             }
         }
-        var urlBeta = r.url + (beta?"b":"");
 
-        var url = baseURL + '/' + urlBeta + '/chart.pl?lat=' + r.curr.pos.lat + '&lon=' + r.curr.pos.lon + 
+        if (!r.url) {
+            // Panic - check if the race_id part is known.
+            // In the unlikely case when the polars change from one leg to another,
+            // this will give surprising results...
+            var race_id = Number(raceId.split('.')[0]);
+            var race = races.get(race_id);
+            r.url = race.url;
+        }
+
+        if (!r.url) {
+            alert('Unknown race - no routing available');
+        } else {
+            var urlBeta = r.url + (beta?"b":"");
+            var url = baseURL + '/' + urlBeta + '/chart.pl?lat=' + r.curr.pos.lat + '&lon=' + r.curr.pos.lon + 
                 '&options=' + options + '&twa=' + r.curr.twa;
                  // +  '&userid=' + r.curr._id.user_id; Not yer
-        window.open(url, cbReuseTab.checked?urlBeta:'_blank');
+            window.open(url, cbReuseTab.checked?urlBeta:'_blank');
+        }
     }
     
     // Greate circle distance in meters
@@ -609,10 +621,11 @@ var controller = function () {
             if (race && race.value == raceId) {
                 beta = race.betaflag;
             }
-        }  
-        if ( races[raceId].url === undefined) {
+        }
+
+        if ( !races.get(raceId) ) {
             alert('Unsupported race #' + raceId);
-        } else if ( races[raceId].curr === undefined ) {
+        } else if ( races.get(raceId).curr === undefined ) {
             alert('No position received yet. Please retry later.');
         } else if ( callUrlFunction === undefined ) {
             // ?
@@ -625,14 +638,14 @@ var controller = function () {
         if ( currentUserId != undefined && currentUserId != newId ) {
             // Re-initialize statistics
             disableRaces();
-            races.map(function (race) {
+            races.forEach(function (race) {
                 race.tableLines = [];
                 race.curr = undefined;
                 race.prev = undefined;
                 race.lastCommand = undefined;
                 race.rank = undefined;
             });
-            makeRaceStatusHTML();
+            divRaceStatus.innerHTML = makeRaceStatusHTML();
             divRecordLog.innerHTML = makeTableHTML();
         };
     }
@@ -684,17 +697,17 @@ var controller = function () {
                         lbBoatname.innerHTML = response.scriptData.me.displayName;
                         // Retrieve rank in current race
                         var raceId = getRaceLegId(request);
-                        var race = races[raceId];
+                        var race = races.get(raceId);
                         if ( race != undefined ) {
                             race.rank = response.scriptData.me.rank;
-                            makeRaceStatusHTML();
+                            divRaceStatus.innerHTML = makeRaceStatusHTML();
                         }
                     } else if ( request.eventKey == "Leg_GetList" ) {
                         // Contains destination coords, ice limits
                         // ToDo: contains Bad Sail warnings. Show in race status table?
                         var legInfos = response.scriptData.res;
                         legInfos.map(function (legInfo) {
-                            var race = races[legInfo.raceId];
+                            var race = races.get(legId(legInfo));
                             if ( race != undefined ) {
                                 race.rank = legInfo.rank;
                                 if ( legInfo.problem == "badSail" ) {
@@ -702,22 +715,24 @@ var controller = function () {
                                 }
                             }
                         });
-                        makeRaceStatusHTML();
+                        divRaceStatus.innerHTML = makeRaceStatusHTML();
                     } else if ( request.eventKey == "Game_GetBoatState" ) {
                         // First boat state message, only sent for the race the UI is displaying
                         var raceId = getRaceLegId(response.scriptData.boatState._id);
-                        updatePosition(response.scriptData.boatState, races[raceId]);
+                        var race =  races.get(raceId);
+                        // Don't try old race_id, messages will be misdirected
+                        updatePosition(response.scriptData.boatState, race);
                         if (cbRouter.checked) {
                             callUrl(raceId);
                         }
                     } else if ( request.eventKey == "Game_AddBoatAction" ) {
                         // First boat state message, only sent for the race the UI is displaying
                         var raceId = getRaceLegId(request);
-                        var race = races[raceId];
+                        var race = races.get(raceId);
                         if ( race != undefined ) {
                             race.lastCommand = {request: request, rc: response.scriptData.rc};
                             addTableCommandLine(race);
-                            makeRaceStatusHTML();
+                            divRaceStatus.innerHTML = makeRaceStatusHTML();
                         }
                     } else if ( request.eventKey == "Meta_GetPolar" ) {
                         if ( polars[response.scriptData.polar._id] == undefined ) {
@@ -728,15 +743,17 @@ var controller = function () {
                             console.info("Known polars " + response.scriptData.polar.label);
                         }
                     } else if ( request.eventKey == "Shop_GetCardsPack" ) {
-                        var card = races[getRaceLegId(request)].curr.soloCard;
+                        var card = races.get(getRaceLegId(request)).curr.soloCard;
                         card.code = response.scriptData.packs[0].code;
                         card.ts = response.scriptData.tsSoloCard;
-                        makeRaceStatusHTML();
+                        divRaceStatus.innerHTML = makeRaceStatusHTML();
                     }
                 } else if ( responseClass == ".ScriptMessage" ) {
                     // There is no request for .ScriptMessages.
                     // The only ScriptMessage type is extCode=boatStatePush
-                    updatePosition(response.data, races[getRaceLegId(response.data._id)]);
+                    var raceId = getRaceLegId(response.data._id);
+                    var race =  races.get(raceId);
+                    updatePosition(response.data, race);
                 }
             }
         }
