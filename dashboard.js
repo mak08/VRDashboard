@@ -320,6 +320,14 @@ var controller = function () {
         divRecordLog.innerHTML = makeTableHTML(races[this.value]);
     }
 
+    function getRaceLegId (id) {
+        return id.race_id + '.' + id.leg_num;
+    }
+    
+    function legId (legInfo) {
+        return legInfo.raceId + '.' + legInfo.legNum;
+    }
+
     function clearLog() {
         divRawLog.innerHTML = "";
     }
@@ -343,7 +351,7 @@ var controller = function () {
     }
     
     function addRace(message) {
-        var raceId = message._id.race_id;
+        var raceId = getRaceLegId(message._id);
         var race = { id: raceId, name : "Race #" + raceId, tableLines: []};
         races[raceId] = race;
         addSelOption(race, false, false); 
@@ -612,7 +620,7 @@ var controller = function () {
             callUrlFunction(raceId, beta);
         }
     }
-    
+
     function reInitUI (newId) {
         if ( currentUserId != undefined && currentUserId != newId ) {
             // Re-initialize statistics
@@ -675,7 +683,7 @@ var controller = function () {
                         currentUserId = response.scriptData.me._id;
                         lbBoatname.innerHTML = response.scriptData.me.displayName;
                         // Retrieve rank in current race
-                        var raceId = request.race_id;
+                        var raceId = getRaceLegId(request);
                         var race = races[raceId];
                         if ( race != undefined ) {
                             race.rank = response.scriptData.me.rank;
@@ -697,14 +705,14 @@ var controller = function () {
                         makeRaceStatusHTML();
                     } else if ( request.eventKey == "Game_GetBoatState" ) {
                         // First boat state message, only sent for the race the UI is displaying
-                        var raceId = response.scriptData.boatState._id.race_id;
+                        var raceId = getRaceLegId(response.scriptData.boatState._id);
                         updatePosition(response.scriptData.boatState, races[raceId]);
                         if (cbRouter.checked) {
                             callUrl(raceId);
                         }
                     } else if ( request.eventKey == "Game_AddBoatAction" ) {
                         // First boat state message, only sent for the race the UI is displaying
-                        var raceId = request.race_id;
+                        var raceId = getRaceLegId(request);
                         var race = races[raceId];
                         if ( race != undefined ) {
                             race.lastCommand = {request: request, rc: response.scriptData.rc};
@@ -720,7 +728,7 @@ var controller = function () {
                             console.info("Known polars " + response.scriptData.polar.label);
                         }
                     } else if ( request.eventKey == "Shop_GetCardsPack" ) {
-                        var card = races[request.race_id].curr.soloCard;
+                        var card = races[getRaceLegId(request)].curr.soloCard;
                         card.code = response.scriptData.packs[0].code;
                         card.ts = response.scriptData.tsSoloCard;
                         makeRaceStatusHTML();
@@ -728,7 +736,7 @@ var controller = function () {
                 } else if ( responseClass == ".ScriptMessage" ) {
                     // There is no request for .ScriptMessages.
                     // The only ScriptMessage type is extCode=boatStatePush
-                    updatePosition(response.data, races[response.data._id.race_id]);
+                    updatePosition(response.data, races[getRaceLegId(response.data._id)]);
                 }
             }
         }
