@@ -40,7 +40,7 @@ var controller = function () {
             divRaceStatus = document.getElementById("raceStatus");
             divRaceStatus.innerHTML = makeRaceStatusHTML();
         }
-        xhr.open('GET', 'http://zezo.org/races.json');
+        xhr.open('GET', 'http://zezo.org/races2.json');
         xhr.send();
     }
 
@@ -55,6 +55,7 @@ var controller = function () {
 
     var tableHeader =  '<tr>'
         + '<th>' + 'Time' + '</th>'
+        + '<th>' + 'Rank' + '</th>'
         + '<th>' + 'Position' + '</th>'
         + '<th>' + 'Heading' + '</th>'
         + '<th title="True Wind Speed">' + 'TWS' + '</th>'
@@ -290,6 +291,7 @@ var controller = function () {
 
         return "<tr>"
             + "<td>" + formatDate(r.curr.lastCalcDate) + "</td>"
+            + "<td>" + ((r.rank)?r.rank:"-") + "</td>"
             + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
             + "<td>" + roundTo(r.curr.heading, 1) + "</td>"
             + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
