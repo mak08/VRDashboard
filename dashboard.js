@@ -56,6 +56,7 @@ var controller = function () {
     var tableHeader =  '<tr>'
         + '<th>' + 'Time' + '</th>'
         + '<th>' + 'Rank' + '</th>'
+        + '<th title="Distance To Leader">' + 'DTL' + '</th>'
         + '<th>' + 'Position' + '</th>'
         + '<th>' + 'Heading' + '</th>'
         + '<th title="True Wind Speed">' + 'TWS' + '</th>'
@@ -76,6 +77,7 @@ var controller = function () {
     var raceStatusHeader =  '<tr>'
         + '<th>' + 'Race' + '</th>'
         + '<th>' + 'Rank' + '</th>'
+        + '<th title="Distance To Leader">' + 'DTL' + '</th>'
         + '<th>' + 'Position' + '</th>'
         + '<th>' + 'Heading' + '</th>'
         + '<th title="True Wind Speed">' + 'TWS' + '</th>'
@@ -176,6 +178,7 @@ var controller = function () {
             return "<tr>"
                 + "<td>" + r.name + "</td>"
                 + "<td>" + ((r.rank)?r.rank:"-") + "</td>"
+                + "<td>" + ((r.dtl)?r.dtl:"-") + "</td>"
                 + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
                 + "<td>" + roundTo(r.curr.heading, 1) + "</td>"
                 + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
@@ -292,6 +295,7 @@ var controller = function () {
         return "<tr>"
             + "<td>" + formatDate(r.curr.lastCalcDate) + "</td>"
             + "<td>" + ((r.rank)?r.rank:"-") + "</td>"
+            + "<td>" + ((r.dtl)?r.dtl:"-") + "</td>"
             + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
             + "<td>" + roundTo(r.curr.heading, 1) + "</td>"
             + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
@@ -646,6 +650,7 @@ var controller = function () {
                 race.prev = undefined;
                 race.lastCommand = undefined;
                 race.rank = undefined;
+                race.dtl = undefined;
             });
             divRaceStatus.innerHTML = makeRaceStatusHTML();
             divRecordLog.innerHTML = makeTableHTML();
@@ -702,6 +707,7 @@ var controller = function () {
                         var race = races.get(raceId);
                         if ( race != undefined ) {
                             race.rank = response.scriptData.me.rank;
+			    race.dtl = roundTo(response.scriptData.me.distance - response.scriptData.res[0].distance,2);
                             divRaceStatus.innerHTML = makeRaceStatusHTML();
                         }
                     } else if ( request.eventKey == "Leg_GetList" ) {
