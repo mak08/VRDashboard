@@ -67,8 +67,8 @@ var controller = function () {
         + '<th title="Polar-derived speed">' + 'vT (kn)' + '</th>'
         + '<th title="Calculated distance">' + 'Δd (nm)' + '</th>'
         + '<th title="Time between positions">' + 'Δt (s)' + '</th>'
-        + '<th title="Auto Sail time remaining">' + 'AutoSail' + '</th>'
-        + '<th title="Auto TWA activated">' + 'AutoTWA' + '</th>'
+        + '<th title="Auto Sail time remaining">' + 'aSail' + '</th>'
+        + '<th title="Auto TWA activated">' + 'aTWA' + '</th>'
         + '<th title="Sail change time remaining">' + 'Sail' + '</th>'
         + '<th title="Gybing time remaining">' + 'Gybe' + '</th>'
         + '<th title="Tacking time remaining">' + 'Tack' + '</th>'
@@ -84,7 +84,7 @@ var controller = function () {
         + '<th title="True Wind Direction"> ' + 'TWD' + '</th>'
         + '<th title="True Wind Angle">' + 'TWA' + '</th>'
         + '<th title="Boat speed">' + 'Speed' + '</th>'
-        + '<th title="Auto TWA activated">' + 'AutoTWA' + '</th>'
+        + '<th title="Auto TWA activated">' + 'aTWA' + '</th>'
         + '<th title="Distance To Finish">' + 'DTF' + '</th>'
         + '<th>' + 'Options' + '</th>'
         + '<th>' + 'Cards' + '</th>'
@@ -270,7 +270,7 @@ var controller = function () {
           "<tr>"
         + "<td>" + formatDate(r.lastCommand.request.ts) + "</td>" 
                 + '<td colspan="2">Command @' + formatTime() + "</td>" 
-        + '<td colspan="13">Actions:' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
+        + '<td colspan="15">Actions:' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
         + "</tr>");
         if (r.id == selRace.value) {
             divRecordLog.innerHTML = makeTableHTML(r);
@@ -579,6 +579,17 @@ var controller = function () {
         return  latString + ((latDMS.u==1)?'N':'S') + ' ' + lonString + ((lonDMS.u==1)?'E':'W');
     }
 
+    function saveOption(e) {
+	localStorage["cb_" + this.id] = this.checked;
+    }
+
+    function getOption(name) {
+	var value = localStorage["cb_" + name];
+	if (value !== undefined) {
+	    document.getElementById(name).checked = value; 
+	}
+    }
+
     var initialize = function () {
         var manifest = chrome.runtime.getManifest();
         document.getElementById("lb_version").innerHTML = manifest.version;
@@ -607,12 +618,21 @@ var controller = function () {
         divRawLog = document.getElementById("rawlog");
         callUrlFunction = callUrlZezo;
         initRaces();
+	
         chrome.storage.local.get("polars", function(items) {
             if (items["polars"] !== undefined) {
                 console.log("Retrieved " + items["polars"].filter(function(value) { return value != null }).length + " polars."); 
                 polars = items["polars"];
             }
         });
+
+	getOption("auto_router");
+	getOption("reuse_tab");
+	getOption("local_time");
+
+	cbRouter.addEventListener("change",saveOption);
+	cbReuseTab.addEventListener("change",saveOption);
+	cbLocalTime.addEventListener("change",saveOption);
         initialized = true;
     }
     
