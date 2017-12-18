@@ -57,18 +57,19 @@ var controller = function () {
         + '<th>' + 'Time' + '</th>'
         + '<th>' + 'Rank' + '</th>'
         + '<th title="Distance To Leader">' + 'DTL' + '</th>'
+        + '<th title="Distance To Finish">' + 'DTF' + '</th>'
         + '<th>' + 'Position' + '</th>'
-        + '<th>' + 'Heading' + '</th>'
+        + '<th title="Heading">' + 'HDG' + '</th>'
         + '<th title="True Wind Speed">' + 'TWS' + '</th>'
         + '<th title="True Wind Direction">' + 'TWD' + '</th>'
         + '<th title="True Wind Angle">' + 'TWA' + '</th>'
+        + '<th title="Auto TWA activated">' + 'aTWA' + '</th>'
+        + '<th title="Auto Sail time remaining">' + 'aSail' + '</th>'
         + '<th title="Reported speed">' + 'vR (kn)' + '</th>'
         + '<th title="Calculated speed (Δd/Δt)">' + 'vC (kn)' + '</th>'
         + '<th title="Polar-derived speed">' + 'vT (kn)' + '</th>'
         + '<th title="Calculated distance">' + 'Δd (nm)' + '</th>'
         + '<th title="Time between positions">' + 'Δt (s)' + '</th>'
-        + '<th title="Auto Sail time remaining">' + 'aSail' + '</th>'
-        + '<th title="Auto TWA activated">' + 'aTWA' + '</th>'
         + '<th title="Sail change time remaining">' + 'Sail' + '</th>'
         + '<th title="Gybing time remaining">' + 'Gybe' + '</th>'
         + '<th title="Tacking time remaining">' + 'Tack' + '</th>'
@@ -78,14 +79,15 @@ var controller = function () {
         + '<th>' + 'Race' + '</th>'
         + '<th>' + 'Rank' + '</th>'
         + '<th title="Distance To Leader">' + 'DTL' + '</th>'
+        + '<th title="Distance To Finish">' + 'DTF' + '</th>'
         + '<th>' + 'Position' + '</th>'
-        + '<th>' + 'Heading' + '</th>'
+        + '<th title="Heading">' + 'HDG' + '</th>'
         + '<th title="True Wind Speed">' + 'TWS' + '</th>'
         + '<th title="True Wind Direction"> ' + 'TWD' + '</th>'
         + '<th title="True Wind Angle">' + 'TWA' + '</th>'
-        + '<th title="Boat speed">' + 'Speed' + '</th>'
         + '<th title="Auto TWA activated">' + 'aTWA' + '</th>'
-        + '<th title="Distance To Finish">' + 'DTF' + '</th>'
+        + '<th title="Auto Sail time remaining">' + 'aSail' + '</th>'
+        + '<th title="Boat speed">' + 'Speed' + '</th>'
         + '<th>' + 'Options' + '</th>'
         + '<th>' + 'Cards' + '</th>'
         + '<th title="Time to next barrel">' + 'Pack' + '</th>'
@@ -118,18 +120,36 @@ var controller = function () {
         return lastCommand;
     }
 
-    function makeRaceStatusLine (pair) {
-        var r = pair[1];
-        if ( r.curr == undefined ) {
-            return "";
-        } else {
+    function commonTableLines(r) {
 
             var autoSail = r.curr.tsEndOfAutoSail - r.curr.lastCalcDate;
             if ( autoSail < 0 ) {
                 autoSail = '-';
             } else {
-                autoSail = formatTime(autoSail);
+                autoSail = formatHMS(autoSail);
             }
+
+	    var twaFG = (r.curr.twa < 0)?"red":"green";
+	    var twaBold = r.curr.twaAuto?"font-weight: bold;":"";
+	    var hdgBold = r.curr.twaAuto?"":' style="font-weight: bold;"';
+
+	    return "<td>" + ((r.rank)?r.rank:"-") + "</td>"
+                + "<td>" + ((r.dtl)?r.dtl:"-") + "</td>"
+                + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
+                + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
+            	+ "<td" + hdgBold + ">" + roundTo(r.curr.heading, 1) + "</td>"
+                + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
+                + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
+                + '<td style="color:' + twaFG + ';' + twaBold + '">'+ roundTo(Math.abs(r.curr.twa), 1) + "</td>"
+                + "<td>" + (r.curr.twaAuto?"Yes":"No") + "</td>"
+            	+ "<td>" + autoSail + "</td>";
+    }
+
+    function makeRaceStatusLine (pair) {
+        var r = pair[1];
+        if ( r.curr == undefined ) {
+            return "";
+        } else {
 
             var sailNameBG = r.curr.badSail?"red":"lightgreen";
             var agroundBG = r.curr.aground?"red":"lightgreen";
@@ -172,21 +192,12 @@ var controller = function () {
                 } else {
                     regPack += "?";
                 }
-            }
-            var twaFG = (r.curr.twa < 0)?"red":"green";
-            
+            } 
+
             return "<tr>"
                 + "<td>" + r.name + "</td>"
-                + "<td>" + ((r.rank)?r.rank:"-") + "(" +  roundTo((r.curr.lastCalcDate - r.rankT)/1000,1) + "s)" +  "</td>"
-                + "<td>" + ((r.dtl)?r.dtl:"-") + "</td>"
-                + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
-                + "<td>" + roundTo(r.curr.heading, 1) + "</td>"
-                + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
-                + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
-                + '<td style="color:' + twaFG + ';">'+ roundTo(Math.abs(r.curr.twa), 1) + "</td>"
-                + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
-                + "<td>" + (r.curr.twaAuto?"Yes":"No") + "</td>"
-                + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
+		+ commonTableLines(r)
+               + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
                 + "<td>" + ((r.curr.options.length == 8)?'Full':r.curr.options.join(' ')) + "</td>"
                 + "<td>" + cards + "</td>"
                 + "<td" + regColor + ">" + regPack + "</td>"
@@ -270,45 +281,27 @@ var controller = function () {
           "<tr>"
         + "<td>" + formatDate(r.lastCommand.request.ts) + "</td>" 
                 + '<td colspan="3">Command @' + formatTime() + "</td>" 
-        + '<td colspan="14">Actions:' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
+        + '<td colspan="16">Actions:' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
         + "</tr>");
         if (r.id == selRace.value) {
             divRecordLog.innerHTML = makeTableHTML(r);
         }
     }
-    
-    function makeTableLine (r) {
 
-        var autoSail = r.curr.tsEndOfAutoSail - r.curr.lastCalcDate;
-        if ( autoSail < 0 ) {
-            autoSail = '-';
-        } else {
-            autoSail = formatHMS(autoSail);
-        }
+    function makeTableLine (r) {
 
         var sailChange = formatSeconds(r.curr.tsEndOfSailChange - r.curr.lastCalcDate);
         var gybing = formatSeconds(r.curr.tsEndOfGybe - r.curr.lastCalcDate);
         var tacking = formatSeconds(r.curr.tsEndOfTack - r.curr.lastCalcDate);
 
-        var twaFG = (r.curr.twa < 0)?"red":"green";
-
         return "<tr>"
             + "<td>" + formatDate(r.curr.lastCalcDate) + "</td>"
-                + "<td>" + ((r.rank)?r.rank:"-") + "(" +  roundTo((r.curr.lastCalcDate - r.rankT)/1000,1) + "s)" +  "</td>"
-//            + "<td>" + ((r.rank)?r.rank:"-") + "</td>"
-            + "<td>" + ((r.dtl)?r.dtl:"-") + "</td>"
-            + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
-            + "<td>" + roundTo(r.curr.heading, 1) + "</td>"
-            + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
-            + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
-            + '<td style="color:' + twaFG + ';">' + roundTo(Math.abs(r.curr.twa), 1) + "</td>"
+	    + commonTableLines(r) 
             + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
             + "<td>" + roundTo(r.curr.speedC, 2) + "</td>"
             + "<td>" + r.curr.speedT + "</td>"
             + "<td>" + roundTo(r.curr.deltaD, 2) + "</td>"
             + "<td>" + roundTo(r.curr.deltaT, 0) + "</td>"
-            + "<td>" + autoSail + "</td>"
-            + "<td>" + (r.curr.twaAuto?"Yes":"No") + "</td>"
             + "<td>" + sailChange + "</td>"
             + "<td>" + gybing + "</td>"
             + "<td>" + tacking + "</td>"
@@ -734,7 +727,6 @@ var controller = function () {
                         if ( race != undefined ) {
                             race.rank = response.scriptData.me.rank;
 			    race.dtl = roundTo(response.scriptData.me.distance - response.scriptData.res[0].distance,2);
-			    race.rankT = response.scriptData.me.date;
                             divRaceStatus.innerHTML = makeRaceStatusHTML();
                         }
                     } else if ( request.eventKey == "Leg_GetList" ) {
