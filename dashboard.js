@@ -55,16 +55,7 @@ var controller = function () {
 
     var tableHeader =  '<tr>'
         + '<th>' + 'Time' + '</th>'
-        + '<th>' + 'Rank' + '</th>'
-        + '<th title="Distance To Leader">' + 'DTL' + '</th>'
-        + '<th title="Distance To Finish">' + 'DTF' + '</th>'
-        + '<th>' + 'Position' + '</th>'
-        + '<th title="Heading">' + 'HDG' + '</th>'
-        + '<th title="True Wind Speed">' + 'TWS' + '</th>'
-        + '<th title="True Wind Direction">' + 'TWD' + '</th>'
-        + '<th title="True Wind Angle">' + 'TWA' + '</th>'
-        + '<th title="Auto TWA activated">' + 'aTWA' + '</th>'
-        + '<th title="Auto Sail time remaining">' + 'aSail' + '</th>'
+        + commonHeaders()
         + '<th title="Reported speed">' + 'vR (kn)' + '</th>'
         + '<th title="Calculated speed (Δd/Δt)">' + 'vC (kn)' + '</th>'
         + '<th title="Polar-derived speed">' + 'vT (kn)' + '</th>'
@@ -77,16 +68,7 @@ var controller = function () {
 
     var raceStatusHeader =  '<tr>'
         + '<th>' + 'Race' + '</th>'
-        + '<th>' + 'Rank' + '</th>'
-        + '<th title="Distance To Leader">' + 'DTL' + '</th>'
-        + '<th title="Distance To Finish">' + 'DTF' + '</th>'
-        + '<th>' + 'Position' + '</th>'
-        + '<th title="Heading">' + 'HDG' + '</th>'
-        + '<th title="True Wind Speed">' + 'TWS' + '</th>'
-        + '<th title="True Wind Direction"> ' + 'TWD' + '</th>'
-        + '<th title="True Wind Angle">' + 'TWA' + '</th>'
-        + '<th title="Auto TWA activated">' + 'aTWA' + '</th>'
-        + '<th title="Auto Sail time remaining">' + 'aSail' + '</th>'
+        + commonHeaders()
         + '<th title="Boat speed">' + 'Speed' + '</th>'
         + '<th>' + 'Options' + '</th>'
         + '<th>' + 'Cards' + '</th>'
@@ -97,7 +79,21 @@ var controller = function () {
         + '<th title="Boat is maneuvering, half speed">' + 'Mnvr' + '</th>'
         + '<th>' + 'Last Command' + '</th>'
         +  '</tr>';
-    
+
+
+    function commonHeaders() {
+        return '<th>' + 'Rank' + '</th>'
+            + '<th title="Distance To Leader">' + 'DTL' + '</th>'
+            + '<th title="Distance To Finish">' + 'DTF' + '</th>'
+            + '<th>' + 'Position' + '</th>'
+            + '<th title="Heading">' + 'HDG' + '</th>'
+            + '<th title="True Wind Angle">' + 'TWA' + '</th>'
+            + '<th title="True Wind Speed">' + 'TWS' + '</th>'
+            + '<th title="True Wind Direction"> ' + 'TWD' + '</th>'
+            + '<th title="Auto TWA activated">' + 'aTWA' + '</th>'
+            + '<th title="Auto Sail time remaining">' + 'aSail' + '</th>';
+    }
+
     function printLastCommand(lcActions) {
         var lastCommand = "";
         
@@ -138,9 +134,9 @@ var controller = function () {
             + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
             + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
             + "<td" + hdgBold + ">" + roundTo(r.curr.heading, 1) + "</td>"
+            + '<td style="color:' + twaFG + ';' + twaBold + '">'+ roundTo(Math.abs(r.curr.twa), 1) + "</td>"
             + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
             + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
-            + '<td style="color:' + twaFG + ';' + twaBold + '">'+ roundTo(Math.abs(r.curr.twa), 1) + "</td>"
             + "<td>" + (r.curr.twaAuto?"Yes":"No") + "</td>"
             + "<td>" + autoSail + "</td>";
     }
