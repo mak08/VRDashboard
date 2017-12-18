@@ -97,10 +97,10 @@ var controller = function () {
         + '<th title="Boat is maneuvering, half speed">' + 'Mnvr' + '</th>'
         + '<th>' + 'Last Command' + '</th>'
         +  '</tr>';
-   
+    
     function printLastCommand(lcActions) {
         var lastCommand = "";
-            
+        
         lcActions.map( function (action) {
             if ( action.type == "heading" ) {
                 lastCommand +=  (action.autoTwa?" TWA":" HDG") + '=' + roundTo(action.value, 1);
@@ -122,27 +122,27 @@ var controller = function () {
 
     function commonTableLines(r) {
 
-            var autoSail = r.curr.tsEndOfAutoSail - r.curr.lastCalcDate;
-            if ( autoSail < 0 ) {
-                autoSail = '-';
-            } else {
-                autoSail = formatHMS(autoSail);
-            }
+        var autoSail = r.curr.tsEndOfAutoSail - r.curr.lastCalcDate;
+        if ( autoSail < 0 ) {
+            autoSail = '-';
+        } else {
+            autoSail = formatHMS(autoSail);
+        }
 
-	    var twaFG = (r.curr.twa < 0)?"red":"green";
-	    var twaBold = r.curr.twaAuto?"font-weight: bold;":"";
-	    var hdgBold = r.curr.twaAuto?"":' style="font-weight: bold;"';
+        var twaFG = (r.curr.twa < 0)?"red":"green";
+        var twaBold = r.curr.twaAuto?"font-weight: bold;":"";
+        var hdgBold = r.curr.twaAuto?"":' style="font-weight: bold;"';
 
-	    return "<td>" + ((r.rank)?r.rank:"-") + "</td>"
-                + "<td>" + ((r.dtl)?r.dtl:"-") + "</td>"
-                + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
-                + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
-            	+ "<td" + hdgBold + ">" + roundTo(r.curr.heading, 1) + "</td>"
-                + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
-                + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
-                + '<td style="color:' + twaFG + ';' + twaBold + '">'+ roundTo(Math.abs(r.curr.twa), 1) + "</td>"
-                + "<td>" + (r.curr.twaAuto?"Yes":"No") + "</td>"
-            	+ "<td>" + autoSail + "</td>";
+        return "<td>" + ((r.rank)?r.rank:"-") + "</td>"
+            + "<td>" + ((r.dtl)?r.dtl:"-") + "</td>"
+            + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
+            + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
+            + "<td" + hdgBold + ">" + roundTo(r.curr.heading, 1) + "</td>"
+            + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
+            + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
+            + '<td style="color:' + twaFG + ';' + twaBold + '">'+ roundTo(Math.abs(r.curr.twa), 1) + "</td>"
+            + "<td>" + (r.curr.twaAuto?"Yes":"No") + "</td>"
+            + "<td>" + autoSail + "</td>";
     }
 
     function makeRaceStatusLine (pair) {
@@ -196,8 +196,8 @@ var controller = function () {
 
             return "<tr>"
                 + "<td>" + r.name + "</td>"
-		+ commonTableLines(r)
-               + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
+                + commonTableLines(r)
+                + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
                 + "<td>" + ((r.curr.options.length == 8)?'Full':r.curr.options.join(' ')) + "</td>"
                 + "<td>" + cards + "</td>"
                 + "<td" + regColor + ">" + regPack + "</td>"
@@ -252,7 +252,7 @@ var controller = function () {
 
         return  pad0(minutes) + 'm' + pad0(seconds) + 's';
     }
-        
+    
     function formatDate(ts) {
         var tsOptions = { year: 'numeric', month: 'numeric', day: 'numeric',
                           hour: 'numeric', minute: 'numeric', second: 'numeric',
@@ -264,7 +264,7 @@ var controller = function () {
         }
         return new Intl.DateTimeFormat("lookup", tsOptions).format(d);
     }
-        
+    
     function formatTime(ts) {
         var tsOptions = { hour: 'numeric', minute: 'numeric', second: 'numeric',
                           hour12: false};
@@ -275,14 +275,14 @@ var controller = function () {
         }
         return new Intl.DateTimeFormat("lookup", tsOptions).format(d);
     }
-        
+    
     function addTableCommandLine(r) {
         r.tableLines.unshift(
-          "<tr>"
-        + "<td>" + formatDate(r.lastCommand.request.ts) + "</td>" 
+            "<tr>"
+                + "<td>" + formatDate(r.lastCommand.request.ts) + "</td>" 
                 + '<td colspan="3">Command @' + formatTime() + "</td>" 
-        + '<td colspan="16">Actions:' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
-        + "</tr>");
+                + '<td colspan="16">Actions:' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
+                + "</tr>");
         if (r.id == selRace.value) {
             divRecordLog.innerHTML = makeTableHTML(r);
         }
@@ -296,7 +296,7 @@ var controller = function () {
 
         return "<tr>"
             + "<td>" + formatDate(r.curr.lastCalcDate) + "</td>"
-	    + commonTableLines(r) 
+            + commonTableLines(r) 
             + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
             + "<td>" + roundTo(r.curr.speedC, 2) + "</td>"
             + "<td>" + r.curr.speedT + "</td>"
@@ -509,7 +509,7 @@ var controller = function () {
             var urlBeta = r.url + (beta?"b":"");
             var url = baseURL + '/' + urlBeta + '/chart.pl?lat=' + r.curr.pos.lat + '&lon=' + r.curr.pos.lon + 
                 '&options=' + options + '&twa=' + r.curr.twa;
-                 // +  '&userid=' + r.curr._id.user_id; Not yer
+            // +  '&userid=' + r.curr._id.user_id; Not yer
             window.open(url, cbReuseTab.checked?urlBeta:'_blank');
         }
     }
@@ -574,28 +574,28 @@ var controller = function () {
     }
 
     function saveOption(e) {
-	localStorage["cb_" + this.id] = this.checked;
+        localStorage["cb_" + this.id] = this.checked;
     }
 
     function getOption(name) {
-	var value = localStorage["cb_" + name];
-	if (value !== undefined) {
-	    cb = document.getElementById(name).checked = (value === "true");
-	}
+        var value = localStorage["cb_" + name];
+        if (value !== undefined) {
+            cb = document.getElementById(name).checked = (value === "true");
+        }
     }
 
     function readOptions() {
-    	getOption("auto_router");
-    	getOption("reuse_tab");
-    	getOption("local_time");
+        getOption("auto_router");
+        getOption("reuse_tab");
+        getOption("local_time");
     }
-	
+    
     function addConfigListeners() {
-    	cbRouter.addEventListener("change",saveOption);
-    	cbReuseTab.addEventListener("change",saveOption);
-    	cbLocalTime.addEventListener("change",saveOption);
+        cbRouter.addEventListener("change",saveOption);
+        cbReuseTab.addEventListener("change",saveOption);
+        cbLocalTime.addEventListener("change",saveOption);
     }
-	
+    
     var initialize = function () {
         var manifest = chrome.runtime.getManifest();
         document.getElementById("lb_version").innerHTML = manifest.version;
@@ -624,7 +624,7 @@ var controller = function () {
         divRawLog = document.getElementById("rawlog");
         callUrlFunction = callUrlZezo;
         initRaces();
-	
+        
         chrome.storage.local.get("polars", function(items) {
             if (items["polars"] !== undefined) {
                 console.log("Retrieved " + items["polars"].filter(function(value) { return value != null }).length + " polars."); 
@@ -726,7 +726,7 @@ var controller = function () {
                         var race = races.get(raceId);
                         if ( race != undefined ) {
                             race.rank = response.scriptData.me.rank;
-			    race.dtl = roundTo(response.scriptData.me.distance - response.scriptData.res[0].distance,2);
+                            race.dtl = roundTo(response.scriptData.me.distance - response.scriptData.res[0].distance,2);
                             divRaceStatus.innerHTML = makeRaceStatusHTML();
                         }
                     } else if ( request.eventKey == "Leg_GetList" ) {
@@ -794,7 +794,7 @@ var controller = function () {
         changeRace: changeRace,
         onEvent: onEvent,
         clearLog: clearLog,
-	readOptions: readOptions,
+        readOptions: readOptions,
         addConfigListeners: addConfigListeners
     }
 } ();
