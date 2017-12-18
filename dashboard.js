@@ -177,7 +177,7 @@ var controller = function () {
             
             return "<tr>"
                 + "<td>" + r.name + "</td>"
-                + "<td>" + ((r.rank)?r.rank:"-") + "</td>"
+                + "<td>" + ((r.rank)?r.rank:"-") + "(" +  roundTo((r.curr.lastCalcDate - r.rankT)/1000,1) + "s)" +  "</td>"
                 + "<td>" + ((r.dtl)?r.dtl:"-") + "</td>"
                 + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
                 + "<td>" + roundTo(r.curr.heading, 1) + "</td>"
@@ -269,8 +269,8 @@ var controller = function () {
         r.tableLines.unshift(
           "<tr>"
         + "<td>" + formatDate(r.lastCommand.request.ts) + "</td>" 
-                + '<td colspan="2">Command @' + formatTime() + "</td>" 
-        + '<td colspan="15">Actions:' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
+                + '<td colspan="3">Command @' + formatTime() + "</td>" 
+        + '<td colspan="14">Actions:' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
         + "</tr>");
         if (r.id == selRace.value) {
             divRecordLog.innerHTML = makeTableHTML(r);
@@ -294,7 +294,8 @@ var controller = function () {
 
         return "<tr>"
             + "<td>" + formatDate(r.curr.lastCalcDate) + "</td>"
-            + "<td>" + ((r.rank)?r.rank:"-") + "</td>"
+                + "<td>" + ((r.rank)?r.rank:"-") + "(" +  roundTo((r.curr.lastCalcDate - r.rankT)/1000,1) + "s)" +  "</td>"
+//            + "<td>" + ((r.rank)?r.rank:"-") + "</td>"
             + "<td>" + ((r.dtl)?r.dtl:"-") + "</td>"
             + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
             + "<td>" + roundTo(r.curr.heading, 1) + "</td>"
@@ -552,7 +553,7 @@ var controller = function () {
     }
     
     function roundTo (number, digits) {
-        if (number) {
+        if (number !== undefined && !isNaN(number)) {
             var scale = Math.pow(10, digits);
             return Math.round(number * scale) / scale;
         } else {
@@ -586,10 +587,22 @@ var controller = function () {
     function getOption(name) {
 	var value = localStorage["cb_" + name];
 	if (value !== undefined) {
-	    document.getElementById(name).checked = value; 
+	    cb = document.getElementById(name).checked = (value === "true");
 	}
     }
 
+    function readOptions() {
+    	getOption("auto_router");
+    	getOption("reuse_tab");
+    	getOption("local_time");
+    }
+	
+    function addConfigListeners() {
+    	cbRouter.addEventListener("change",saveOption);
+    	cbReuseTab.addEventListener("change",saveOption);
+    	cbLocalTime.addEventListener("change",saveOption);
+    }
+	
     var initialize = function () {
         var manifest = chrome.runtime.getManifest();
         document.getElementById("lb_version").innerHTML = manifest.version;
@@ -626,13 +639,6 @@ var controller = function () {
             }
         });
 
-	getOption("auto_router");
-	getOption("reuse_tab");
-	getOption("local_time");
-
-	cbRouter.addEventListener("change",saveOption);
-	cbReuseTab.addEventListener("change",saveOption);
-	cbLocalTime.addEventListener("change",saveOption);
         initialized = true;
     }
     
@@ -728,6 +734,7 @@ var controller = function () {
                         if ( race != undefined ) {
                             race.rank = response.scriptData.me.rank;
 			    race.dtl = roundTo(response.scriptData.me.distance - response.scriptData.res[0].distance,2);
+			    race.rankT = response.scriptData.me.date;
                             divRaceStatus.innerHTML = makeRaceStatusHTML();
                         }
                     } else if ( request.eventKey == "Leg_GetList" ) {
@@ -794,8 +801,9 @@ var controller = function () {
         callUrl: callUrl,
         changeRace: changeRace,
         onEvent: onEvent,
-        clearLog: clearLog
-
+        clearLog: clearLog,
+	readOptions: readOptions,
+        addConfigListeners: addConfigListeners
     }
 } ();
 
@@ -810,6 +818,9 @@ window.addEventListener("load", function() {
     document.getElementById("bt_callurl").addEventListener("click", controller.callUrl);
     document.getElementById("sel_race").addEventListener("change", controller.changeRace);
     document.getElementById("bt_clear").addEventListener("click", controller.clearLog);
+
+    controller.readOptions();
+    controller.addConfigListeners();
     
     chrome.debugger.sendCommand({tabId:tabId}, "Network.enable", function() {
         // just close the dashboard window if debugger attach fails
