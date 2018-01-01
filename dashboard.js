@@ -118,12 +118,7 @@ var controller = function () {
 
     function commonTableLines(r) {
 
-        var autoSail = r.curr.tsEndOfAutoSail - r.curr.lastCalcDate;
-        if ( autoSail < 0 ) {
-            autoSail = '-';
-        } else {
-            autoSail = formatHMS(autoSail);
-        }
+        var autoSail = formatHMS(r.curr.tsEndOfAutoSail - r.curr.lastCalcDate);
 
         var twaFG = (r.curr.twa < 0)?"red":"green";
         var twaBold = r.curr.twaAuto?"font-weight: bold;":"";
@@ -229,6 +224,10 @@ var controller = function () {
     }
 
     function formatHMS(seconds) {
+	if (seconds === undefined || isNaN(seconds) || seconds < 0) {
+		return '-';
+	}
+
         seconds = Math.floor(seconds/1000);
 
         var hours = Math.floor(seconds/3600);
@@ -241,6 +240,10 @@ var controller = function () {
     }
 
     function formatMS(seconds) {
+	if (seconds === undefined || isNaN(seconds) || seconds < 0) {
+		return '-';
+	}
+
         seconds = Math.floor(seconds/1000);
 
         var minutes = Math.floor(seconds/60);
@@ -712,7 +715,9 @@ var controller = function () {
                         // Probably only when debugging.
                         // -- save and process later?
                         console.warn(responseClass + " " + response.requestId + " not found");
-                    } else if ( request.eventKey == "LDB_GetLegRank"  && response.scriptData.me !== null) {
+                    } else if ((request.eventKey == "LDB_GetLegRank" || 
+				request.eventKey == "LDB_GetGateRank") && 
+					response.scriptData.me !== null) {
                         // Use this response to update User/Boat info if the plugin is switched on while already logged in
                         reInitUI(response.scriptData.me._id );
                         currentUserId = response.scriptData.me._id;
