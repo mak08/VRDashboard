@@ -162,28 +162,33 @@ var controller = function () {
             }
 
             var cards = "";
-            for ( var key in r.curr.cards ) {
-                cards =  cards + " " + key + ":" + r.curr.cards[key];
-            }
-
             var regPack = "";
             var regColor = "";
-            if (r.curr.regPack) { 
-                if (r.curr.regPack.tsNext > r.curr.lastCalcDate) {  
-                    regPack = formatHMS(r.curr.regPack.tsNext - r.curr.lastCalcDate);
-                } else {
-                    regPack = "Ready";
-                    regColor = ' style="background-color: lightgreen;"';
-                } 
-            }
-            if (r.curr.soloCard) {
-                regPack += "<br>Solo: ";
-                if (r.curr.soloCard.ts > r.curr.lastCalcDate) {
-                    regPack += r.curr.soloCard.code + ":" + formatMS(r.curr.soloCard.ts - r.curr.lastCalcDate);
-                } else {
-                    regPack += "?";
+
+	    if (r.curr.fullOptions !== undefined) {
+		    cards = "Full";
+		    regPack = "N/A";
+	    } else {
+                for ( var key in r.curr.cards ) {
+               	    cards =  cards + " " + key + ":" + r.curr.cards[key];
+            	}
+                if (r.curr.regPack) { 
+                    if (r.curr.regPack.tsNext > r.curr.lastCalcDate) {  
+                        regPack = formatHMS(r.curr.regPack.tsNext - r.curr.lastCalcDate);
+                    } else {
+                        regPack = "Ready";
+                        regColor = ' style="background-color: lightgreen;"';
+                    } 
                 }
-            } 
+                if (r.curr.soloCard) {
+                    regPack += "<br>Solo: ";
+                    if (r.curr.soloCard.ts > r.curr.lastCalcDate) {
+                        regPack += r.curr.soloCard.code + ":" + formatMS(r.curr.soloCard.ts - r.curr.lastCalcDate);
+                    } else {
+                        regPack += "?";
+                    }
+                }
+	    } 
 
             return "<tr>"
                 + "<td>" + r.name + "</td>"
