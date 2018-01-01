@@ -702,7 +702,7 @@ var controller = function () {
                 console.log("Invalid JSON in payload");
             } else {
                 var responseClass = response["@class"];
-                if ( responseClass == ".AuthenticationResponse" ) {
+                if ( responseClass == ".AccountDetailsResponse" ) {
                     reInitUI(response.userId);
                     currentUserId = response.userId;
                     lbBoatname.innerHTML = response.displayName;
