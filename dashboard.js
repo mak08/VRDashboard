@@ -130,7 +130,7 @@ var controller = function () {
             + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
             + "<td" + hdgBold + ">" + roundTo(r.curr.heading, 1) + "</td>"
             + '<td style="color:' + twaFG + ';' + twaBold + '">'+ roundTo(Math.abs(r.curr.twa), 1) + "</td>"
-            + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
+            + "<td>" + roundTo(r.curr.tws, 2) + "</td>"
             + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
             + "<td>" + (r.curr.twaAuto?"Yes":"No") + "</td>"
             + "<td>" + autoSail + "</td>";
