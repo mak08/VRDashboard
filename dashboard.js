@@ -165,13 +165,13 @@ var controller = function () {
             var regPack = "";
             var regColor = "";
 
-	    if (r.curr.fullOptions !== undefined) {
-		    cards = "Full";
-		    regPack = "N/A";
-	    } else {
+        if (r.curr.fullOptions !== undefined) {
+            cards = "Full";
+            regPack = "N/A";
+        } else {
                 for ( var key in r.curr.cards ) {
-               	    cards =  cards + " " + key + ":" + r.curr.cards[key];
-            	}
+                    cards =  cards + " " + key + ":" + r.curr.cards[key];
+                }
                 if (r.curr.regPack) { 
                     if (r.curr.regPack.tsNext > r.curr.lastCalcDate) {  
                         regPack = formatHMS(r.curr.regPack.tsNext - r.curr.lastCalcDate);
@@ -188,7 +188,7 @@ var controller = function () {
                         regPack += "?";
                     }
                 }
-	    } 
+        } 
 
             return "<tr>"
                 + "<td>" + r.name + "</td>"
@@ -229,9 +229,9 @@ var controller = function () {
     }
 
     function formatHMS(seconds) {
-	if (seconds === undefined || isNaN(seconds) || seconds < 0) {
-		return '-';
-	}
+    if (seconds === undefined || isNaN(seconds) || seconds < 0) {
+        return '-';
+    }
 
         seconds = Math.floor(seconds/1000);
 
@@ -245,9 +245,9 @@ var controller = function () {
     }
 
     function formatMS(seconds) {
-	if (seconds === undefined || isNaN(seconds) || seconds < 0) {
-		return '-';
-	}
+    if (seconds === undefined || isNaN(seconds) || seconds < 0) {
+        return '-';
+    }
 
         seconds = Math.floor(seconds/1000);
 
@@ -377,7 +377,13 @@ var controller = function () {
         r.curr = message;
         r.curr.speedT =  theoreticalSpeed(message);
         if ( r.prev != undefined ) {
-            r.curr.deltaD = gcDistance(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon);
+            var d = gcDistance(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon);
+            var delta = courseAngle(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon);
+            var alpha = normalizeAngle(toRad(r.prev.heading) - delta);
+            var beta = normalizeAngle(toRad(r.curr.heading) - delta);
+            // var gamma = Math.PI - Math.abs(toRad(r.curr.heading) - toRad(r.prev.heading));
+            var gamma = Math.PI - alpha - beta;
+            r.curr.deltaD = d / Math.sin(gamma) * (Math.sin(beta) +  Math.sin(alpha));
             // Epoch timestamps are milliseconds since 00:00:00 UTC on 1 January 1970.
             r.curr.deltaT = (r.curr.lastCalcDate - r.prev.lastCalcDate)/1000;
             r.curr.speedC = roundTo(r.curr.deltaD/r.curr.deltaT * 3600, 2);
@@ -386,6 +392,12 @@ var controller = function () {
         divRaceStatus.innerHTML = makeRaceStatusHTML();
     }
 
+    function normalizeAngle (alpha) {
+        var a =  Math.abs(alpha);
+        while (a > Math.PI/2) a -= Math.PI/2;
+        return a;
+    }
+    
     function theoreticalSpeed (message) {
         var shortNames = {
             "JIB" : "Jib",
@@ -525,15 +537,35 @@ var controller = function () {
         var rlat1 = toRad(lat1);
         var rlon0 = toRad(lon0);
         var rlon1 = toRad(lon1);
-        return radius * Math.acos(Math.sin(rlat0) * Math.sin(rlat1)
-                                  + Math.cos(rlat0) * Math.cos(rlat1) * Math.cos(rlon1 - rlon0));
+        return radius * gcAngle(rlat0, rlon0, rlat1, rlon1);
+    }
+
+    function gcAngle(rlat0, rlon0, rlat1, rlon1) {
+        return Math.acos(Math.sin(rlat0) * Math.sin(rlat1)
+                         + Math.cos(rlat0) * Math.cos(rlat1) * Math.cos(rlon1 - rlon0));
+
+    }
+
+    function courseAngle(lat0, lon0, lat1, lon1) {
+        var rlat0 = toRad(lat0);
+        var rlat1 = toRad(lat1);
+        var rlon0 = toRad(lon0);
+        var rlon1 = toRad(lon1);
+        var xi = gcAngle(rlat0, rlon0, rlat1, rlon1);
+        var a = Math.acos((Math.sin(rlat1) - Math.sin(rlat0) * Math.cos(xi))
+                         / (Math.cos(rlat0) * Math.sin(xi)));
+        return (rlon1 > rlon0)?a:(2*Math.PI-a);
     }
 
     function toRad (angle) {
         return angle / 180 * Math.PI;
     }
+
+    function toDeg (angle) {
+        return angle * Math.PI / 180;
+    }
     
-    function toDeg (number) {
+    function toDMS (number) {
         var u = sign(number);
         number = Math.abs(number);
         var g = Math.floor(number);
@@ -570,8 +602,8 @@ var controller = function () {
     }
 
     function formatPosition (lat, lon) {
-        var latDMS = toDeg(lat);
-        var lonDMS = toDeg(lon);
+        var latDMS = toDMS(lat);
+        var lonDMS = toDMS(lon);
         var latString = latDMS.g + "°" + pad0(latDMS.m) + "'" + pad0(latDMS.s) + '"';
         var lonString = lonDMS.g + "°" + pad0(lonDMS.m) + "'" + pad0(lonDMS.s) + '"';
         return  latString + ((latDMS.u==1)?'N':'S') + ' ' + lonString + ((lonDMS.u==1)?'E':'W');
@@ -721,8 +753,8 @@ var controller = function () {
                         // -- save and process later?
                         console.warn(responseClass + " " + response.requestId + " not found");
                     } else if ((request.eventKey == "LDB_GetLegRank" || 
-				request.eventKey == "LDB_GetGateRank") && 
-					response.scriptData.me !== null) {
+                                request.eventKey == "LDB_GetGateRank") && 
+                               response.scriptData.me !== null) {
                         // Use this response to update User/Boat info if the plugin is switched on while already logged in
                         reInitUI(response.scriptData.me._id );
                         currentUserId = response.scriptData.me._id;
