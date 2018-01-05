@@ -294,6 +294,34 @@ var controller = function () {
 
     function makeTableLine (r) {
 
+        function isDifferingSpeed () {
+            return Math.abs(1 - r.curr.speed / r.curr.speedC) > 0.01;
+        }
+
+        function isCurrent(timestamp) {
+            return (timestamp && (timestamp > r.prev.lastCalcDate) );
+        }
+        
+        function getBG (timestamp) {
+            return isCurrent(timestamp)?'style="background-color: tomato;"':'';
+        }
+
+        function isPenalty () {
+            return isCurrent(r.curr.tsEndOfSailChange)
+                ||isCurrent(r.curr.tsEndOfGybe)
+                ||isCurrent(r.curr.tsEndOfTack);
+        }
+
+        function getSpeedCBG() {
+            if ( isPenalty() ) {
+                return 'style="background-color: tomato;"';
+            } else if ( isDifferingSpeed() ) {
+                return 'style="background-color: yellow;"';
+            } else {
+                return '';
+            }
+        }
+        
         var sailChange = formatSeconds(r.curr.tsEndOfSailChange - r.curr.lastCalcDate);
         var gybing = formatSeconds(r.curr.tsEndOfGybe - r.curr.lastCalcDate);
         var tacking = formatSeconds(r.curr.tsEndOfTack - r.curr.lastCalcDate);
@@ -302,13 +330,13 @@ var controller = function () {
             + "<td>" + formatDate(r.curr.lastCalcDate) + "</td>"
             + commonTableLines(r) 
             + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
-            + "<td>" + roundTo(r.curr.speedC, 2) + "</td>"
+            + "<td " + getSpeedCBG() + ">" + roundTo(r.curr.speedC, 2) + "</td>"
             + "<td>" + r.curr.speedT + "</td>"
             + "<td>" + roundTo(r.curr.deltaD, 2) + "</td>"
             + "<td>" + roundTo(r.curr.deltaT, 0) + "</td>"
-            + "<td>" + sailChange + "</td>"
-            + "<td>" + gybing + "</td>"
-            + "<td>" + tacking + "</td>"
+            + "<td " + getBG(r.curr.tsEndOfSailChange) + ">" + sailChange + "</td>"
+            + "<td " + getBG(r.curr.tsEndOfGybe) + ">" + gybing + "</td>"
+            + "<td " + getBG(r.curr.tsEndOfTack) + ">" + tacking + "</td>"
             + "</tr>";
     }
 
@@ -379,11 +407,15 @@ var controller = function () {
         if ( r.prev != undefined ) {
             var d = gcDistance(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon);
             var delta = courseAngle(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon);
-            var alpha = normalizeAngle(toRad(r.prev.heading) - delta);
-            var beta = normalizeAngle(toRad(r.curr.heading) - delta);
-            // var gamma = Math.PI - Math.abs(toRad(r.curr.heading) - toRad(r.prev.heading));
-            var gamma = Math.PI - alpha - beta;
-            r.curr.deltaD = d / Math.sin(gamma) * (Math.sin(beta) +  Math.sin(alpha));
+            var alpha = Math.PI - angle(toRad(r.prev.heading), delta);
+            var beta = Math.PI - angle(toRad(r.curr.heading), delta);
+            var gamma = angle(toRad(r.curr.heading), toRad(r.prev.heading));
+            // var gamma = Math.PI - alpha - beta;
+            if ( toDeg(alpha) > 1 && toDeg(beta) > 1 ) {
+                r.curr.deltaD = d / Math.sin(gamma) * (Math.sin(beta) +  Math.sin(alpha));
+            } else {
+                r.curr.deltaD = d;
+            }
             // Epoch timestamps are milliseconds since 00:00:00 UTC on 1 January 1970.
             r.curr.deltaT = (r.curr.lastCalcDate - r.prev.lastCalcDate)/1000;
             r.curr.speedC = roundTo(r.curr.deltaD/r.curr.deltaT * 3600, 2);
@@ -392,10 +424,8 @@ var controller = function () {
         divRaceStatus.innerHTML = makeRaceStatusHTML();
     }
 
-    function normalizeAngle (alpha) {
-        var a =  Math.abs(alpha);
-        while (a > Math.PI/2) a -= Math.PI/2;
-        return a;
+    function angle (h0, h1) {
+        return Math.abs(Math.PI - Math.abs(h1 - h0));
     }
     
     function theoreticalSpeed (message) {
@@ -562,7 +592,7 @@ var controller = function () {
     }
 
     function toDeg (angle) {
-        return angle * Math.PI / 180;
+        return angle / Math.PI * 180;
     }
     
     function toDMS (number) {
