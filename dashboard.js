@@ -294,8 +294,8 @@ var controller = function () {
 
     function makeTableLine (r) {
 
-        function isDifferingSpeed () {
-            return Math.abs(1 - r.curr.speed / r.curr.speedC) > 0.01;
+        function isDifferingSpeed (speed) {
+            return Math.abs(1 - r.curr.speed / speed) > 0.01;
         }
 
         function isCurrent(timestamp) {
@@ -311,15 +311,22 @@ var controller = function () {
                 ||isCurrent(r.curr.tsEndOfGybe)
                 ||isCurrent(r.curr.tsEndOfTack);
         }
-
-        function getSpeedCBG() {
-            if ( isPenalty() ) {
-                return 'style="background-color: tomato;"';
-            } else if ( isDifferingSpeed() ) {
-                return 'style="background-color: yellow;"';
-            } else {
-                return '';
-            }
+        
+        var speedCStyle = '';
+        var speedTStyle = '';
+        var deltaDist = roundTo(r.curr.deltaD, 2);
+        var speedT = '-';
+        if ( r.curr.speedT ) {
+            speedT = r.curr.speedT.speed + '&nbsp;(' + r.curr.speedT.sail + ')';
+        }
+        
+        if ( isPenalty() ) {
+            speedCStyle = 'style="background-color: tomato;"';
+        } else if ( isDifferingSpeed(r.curr.speedC) ) {
+            speedCStyle = 'style="background-color: yellow;"';
+        } else if ( isDifferingSpeed(r.curr.speedT.speed) ) {
+            speedTStyle = 'style="background-color: red;"';
+            deltaDist = deltaDist + ' (' +  roundTo(r.curr.deltaD_T, 2) + ')';
         }
         
         var sailChange = formatSeconds(r.curr.tsEndOfSailChange - r.curr.lastCalcDate);
@@ -330,9 +337,9 @@ var controller = function () {
             + "<td>" + formatDate(r.curr.lastCalcDate) + "</td>"
             + commonTableLines(r) 
             + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
-            + "<td " + getSpeedCBG() + ">" + roundTo(r.curr.speedC, 2) + "</td>"
-            + "<td>" + r.curr.speedT + "</td>"
-            + "<td>" + roundTo(r.curr.deltaD, 2) + "</td>"
+            + "<td " + speedCStyle + ">" + roundTo(r.curr.speedC, 2) + "</td>"
+            + "<td " + speedTStyle + ">" + speedT + "</td>"
+            + "<td " + speedTStyle + ">" + deltaDist + "</td>"
             + "<td>" + roundTo(r.curr.deltaT, 0) + "</td>"
             + "<td " + getBG(r.curr.tsEndOfSailChange) + ">" + sailChange + "</td>"
             + "<td " + getBG(r.curr.tsEndOfGybe) + ">" + gybing + "</td>"
@@ -419,6 +426,11 @@ var controller = function () {
             // Epoch timestamps are milliseconds since 00:00:00 UTC on 1 January 1970.
             r.curr.deltaT = (r.curr.lastCalcDate - r.prev.lastCalcDate)/1000;
             r.curr.speedC = roundTo(r.curr.deltaD/r.curr.deltaT * 3600, 2);
+            // deltaD_T = Delta distance computed from speedT is only displayed when it deviates
+            if ( r.curr.speedT ) {
+                r.curr.deltaD_T = r.curr.deltaD /  r.curr.speedC * r.curr.speedT.speed;
+            }
+
             saveMessage(r);
         }
         divRaceStatus.innerHTML = makeRaceStatusHTML();
@@ -441,7 +453,7 @@ var controller = function () {
 
         var boatPolars = polars[message.boat.polar_id];
         if ( boatPolars == undefined || message.options == undefined || message.tws == undefined) {
-            return '-';
+            return undefined;
         } else {
             var tws = message.tws;
             var twd = message.twd;
@@ -452,7 +464,7 @@ var controller = function () {
             var twsLookup = fractionStep(tws, boatPolars.tws);
             var twaLookup = fractionStep(twa, boatPolars.twa);
             var speed = maxSpeed(options, twsLookup, twaLookup, boatPolars.sail);
-            return ' ' + roundTo(speed.speed * foil * hull, 2) + '&nbsp;(' + shortNames[speed.sail] + ')';
+            return {"speed": roundTo(speed.speed * foil * hull, 2), "sail": shortNames[speed.sail]};
         }
     }
 
