@@ -122,14 +122,15 @@ var controller = function () {
 
         var twaFG = (r.curr.twa < 0)?"red":"green";
         var twaBold = r.curr.twaAuto?"font-weight: bold;":"";
-        var hdgBold = r.curr.twaAuto?"":' style="font-weight: bold;"';
+        var hdgFG = r.curr.twaAuto?"black":"blue";
+        var hdgBold = r.curr.twaAuto?"font-weight: normal;":"font-weight: bold;";
 
         return "<td>" + ((r.rank)?r.rank:"-") + "</td>"
             + "<td>" + ((r.dtl)?r.dtl:"-") + "</td>"
             + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
             + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
-            + "<td" + hdgBold + ">" + roundTo(r.curr.heading, 1) + "</td>"
-            + '<td style="color:' + twaFG + ';' + twaBold + '">'+ roundTo(Math.abs(r.curr.twa), 1) + "</td>"
+            + '<td style="color:' + hdgFG + ';' + hdgBold + '">' + roundTo(r.curr.heading, 1) + "</td>"
+            + '<td style="color:' + twaFG + ';' + twaBold + '">' + roundTo(Math.abs(r.curr.twa), 1) + "</td>"
             + "<td>" + roundTo(r.curr.tws, 1) + "</td>"
             + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
             + "<td>" + (r.curr.twaAuto?"Yes":"No") + "</td>"
