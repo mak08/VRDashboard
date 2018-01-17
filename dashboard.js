@@ -3,6 +3,8 @@
 
 var controller = function () {
 
+    const LightRed = '#ffa0a0';
+    
     // ToDo: clear stats if user/boat changes
     var currentUserId;
     var requests = new Map();
@@ -143,8 +145,8 @@ var controller = function () {
             return "";
         } else {
 
-            var sailNameBG = r.curr.badSail?"red":"lightgreen";
-            var agroundBG = r.curr.aground?"red":"lightgreen";
+            var sailNameBG = r.curr.badSail?LightRed:"lightgreen";
+            var agroundBG = r.curr.aground?LightRed:"lightgreen";
 
             var manoeuvering = (r.curr.tsEndOfSailChange  > r.curr.lastCalcDate)
                 || (r.curr.tsEndOfGybe  > r.curr.lastCalcDate)
@@ -158,7 +160,7 @@ var controller = function () {
                 lastCommand = printLastCommand(r.lastCommand.request.actions);
                 lastCommand = "T:" + lcTime + ' Actions:' + lastCommand;
                 if ( r.lastCommand.rc != "ok" ) {
-                    lastCommandBG = 'red';
+                    lastCommandBG = LightRed;
                 }
             }
 
@@ -304,7 +306,7 @@ var controller = function () {
         }
         
         function getBG (timestamp) {
-            return isCurrent(timestamp)?'style="background-color: tomato;"':'';
+            return isCurrent(timestamp)?('style="background-color: ' + LightRed + ';"'):'';
         }
 
         function isPenalty () {
@@ -322,11 +324,11 @@ var controller = function () {
         }
         
         if ( isPenalty() ) {
-            speedCStyle = 'style="background-color: tomato;"';
+            speedCStyle = 'style="background-color: ' + LightRed + ';"';
         } else if ( isDifferingSpeed(r.curr.speedC) ) {
             speedCStyle = 'style="background-color: yellow;"';
         } else if ( isDifferingSpeed(r.curr.speedT.speed) ) {
-            speedTStyle = 'style="background-color: red;"';
+            speedTStyle = 'style="background-color: ' + LightRed + ';"';
             deltaDist = deltaDist + ' (' +  roundTo(r.curr.deltaD_T, 2) + ')';
         }
         
