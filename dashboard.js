@@ -317,7 +317,7 @@ var controller = function () {
         
         var speedCStyle = '';
         var speedTStyle = '';
-        var deltaDist = roundTo(r.curr.deltaD, 2);
+        var deltaDist = roundTo(r.curr.deltaD, 3);
         var speedT = '-';
         if ( r.curr.speedT ) {
             speedT = r.curr.speedT.speed + '&nbsp;(' + r.curr.speedT.sail + ')';
@@ -328,8 +328,9 @@ var controller = function () {
         } else if ( isDifferingSpeed(r.curr.speedC) ) {
             speedCStyle = 'style="background-color: yellow;"';
         } else if ( isDifferingSpeed(r.curr.speedT.speed) ) {
+            // Speed differs but not due to penalty - assume 'Bad Sail' and display theoretical delta
             speedTStyle = 'style="background-color: ' + LightRed + ';"';
-            deltaDist = deltaDist + ' (' +  roundTo(r.curr.deltaD_T, 2) + ')';
+            deltaDist = deltaDist + ' (' +  roundTo(r.curr.deltaD_T, 3) + ')';
         }
         
         var sailChange = formatSeconds(r.curr.tsEndOfSailChange - r.curr.lastCalcDate);
@@ -599,7 +600,7 @@ var controller = function () {
         var xi = gcAngle(rlat0, rlon0, rlat1, rlon1);
         var a = Math.acos((Math.sin(rlat1) - Math.sin(rlat0) * Math.cos(xi))
                          / (Math.cos(rlat0) * Math.sin(xi)));
-        return (rlon1 > rlon0)?a:(2*Math.PI-a);
+        return (Math.sin(rlon1-rlon0)>0)?a:(2*Math.PI-a);
     }
 
     function toRad (angle) {
