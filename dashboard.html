@@ -36,6 +36,9 @@
       	border: 1px solid black;
 		border-collapse: collapse;
 	  }
+	  tr.hov:hover {
+	  background: #dddddd;
+	  }
 	  th {
       	border: 1px solid black;
 		padding: 2px;
@@ -44,6 +47,10 @@
       	border: 1px solid grey;
 		padding: 2px;
 	  }
+        #friendList {
+  		display: none;
+	  }
+
     </style>
 
 	<script src="dashboard.js"></script>
@@ -74,12 +81,17 @@
 		<label>Local times</label>
 	  </div>
 	  <div>
+		<input type="checkbox" id="friends">
+		<label>Friends</label>
+	  </div>
+	  <div>
 		<label>Version</label>
 		<label id="lb_version"></label>
 	  </div>
 	</div>
 	<div id="container">
 	  <div id="raceStatus"></div>
+	  <div id="friendList"></div>
 	  <div id="recordlog"></div>
 	</div>
 	<div>
@@ -90,4 +102,3 @@
  	<div style="white-space: pre;" id="rawlog"></div>
   </body>
 </html>
-
