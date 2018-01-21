@@ -422,7 +422,7 @@ var controller = function () {
             var beta = Math.PI - angle(toRad(r.curr.heading), delta);
             var gamma = angle(toRad(r.curr.heading), toRad(r.prev.heading));
             // var gamma = Math.PI - alpha - beta;
-            if ( toDeg(alpha) > 1 && toDeg(beta) > 1 ) {
+            if ( Math.abs(toDeg(gamma)-180) > 1 && toDeg(alpha) > 1 && toDeg(beta) > 1 ) {
                 r.curr.deltaD = d / Math.sin(gamma) * (Math.sin(beta) +  Math.sin(alpha));
             } else {
                 r.curr.deltaD = d;
