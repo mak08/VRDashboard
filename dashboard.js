@@ -421,14 +421,16 @@ var controller = function () {
             var alpha = Math.PI - angle(toRad(r.prev.heading), delta);
             var beta = Math.PI - angle(toRad(r.curr.heading), delta);
             var gamma = angle(toRad(r.curr.heading), toRad(r.prev.heading));
-            // var gamma = Math.PI - alpha - beta;
-            if ( Math.abs(toDeg(gamma)-180) > 1 && toDeg(alpha) > 1 && toDeg(beta) > 1 ) {
+            // Epoch timestamps are milliseconds since 00:00:00 UTC on 1 January 1970.
+            r.curr.deltaT = (r.curr.lastCalcDate - r.prev.lastCalcDate)/1000;
+            if ( r.curr.deltaT > 0
+                 && Math.abs(toDeg(gamma)-180) > 1
+                 && toDeg(alpha) > 1
+                 && toDeg(beta) > 1 ) {
                 r.curr.deltaD = d / Math.sin(gamma) * (Math.sin(beta) +  Math.sin(alpha));
             } else {
                 r.curr.deltaD = d;
             }
-            // Epoch timestamps are milliseconds since 00:00:00 UTC on 1 January 1970.
-            r.curr.deltaT = (r.curr.lastCalcDate - r.prev.lastCalcDate)/1000;
             r.curr.speedC = roundTo(r.curr.deltaD/r.curr.deltaT * 3600, 2);
             // deltaD_T = Delta distance computed from speedT is only displayed when it deviates
             if ( r.curr.speedT ) {
