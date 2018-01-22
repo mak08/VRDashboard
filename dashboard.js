@@ -774,6 +774,15 @@ var controller = function () {
             // Map to request type via requestId
             var request = JSON.parse(params.response.payloadData);
             requests.set(request.requestId, request);
+
+            if ( request.eventKey == "Game_StartAttempt" ) {
+                var raceId = getRaceLegId(request);
+                var race = races.get(raceId);
+                if (race) {
+                    race.prev = undefined;
+                    race.curr = undefined;
+                }
+            }
             
         } else if ( message == "Network.webSocketFrameReceived" ) {
             // Append message to raw log
