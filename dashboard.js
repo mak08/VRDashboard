@@ -103,7 +103,7 @@ var controller = function () {
         + '<th>' + 'Rank' + '</th>'
         + '<th title="Distance To Finish">' + 'DTF' + '</th>'
         + '<th title="Distance To Us">' + 'DTU' + '</th>'
-        + '<th>' + 'Type' + '</th>'
+        + '<th>' + 'Sail' + '</th>'
         + '<th>' + 'State' + '</th>'
         + '<th>' + 'Position' + '</th>'
         + '<th title="Heading">' + 'HDG' + '</th>'
@@ -236,7 +236,7 @@ var controller = function () {
             var trstyle = "hov";
             if(r.id === selRace.value) trstyle += " sel";
             return "<tr class='" + trstyle +"' id='rs:" + r.id + "'>"
-                + (r.url ? ("<td class='tdc' id='rt:" + r.id + "'>&#x2388;</td>") : "<td>&nbsp;</td>")
+                + (r.url ? ("<td class='tdc' id='rt:" + r.id + "' align='center' style='font-size:200%'>&#x2388;</td>") : "<td>&nbsp;</td>")
                 + "<td>" + r.name + "</td>"
                 + "<td>" + info + "</td>"
                 + commonTableLines(r)
@@ -262,13 +262,13 @@ var controller = function () {
             if ( r == undefined ) return "";
             var nameBold = (r.mode == "followed") ?"font-weight: bold;":"";
             return "<tr class='hov' id='ui:" + uid + "'>"
-                + (race.url ? ("<td class='tdc' id='rt:" + uid + "'>&#x2388;</td>") : "<td>&nbsp;</td>")
+                + (race.url ? ("<td class='tdc' id='rt:" + uid + "' align='center' style='font-size:200%'>&#x2388;</td>") : "<td>&nbsp;</td>")
                 + '<td style="' + nameBold + '">' + r.displayName + "</td>"
                 + "<td>" + formatDate(r.ts) + "</td>"
                 + "<td>" + ((r.rank)?r.rank:"-") + "</td>"
                 + "<td>" + ((r.distanceToEnd)?r.distanceToEnd:"-") + "</td>"
                 + "<td>" + ((r.distanceToUs)?r.distanceToUs:"-") + "</td>"
-                + "<td>" + r.type + "</td>"
+                + "<td>" + sailNames[r.sail] + "</td>"
                 + "<td>" + r.state + "</td>"
                 + "<td>" + formatPosition(r.pos.lat, r.pos.lon) + "</td>"
                 + "<td>" + roundTo(r.heading, 1) + "</td>"
@@ -315,7 +315,7 @@ var controller = function () {
         }
         if(ndata.mode == "followed") data.mode = "followed"; // keep followed state if present
 
-        var elemlist = ["displayName", "ts", "rank", "type", "state", "pos","heading","twa","tws","speed","mode","distanceToEnd"];
+        var elemlist = ["displayName", "ts", "rank", "type", "state", "pos","heading","twa","tws","speed","mode","distanceToEnd","sail"];
         // copy elems from data to uinfo
         elemlist.forEach(function(tag) {
             if(data[tag]) {
