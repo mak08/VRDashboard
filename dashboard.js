@@ -26,23 +26,27 @@ var controller = function () {
         selRace.appendChild(option);
     }
     
+    function initRace(race, disabled) {
+	race.tableLines=[];
+	races.set(race.id, race);
+	var rfdef = new Map();
+	rfdef.table = new Array();
+	rfdef.uinfo = new Object();
+	racefriends.set(race.id, rfdef);
+	addSelOption(race, false, disabled);
+	if (race.has_beta) {
+	    addSelOption(race, true, disabled);
+	}
+    }
+
     function initRaces() {
         var xhr = new XMLHttpRequest();
         xhr.onload = function() {
             var json = xhr.responseText;
             json = JSON.parse(json);
             for (var i = 0; i < json.races.length; i++) {
-                var race = json.races[i];
-                race.tableLines=[];
-                races.set(race.id, race);
-		var rfdef = new Map();
-		rfdef.table = new Array();
-		rfdef.uinfo = new Object();
-		racefriends.set(race.id, rfdef);
-                addSelOption(race, false, true);
-                if (race.has_beta) {
-                    addSelOption(race, true, true);
-                }
+		json.races[i].source = "zezo";
+		initRace(json.races[i],true);
             }
             divRaceStatus = document.getElementById("raceStatus");
             divRaceStatus.innerHTML = makeRaceStatusHTML();
@@ -50,6 +54,7 @@ var controller = function () {
             divFriendList.innerHTML = "No friend positions received yet";
         }
         xhr.open('GET', 'http://zezo.org/races2.json');
+        //xhr.open('GET', 'races2.json');
         xhr.send();
     }
 
@@ -76,7 +81,9 @@ var controller = function () {
         + '</tr>';
 
     var raceStatusHeader =  '<tr>'
+        + '<th>' + 'RT' + '</th>'
         + '<th>' + 'Race' + '</th>'
+        + '<th>' + 'Info' + '</th>'
         + commonHeaders()
         + '<th title="Boat speed">' + 'Speed' + '</th>'
         + '<th>' + 'Options' + '</th>'
@@ -90,6 +97,7 @@ var controller = function () {
         +  '</tr>';
 
     var friendListHeader =  '<tr>'
+        + '<th>' + 'RT' + '</th>'
         + '<th>' + 'Friend/Opponent' + '</th>'
         + '<th>' + 'Last Update' + '</th>'
         + '<th>' + 'Rank' + '</th>'
@@ -215,8 +223,20 @@ var controller = function () {
                 }
         } 
 
+	    var info;
+	    if(r.type === "leg") {
+	    	info = "<span>Leg " + r.legnum + "</span>";
+	    } else if(r.type === "record") {
+	    	info = " <span>Record, Attempt " + parseInt(r.record.attemptCounter) + "</span>";
+	    }
+	    if(r.type === "record" && r.record.lastRankingGateName) {
+	    	info += "<br/><span>@" + r.record.lastRankingGateName + "</span>";
+	    }
+
             return "<tr class='hov' id='rs:" + r.id + "'>"
+	    	+ (r.url ? ("<td id='rt:" + r.id + "'>&#x2388</td>") : "<td>&nbsp;</td>")
                 + "<td>" + r.name + "</td>"
+		+ "<td>" + info + "</td>"
                 + commonTableLines(r)
                 + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
                 + "<td>" + ((r.curr.options.length == 8)?'Full':r.curr.options.join(' ')) + "</td>"
@@ -236,9 +256,11 @@ var controller = function () {
             return "";
         } else {
 	    var r = this.uinfo[uid];
+	    var race = races.get(selRace.value);
             if ( r == undefined ) return "";
 	    var nameBold = (r.mode == "followed") ?"font-weight: bold;":"";
             return "<tr class='hov' id='ui:" + uid + "'>"
+	    	+ (race.url ? ("<td id='rt:" + uid + "'>&#x2388</td>") : "<td>&nbsp;</td>")
 		+ '<td style="' + nameBold + '">' + r.displayName + "</td>"
 		+ "<td>" + formatDate(r.ts) + "</td>"
 		+ "<td>" + ((r.rank)?r.rank:"-") + "</td>"
@@ -263,6 +285,7 @@ var controller = function () {
     }
 
     function makeFriendsHTML(rf) {
+	if(rf === undefined) return;
         return "<table style=\"width:100%\">"
             + friendListHeader
             + Array.from(rf.table||[]).map(makeFriendListLine, rf).join(' ');
@@ -471,9 +494,12 @@ var controller = function () {
         }
     }
 
-    function changeRace() {
-        divRecordLog.innerHTML = makeTableHTML(races.get(this.value));
-        divFriendList.innerHTML = makeFriendsHTML(racefriends.get(this.value));
+    function changeRace(race) {
+        if (typeof race === "object") { // select event
+		race = this.value;
+	}
+        divRecordLog.innerHTML = makeTableHTML(races.get(race));
+        divFriendList.innerHTML = makeFriendsHTML(racefriends.get(race));
     }
 
     function getRaceLegId (id) {
@@ -493,32 +519,52 @@ var controller = function () {
         divRawLog.innerHTML = "";
     }
 
-    function friendDisplay(ev) {
-	if(ev.target.checked) divFriendList.style.display = 'block';
-	else divFriendList.style.display = 'none';
-    }
-
     function tableClick(ev) {
-	var id = ev.target.parentNode.id;
-	if(id === undefined) return;
-	var match;
+	var call_rt = false;
+	var friend=false;
+	var rmatch;
+	var re_rttd = new RegExp("^rt:(.+)");
 	var re_rsel = new RegExp("^rs:(.+)");
 	var re_usel = new RegExp("^ui:(.+)");
 
-	if(match = re_rsel.exec(id)) {
-	    callUrl(match[1]);
-	} else if(match = re_usel.exec(id)) {
-	    callUrl(selRace.value,match[1]);
+	for(var node = ev.target; node ; node = node.parentNode) {
+		var id = node.id;
+		var match;
+		if(re_rttd.exec(id)) {
+			call_rt = true;
+		} else if(match = re_rsel.exec(id)) {
+			rmatch = match[1];
+		} else if(match = re_usel.exec(id)) {
+			rmatch = match[1];
+			friend=true;
+		}
+	}
+	if(rmatch) {
+		if(friend) {
+			if(call_rt) callUrl(selRace.value,rmatch);
+		} else {
+			if(call_rt) callUrl(rmatch);
+			enableRace(rmatch,true);
+			changeRace(rmatch);
+		}
 	}
     }
 
-    function enableRace(id) {
+    function enableRace(id,force) {
         for (var i = 0; i < selRace.options.length; i++) {
             if (selRace.options[i].value == id) {
                 selRace.options[i].disabled = false;
-                if (selRace.selectedIndex == -1) {
+                if (selRace.selectedIndex == -1 || force) {
                     selRace.selectedIndex = i;
                 }
+            }
+        }
+    }
+
+    function renameRace(id, newname) {
+        for (var i = 0; i < selRace.options.length; i++) {
+            if (selRace.options[i].value == id) {
+                selRace.options[i].text = newname;
             }
         }
     }
@@ -532,9 +578,8 @@ var controller = function () {
     
     function addRace(message) {
         var raceId = getRaceLegId(message._id);
-        var race = { id: raceId, name : "Race #" + raceId, tableLines: []};
-        races.set(raceId, race);
-        addSelOption(race, false, false); 
+        var race = { id: raceId, name: "Race #" + raceId, source: "tmp"};
+	initRace(race, false);
         return race;
     }
     
@@ -720,15 +765,17 @@ var controller = function () {
 	    var pos = r.curr.pos;
 	    var twa = r.curr.twa;
 	    var uid = r.curr._id.user_id;
+	    var type = "me";
 
 	    if(uinfo) {
 		pos = uinfo.pos;
 		twa = uinfo.twa;
 		uid = userId;
+		options = 0;
+		type = "friend";
 	    }
-            var url = baseURL + '/' + urlBeta + '/chart.pl?lat=' + pos.lat + '&lon=' + pos.lon + 
-                '&options=' + options + '&twa=' + r.curr.twa;
-            // +  '&userid=' + uid; Not yer
+	    var url = baseURL + '/' + urlBeta + '/chart.pl?lat=' + pos.lat + '&lon=' + pos.lon +
+	    	'&options=' + options + '&twa=' + twa + '&userid=' + uid + '&type=' + type;
             window.open(url, cbReuseTab.checked?urlBeta:'_blank');
         }
     }
@@ -891,6 +938,8 @@ var controller = function () {
             alert('Unsupported race #' + raceId);
         } else if ( races.get(raceId).curr === undefined ) {
             alert('No position received yet. Please retry later.');
+        } else if ( races.get(raceId).url === undefined ) {
+            alert('Unsupported race, no router support yet.');
         } else if ( callUrlFunction === undefined ) {
             // ?
         } else {
@@ -985,13 +1034,24 @@ var controller = function () {
                         // ToDo: contains Bad Sail warnings. Show in race status table?
                         var legInfos = response.scriptData.res;
                         legInfos.map(function (legInfo) {
-                            var race = races.get(legId(legInfo));
-                            if ( race != undefined ) {
-                                race.rank = legInfo.rank;
-                                if ( legInfo.problem == "badSail" ) {
-                                } else if ( legInfo.problem == "..." ) {
-                                }
-                            }
+			    var rid = legId(legInfo);
+                            var race = races.get(rid);
+			    if ( race === undefined ) {	
+				race = { id: rid, name: legInfo.legName, source: "vr_leglist" };
+				initRace(race, true);
+			    }
+			    if(race.source === "tmp") {
+				race.name = legInfo.legName; // no name yet (created by updatePosition)
+				renameRace(rid, race.name);
+			    }
+			    race.rank = legInfo.rank;
+			    race.type = legInfo.raceType; 
+			    race.legnum = legInfo.legNum; 
+			    race.status = legInfo.status; 
+			    race.record = legInfo.record; 
+			    if ( legInfo.problem == "badSail" ) {
+			    } else if ( legInfo.problem == "..." ) {
+			    }
                         });
                         divRaceStatus.innerHTML = makeRaceStatusHTML();
                     } else if ( request.eventKey == "Game_GetBoatState" ) {
@@ -1065,7 +1125,6 @@ var controller = function () {
         changeRace: changeRace,
         onEvent: onEvent,
         clearLog: clearLog,
-	friendDisplay: friendDisplay,
 	tableClick: tableClick,
         readOptions: readOptions,
         addConfigListeners: addConfigListeners
@@ -1083,7 +1142,6 @@ window.addEventListener("load", function() {
     document.getElementById("bt_callurl").addEventListener("click", controller.callUrl);
     document.getElementById("sel_race").addEventListener("change", controller.changeRace);
     document.getElementById("bt_clear").addEventListener("click", controller.clearLog);
-    document.getElementById("friends").addEventListener("change", controller.friendDisplay);
     document.addEventListener("click", controller.tableClick);
 
     controller.readOptions();
