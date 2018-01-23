@@ -847,6 +847,12 @@ var controller = function () {
                         if (cbRouter.checked) {
                             callUrl(raceId);
                         }
+                    } else if ( request.eventKey == "Game_RefreshBoatState" ) {
+                        // New message - does this replace the boatStatePush? 
+                        var raceId = getRaceLegId(response.scriptData.boatState._id);
+                        var race =  races.get(raceId);
+                        // Don't try old race_id, messages will be misdirected
+                        updatePosition(response.scriptData.boatState, race);
                     } else if ( request.eventKey == "Game_AddBoatAction" ) {
                         // First boat state message, only sent for the race the UI is displaying
                         var raceId = getRaceLegId(request);
