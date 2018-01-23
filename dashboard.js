@@ -431,7 +431,7 @@ var controller = function () {
             } else {
                 r.curr.deltaD = d;
             }
-            r.curr.speedC = roundTo(r.curr.deltaD/r.curr.deltaT * 3600, 2);
+            r.curr.speedC = Math.abs(roundTo(r.curr.deltaD/r.curr.deltaT * 3600, 2));
             // deltaD_T = Delta distance computed from speedT is only displayed when it deviates
             if ( r.curr.speedT ) {
                 r.curr.deltaD_T = r.curr.deltaD /  r.curr.speedC * r.curr.speedT.speed;
