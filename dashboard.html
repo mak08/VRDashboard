@@ -36,6 +36,12 @@
 	  border: 1px solid black;
 	  border-collapse: collapse;
 	  }
+	  tr.sel {
+	  background: #eeeeee;
+	  }
+	  tr.sel:hover {
+	  background: #dddddd;
+	  }
 	  tr.hov:hover {
 	  background: #dddddd;
 	  }
@@ -50,11 +56,16 @@
 	  span {
 	  white-space:nowrap;
 	  }
+	  td.tdc {
+	  cursor: pointer;
+	  font-weight: bold;
+	  }
+
 	  .tabs{
 	  display: block;
 	  position: relative;
+	  padding: 0px;
 	  }
-	  
 	  .tabs .tab{
 	  float: left;
 	  display: block;
@@ -78,7 +89,7 @@
 	  overflow: hidden;
 	  width: 100%;
 	  position: absolute;
-	  top: 50px;
+	  top: auto;
 	  left: 0;
 	  opacity:0;
 	  transition: opacity 400ms ease-out;

@@ -81,7 +81,7 @@ var controller = function () {
         + '</tr>';
 
     var raceStatusHeader =  '<tr>'
-        + '<th>' + 'RT' + '</th>'
+        + '<th title="Call Router">' + 'RT' + '</th>'
         + '<th>' + 'Race' + '</th>'
         + '<th>' + 'Info' + '</th>'
         + commonHeaders()
@@ -97,7 +97,7 @@ var controller = function () {
         +  '</tr>';
 
     var friendListHeader =  '<tr>'
-        + '<th>' + 'RT' + '</th>'
+        + '<th title="Call Router">' + 'RT' + '</th>'
         + '<th>' + 'Friend/Opponent' + '</th>'
         + '<th>' + 'Last Update' + '</th>'
         + '<th>' + 'Rank' + '</th>'
@@ -233,8 +233,10 @@ var controller = function () {
 	    	info += "<br/><span>@" + r.record.lastRankingGateName + "</span>";
 	    }
 
-            return "<tr class='hov' id='rs:" + r.id + "'>"
-	    	+ (r.url ? ("<td id='rt:" + r.id + "'>&#x2388</td>") : "<td>&nbsp;</td>")
+	    var trstyle = "hov";
+	    if(r.id === selRace.value) trstyle += " sel";
+            return "<tr class='" + trstyle +"' id='rs:" + r.id + "'>"
+		+ (r.url ? ("<td class='tdc' id='rt:" + r.id + "'>&#x2388;</td>") : "<td>&nbsp;</td>")
                 + "<td>" + r.name + "</td>"
 		+ "<td>" + info + "</td>"
                 + commonTableLines(r)
@@ -260,7 +262,7 @@ var controller = function () {
             if ( r == undefined ) return "";
 	    var nameBold = (r.mode == "followed") ?"font-weight: bold;":"";
             return "<tr class='hov' id='ui:" + uid + "'>"
-	    	+ (race.url ? ("<td id='rt:" + uid + "'>&#x2388</td>") : "<td>&nbsp;</td>")
+		+ (race.url ? ("<td class='tdc' id='rt:" + uid + "'>&#x2388;</td>") : "<td>&nbsp;</td>")
 		+ '<td style="' + nameBold + '">' + r.displayName + "</td>"
 		+ "<td>" + formatDate(r.ts) + "</td>"
 		+ "<td>" + ((r.rank)?r.rank:"-") + "</td>"
@@ -498,6 +500,7 @@ var controller = function () {
         if (typeof race === "object") { // select event
 		race = this.value;
 	}
+	divRaceStatus.innerHTML = makeRaceStatusHTML();
         divRecordLog.innerHTML = makeTableHTML(races.get(race));
         divFriendList.innerHTML = makeFriendsHTML(racefriends.get(race));
     }
