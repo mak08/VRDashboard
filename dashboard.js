@@ -13,6 +13,7 @@ var controller = function () {
     var polars =  [];
 
     var races = new Map();
+    var racefriends = new Map();
 
     var sailNames = [0, "Jib", "Spi", "Staysail", "Light Jib", "Code0", "Heavy Gnk", "Light Gnk", 8, 9, "Auto", "Jib (Auto)", "Spi (Auto)", "Staysail (Auto)", "Light Jib (Auto)", "Code0 (Auto)", "Heavy Gnk (Auto)", "Light Gnk (Auto)"];
 
@@ -25,24 +26,35 @@ var controller = function () {
         selRace.appendChild(option);
     }
     
+    function initRace(race, disabled) {
+	race.tableLines=[];
+	races.set(race.id, race);
+	var rfdef = new Map();
+	rfdef.table = new Array();
+	rfdef.uinfo = new Object();
+	racefriends.set(race.id, rfdef);
+	addSelOption(race, false, disabled);
+	if (race.has_beta) {
+	    addSelOption(race, true, disabled);
+	}
+    }
+
     function initRaces() {
         var xhr = new XMLHttpRequest();
         xhr.onload = function() {
             var json = xhr.responseText;
             json = JSON.parse(json);
             for (var i = 0; i < json.races.length; i++) {
-                var race = json.races[i];
-                race.tableLines=[];
-                races.set(race.id, race);
-                addSelOption(race, false, true);
-                if (race.has_beta) {
-                    addSelOption(race, true, true);
-                }
+		json.races[i].source = "zezo";
+		initRace(json.races[i],true);
             }
             divRaceStatus = document.getElementById("raceStatus");
             divRaceStatus.innerHTML = makeRaceStatusHTML();
+            divFriendList = document.getElementById("friendList");
+            divFriendList.innerHTML = "No friend positions received yet";
         }
         xhr.open('GET', 'http://zezo.org/races2.json');
+        //xhr.open('GET', 'races2.json');
         xhr.send();
     }
 
@@ -69,7 +81,9 @@ var controller = function () {
         + '</tr>';
 
     var raceStatusHeader =  '<tr>'
+        + '<th title="Call Router">' + 'RT' + '</th>'
         + '<th>' + 'Race' + '</th>'
+        + '<th>' + 'Info' + '</th>'
         + commonHeaders()
         + '<th title="Boat speed">' + 'Speed' + '</th>'
         + '<th>' + 'Options' + '</th>'
@@ -80,6 +94,22 @@ var controller = function () {
         + '<th title="Stealth mode">' + 'Stlt' + '</th>'
         + '<th title="Boat is maneuvering, half speed">' + 'Mnvr' + '</th>'
         + '<th>' + 'Last Command' + '</th>'
+        +  '</tr>';
+
+    var friendListHeader =  '<tr>'
+        + '<th title="Call Router">' + 'RT' + '</th>'
+        + '<th>' + 'Friend/Opponent' + '</th>'
+        + '<th>' + 'Last Update' + '</th>'
+        + '<th>' + 'Rank' + '</th>'
+	+ '<th title="Distance To Finish">' + 'DTF' + '</th>'
+	+ '<th title="Distance To Us">' + 'DTU' + '</th>'
+        + '<th>' + 'Type' + '</th>'
+        + '<th>' + 'State' + '</th>'
+	+ '<th>' + 'Position' + '</th>'
+	+ '<th title="Heading">' + 'HDG' + '</th>'
+	+ '<th title="True Wind Angle">' + 'TWA' + '</th>'
+	+ '<th title="True Wind Speed">' + 'TWS' + '</th>'
+        + '<th title="Boat speed">' + 'Speed' + '</th>'
         +  '</tr>';
 
 
@@ -193,8 +223,22 @@ var controller = function () {
                 }
         } 
 
-            return "<tr>"
+	    var info;
+	    if(r.type === "leg") {
+	    	info = "<span>Leg " + r.legnum + "</span>";
+	    } else if(r.type === "record") {
+	    	info = " <span>Record, Attempt " + parseInt(r.record.attemptCounter) + "</span>";
+	    }
+	    if(r.type === "record" && r.record.lastRankingGateName) {
+	    	info += "<br/><span>@" + r.record.lastRankingGateName + "</span>";
+	    }
+
+	    var trstyle = "hov";
+	    if(r.id === selRace.value) trstyle += " sel";
+            return "<tr class='" + trstyle +"' id='rs:" + r.id + "'>"
+		+ (r.url ? ("<td class='tdc' id='rt:" + r.id + "'>&#x2388;</td>") : "<td>&nbsp;</td>")
                 + "<td>" + r.name + "</td>"
+		+ "<td>" + info + "</td>"
                 + commonTableLines(r)
                 + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
                 + "<td>" + ((r.curr.options.length == 8)?'Full':r.curr.options.join(' ')) + "</td>"
@@ -209,10 +253,44 @@ var controller = function () {
         }
     }
 
+    function makeFriendListLine (uid) {
+        if ( uid == undefined ) {
+            return "";
+        } else {
+	    var r = this.uinfo[uid];
+	    var race = races.get(selRace.value);
+            if ( r == undefined ) return "";
+	    var nameBold = (r.mode == "followed") ?"font-weight: bold;":"";
+            return "<tr class='hov' id='ui:" + uid + "'>"
+		+ (race.url ? ("<td class='tdc' id='rt:" + uid + "'>&#x2388;</td>") : "<td>&nbsp;</td>")
+		+ '<td style="' + nameBold + '">' + r.displayName + "</td>"
+		+ "<td>" + formatDate(r.ts) + "</td>"
+		+ "<td>" + ((r.rank)?r.rank:"-") + "</td>"
+		+ "<td>" + ((r.distanceToEnd)?r.distanceToEnd:"-") + "</td>"
+		+ "<td>" + ((r.distanceToUs)?r.distanceToUs:"-") + "</td>"
+		+ "<td>" + r.type + "</td>"
+		+ "<td>" + r.state + "</td>"
+		+ "<td>" + formatPosition(r.pos.lat, r.pos.lon) + "</td>"
+		+ "<td>" + roundTo(r.heading, 1) + "</td>"
+		+ "<td>" + roundTo(Math.abs(r.twa), 1) + "</td>"
+		+ "<td>" + roundTo(r.tws, 1) + "</td>"
+		+ "<td>" + roundTo(r.speed, 2) + "</td>"
+		+ "</tr>";
+        }
+    }
+
     function makeRaceStatusHTML () {
         return "<table style=\"width:100%\">"
             + raceStatusHeader
             + Array.from(races||[]).map(makeRaceStatusLine).join(' ');
+            + "</table>";
+    }
+
+    function makeFriendsHTML(rf) {
+	if(rf === undefined) return;
+        return "<table style=\"width:100%\">"
+            + friendListHeader
+            + Array.from(rf.table||[]).map(makeFriendListLine, rf).join(' ');
             + "</table>";
     }
 
@@ -221,6 +299,65 @@ var controller = function () {
             + tableHeader
             + (r === undefined?"":r.tableLines.join(' '))
             + "</table>";
+    }
+
+    function updateFriendUinfo(rid, mode, uid, data) {
+	var rfd = racefriends.get(rid);
+	var race = races.get(rid);
+	var ndata = rfd.uinfo[uid];
+	if(!ndata) {
+		ndata = new Object();
+		rfd.uinfo[uid] = ndata;
+	}
+	if(mode == "usercard") {
+		data.mode = "opponents";
+		data.ts = data.lastCalcDate;
+	}
+	if(ndata.mode == "followed") data.mode = "followed"; // keep followed state if present
+
+        var elemlist = ["displayName", "ts", "rank", "type", "state", "pos","heading","twa","tws","speed","mode","distanceToEnd"];
+	// copy elems from data to uinfo
+	elemlist.forEach(function(tag) {
+		if(data[tag]) {
+			ndata[tag] = data[tag];
+			if(tag == "pos") { // calc gc distance to us
+				ndata.distanceToUs = roundTo(gcDistance(race.curr.pos.lat,  race.curr.pos.lon, data.pos.lat, data.pos.lon) / 1.852,1);
+			}
+		}
+	});
+    }
+
+    function updateFriends(rid, mode, data) {
+	var rfd = racefriends.get(rid);
+	var fln = new Array();
+	var flk = new Array();
+
+	/* keep old records of other types */
+	rfd.table.forEach(function(oelem) {
+		var ouser = rfd.uinfo[oelem];
+		if(ouser.mode != mode) flk.push(oelem);
+	});
+
+	data.forEach(function(delem) {
+		delem.mode = mode;
+		if(!delem.ts) delem.ts = Date.now();
+		if(mode == "opponents") {
+			if(delem.type == "pilotBoat") {
+				delem.displayName = "StarVRtrek Teleport Frigate";
+			} else if(delem.type == "real") {
+				delem.displayName = delem.extendedInfos.boatName;
+				delem.rank = delem.extendedInfos.rank;
+			}
+		}
+		fln.push(delem.userId);
+		updateFriendUinfo(rid, mode, delem.userId, delem);
+	});
+
+	if(mode == "followed") {
+		rfd.table = fln.concat(flk);
+	} else {
+		rfd.table = flk.concat(fln);
+	}
     }
 
     function formatSeconds (value) {
@@ -359,12 +496,22 @@ var controller = function () {
         }
     }
 
-    function changeRace() {
-        divRecordLog.innerHTML = makeTableHTML(races.get(this.value));
+    function changeRace(race) {
+        if (typeof race === "object") { // select event
+		race = this.value;
+	}
+	divRaceStatus.innerHTML = makeRaceStatusHTML();
+        divRecordLog.innerHTML = makeTableHTML(races.get(race));
+        divFriendList.innerHTML = makeFriendsHTML(racefriends.get(race));
     }
 
     function getRaceLegId (id) {
-        return id.race_id + '.' + id.leg_num;
+	// work around for certain messages (Game_GetOpponents)
+	if(id.raceId) {
+		return id.raceId + '.' + id.legNum;
+	} else {
+		return id.race_id + '.' + id.leg_num;
+	}
     }
     
     function legId (legInfo) {
@@ -375,13 +522,52 @@ var controller = function () {
         divRawLog.innerHTML = "";
     }
 
-    function enableRace(id) {
+    function tableClick(ev) {
+	var call_rt = false;
+	var friend=false;
+	var rmatch;
+	var re_rttd = new RegExp("^rt:(.+)");
+	var re_rsel = new RegExp("^rs:(.+)");
+	var re_usel = new RegExp("^ui:(.+)");
+
+	for(var node = ev.target; node ; node = node.parentNode) {
+		var id = node.id;
+		var match;
+		if(re_rttd.exec(id)) {
+			call_rt = true;
+		} else if(match = re_rsel.exec(id)) {
+			rmatch = match[1];
+		} else if(match = re_usel.exec(id)) {
+			rmatch = match[1];
+			friend=true;
+		}
+	}
+	if(rmatch) {
+		if(friend) {
+			if(call_rt) callUrl(selRace.value,rmatch);
+		} else {
+			if(call_rt) callUrl(rmatch);
+			enableRace(rmatch,true);
+			changeRace(rmatch);
+		}
+	}
+    }
+
+    function enableRace(id,force) {
         for (var i = 0; i < selRace.options.length; i++) {
             if (selRace.options[i].value == id) {
                 selRace.options[i].disabled = false;
-                if (selRace.selectedIndex == -1) {
+                if (selRace.selectedIndex == -1 || force) {
                     selRace.selectedIndex = i;
                 }
+            }
+        }
+    }
+
+    function renameRace(id, newname) {
+        for (var i = 0; i < selRace.options.length; i++) {
+            if (selRace.options[i].value == id) {
+                selRace.options[i].text = newname;
             }
         }
     }
@@ -395,9 +581,8 @@ var controller = function () {
     
     function addRace(message) {
         var raceId = getRaceLegId(message._id);
-        var race = { id: raceId, name : "Race #" + raceId, tableLines: []};
-        races.set(raceId, race);
-        addSelOption(race, false, false); 
+        var race = { id: raceId, name: "Race #" + raceId, source: "tmp"};
+	initRace(race, false);
         return race;
     }
     
@@ -545,12 +730,21 @@ var controller = function () {
         }
     }
     
-    function callUrlZezo (raceId, beta) {
+    function callUrlZezo (raceId, userId, beta) {
         var optionBits = { "foil" : 16, "winch" : 4, "reach": 64, "heavy":128, "light" : 32 }; 
 
         var baseURL = 'http://zezo.org';
         var r = races.get(raceId);
-        
+	var uinfo;
+
+	if(userId) {
+		uinfo = racefriends.get(raceId).uinfo[userId];
+		if(uinfo === undefined) {
+			alert("Can't find record for user id " + userId);
+			return;
+		}
+	}
+
         var options = 0;
         for (var key in r.curr.options) {
             if (optionBits[r.curr.options[key]]) {
@@ -571,9 +765,20 @@ var controller = function () {
             alert('Unknown race - no routing available');
         } else {
             var urlBeta = r.url + (beta?"b":"");
-            var url = baseURL + '/' + urlBeta + '/chart.pl?lat=' + r.curr.pos.lat + '&lon=' + r.curr.pos.lon + 
-                '&options=' + options + '&twa=' + r.curr.twa;
-            // +  '&userid=' + r.curr._id.user_id; Not yer
+	    var pos = r.curr.pos;
+	    var twa = r.curr.twa;
+	    var uid = r.curr._id.user_id;
+	    var type = "me";
+
+	    if(uinfo) {
+		pos = uinfo.pos;
+		twa = uinfo.twa;
+		uid = userId;
+		options = 0;
+		type = "friend";
+	    }
+	    var url = baseURL + '/' + urlBeta + '/chart.pl?lat=' + pos.lat + '&lon=' + pos.lon +
+	    	'&options=' + options + '&twa=' + twa + '&userid=' + uid + '&type=' + type;
             window.open(url, cbReuseTab.checked?urlBeta:'_blank');
         }
     }
@@ -719,7 +924,7 @@ var controller = function () {
         initialized = true;
     }
     
-    var callUrl = function (raceId) {
+    var callUrl = function (raceId, userId) {
         var beta = false;
 
         if (typeof raceId === "object") { // button event
@@ -736,10 +941,12 @@ var controller = function () {
             alert('Unsupported race #' + raceId);
         } else if ( races.get(raceId).curr === undefined ) {
             alert('No position received yet. Please retry later.');
+        } else if ( races.get(raceId).url === undefined ) {
+            alert('Unsupported race, no router support yet.');
         } else if ( callUrlFunction === undefined ) {
             // ?
         } else {
-            callUrlFunction(raceId, beta);
+            callUrlFunction(raceId, userId, beta);
         }
     }
 
@@ -757,6 +964,7 @@ var controller = function () {
             });
             divRaceStatus.innerHTML = makeRaceStatusHTML();
             divRecordLog.innerHTML = makeTableHTML();
+            divFriendList.innerHTML = makeFriendsHTML();
         };
     }
     
@@ -829,13 +1037,24 @@ var controller = function () {
                         // ToDo: contains Bad Sail warnings. Show in race status table?
                         var legInfos = response.scriptData.res;
                         legInfos.map(function (legInfo) {
-                            var race = races.get(legId(legInfo));
-                            if ( race != undefined ) {
-                                race.rank = legInfo.rank;
-                                if ( legInfo.problem == "badSail" ) {
-                                } else if ( legInfo.problem == "..." ) {
-                                }
-                            }
+			    var rid = legId(legInfo);
+                            var race = races.get(rid);
+			    if ( race === undefined ) {	
+				race = { id: rid, name: legInfo.legName, source: "vr_leglist" };
+				initRace(race, true);
+			    }
+			    if(race.source === "tmp") {
+				race.name = legInfo.legName; // no name yet (created by updatePosition)
+				renameRace(rid, race.name);
+			    }
+			    race.rank = legInfo.rank;
+			    race.type = legInfo.raceType; 
+			    race.legnum = legInfo.legNum; 
+			    race.status = legInfo.status; 
+			    race.record = legInfo.record; 
+			    if ( legInfo.problem == "badSail" ) {
+			    } else if ( legInfo.problem == "..." ) {
+			    }
                         });
                         divRaceStatus.innerHTML = makeRaceStatusHTML();
                     } else if ( request.eventKey == "Game_GetBoatState" ) {
@@ -875,7 +1094,27 @@ var controller = function () {
                         card.code = response.scriptData.packs[0].code;
                         card.ts = response.scriptData.tsSoloCard;
                         divRaceStatus.innerHTML = makeRaceStatusHTML();
-                    }
+                    } else if ( request.eventKey == "Game_GetFollowedBoats") {
+                        var raceId = getRaceLegId(request);
+			updateFriends(raceId, "followed", response.scriptData.res);
+			if(raceId == selRace.value) {
+				divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+			}
+                    } else if ( request.eventKey == "Game_GetOpponents" ) {
+                        var raceId = getRaceLegId(request);
+			updateFriends(raceId, "opponents", response.scriptData.res);
+			if(raceId == selRace.value) {
+				divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+			}
+                    } else if ( request.eventKey == "User_GetCard" ) {
+                        var raceId = getRaceLegId(request);
+			var uid = request.user_id;
+			response.scriptData.legInfos.baseInfos = response.scriptData.baseInfos; // tweak record
+			updateFriendUinfo(raceId, "usercard", uid, response.scriptData.legInfos);
+			if(raceId == selRace.value) {
+				divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+			}
+		    }
                 } else if ( responseClass == ".ScriptMessage" ) {
                     // There is no request for .ScriptMessages.
                     // The only ScriptMessage type is extCode=boatStatePush
@@ -895,6 +1134,7 @@ var controller = function () {
         changeRace: changeRace,
         onEvent: onEvent,
         clearLog: clearLog,
+	tableClick: tableClick,
         readOptions: readOptions,
         addConfigListeners: addConfigListeners
     }
@@ -911,6 +1151,7 @@ window.addEventListener("load", function() {
     document.getElementById("bt_callurl").addEventListener("click", controller.callUrl);
     document.getElementById("sel_race").addEventListener("change", controller.changeRace);
     document.getElementById("bt_clear").addEventListener("click", controller.clearLog);
+    document.addEventListener("click", controller.tableClick);
 
     controller.readOptions();
     controller.addConfigListeners();
