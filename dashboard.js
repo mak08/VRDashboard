@@ -225,7 +225,7 @@ var controller = function () {
 
             var info;
             if(r.type === "leg") {
-                info = "<span>Leg " + r.legnum + "</span>";
+                info = "<span>Leg " + (r.legnum+1) + "</span>";
             } else if(r.type === "record") {
                 info = " <span>Record, Attempt " + parseInt(r.record.attemptCounter) + "</span>";
             }
