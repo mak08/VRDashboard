@@ -83,7 +83,7 @@ var controller = function () {
     var raceStatusHeader =  '<tr>'
         + '<th title="Call Router">' + 'RT' + '</th>'
         + '<th>' + 'Race' + '</th>'
-        + '<th>' + 'Info' + '</th>'
+        + '<th>' + 'Leg' + '</th>'
         + commonHeaders()
         + '<th title="Boat speed">' + 'Speed' + '</th>'
         + '<th>' + 'Options' + '</th>'
@@ -225,7 +225,7 @@ var controller = function () {
 
             var info;
             if(r.type === "leg") {
-                info = "<span>Leg " + (r.legnum+1) + "</span>";
+                info = "<span>" + r.legName + "</span>";
             } else if(r.type === "record") {
                 info = " <span>Record, Attempt " + parseInt(r.record.attemptCounter) + "</span>";
             }
@@ -340,10 +340,10 @@ var controller = function () {
 
         data.forEach(function(delem) {
             delem.mode = mode;
-            if(!delem.ts) delem.ts = Date.now();
-            if(mode == "opponents") {
+            if (!delem.ts) delem.ts = Date.now();
+            if (mode == "opponents") {
                 if(delem.type == "pilotBoat") {
-                    delem.displayName = "StarVRtrek Teleport Frigate";
+                    return;
                 } else if(delem.type == "real") {
                     delem.displayName = delem.extendedInfos.boatName;
                     delem.rank = delem.extendedInfos.rank;
@@ -353,7 +353,7 @@ var controller = function () {
             updateFriendUinfo(rid, mode, delem.userId, delem);
         });
 
-        if(mode == "followed") {
+        if (mode == "followed") {
             rfd.table = fln.concat(flk);
         } else {
             rfd.table = flk.concat(fln);
@@ -1040,12 +1040,11 @@ var controller = function () {
                             var rid = legId(legInfo);
                             var race = races.get(rid);
                             if ( race === undefined ) { 
-                                race = { id: rid, name: legInfo.legName, source: "vr_leglist" };
+                                race = { id: rid, name: legInfo.legName, legName: legInfo.legName, source: "vr_leglist" };
                                 initRace(race, true);
-                            }
-                            if(race.source === "tmp") {
-                                race.name = legInfo.legName; // no name yet (created by updatePosition)
-                                renameRace(rid, race.name);
+                            } else {
+                                race.legName = legInfo.legName; // no name yet (created by updatePosition)
+                                // renameRace(rid, race.name);
                             }
                             race.rank = legInfo.rank;
                             race.type = legInfo.raceType; 

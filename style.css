@@ -1,0 +1,112 @@
+body {
+	font-family: monospace;
+	word-wrap: break-word;
+	height: 90%
+}
+
+.flexrow {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	flex-grow: 1;
+}
+
+.flexcolumn {
+	display:inline-flex;
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+#container {
+	white-space: pre;
+}
+
+table {
+	border: 1px solid black;
+	border-collapse: collapse;
+}
+tr.sel {
+	background: #eeeeee;
+}
+tr.sel:hover {
+	background: #dddddd;
+}
+tr.hov:hover {
+	background: #dddddd;
+}
+th {
+	border: 1px solid black;
+	padding: 2px;
+}
+td {
+	border: 1px solid grey;
+	padding: 2px;
+}
+span {
+	white-space:nowrap;
+}
+td.tdc {
+	cursor: pointer;
+	font-weight: bold;
+	font-size: 150%;
+	text-align: center;
+	padding-top: 0px;
+	padding-bottom: 0px;
+}
+
+.tabs{
+	display: block;
+	position: relative;
+	padding: 0px;
+}
+.tabs .tab{
+	float: left;
+	display: block;
+}
+.tabs .tab>input[type="radio"] {
+	position: absolute;
+	display: none;
+}
+.tabs .tab>label {
+	display: block;
+	padding: 6px 21px;
+	font-size: 12px;
+	text-transform: uppercase;
+	cursor: pointer;
+	position: relative;
+	color: #000;
+	background: #eee;
+}
+.tabs .content {
+	display: none;
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	top: auto;
+	left: 0;
+	opacity:0;
+	transition: opacity 400ms ease-out;
+}
+.tabs>.tab>[id^="tab"]:checked + label {
+	top: 0;
+	background: #555;
+	color: #F5F5F5;
+}
+.tabs>.tab>[id^="tab"]:checked ~ [id^="tab-content"] {
+	display: block;
+	opacity: 1;
+	transition: opacity 400ms ease-out;
+}
+
+#recordlog {
+	height: 540px;
+	overflow-y: scroll;
+}
+#friendlist {
+	height: 540px;
+	overflow-y: scroll;
+}
+#rawlog {
+	height: 540px;
+	overflow: scroll;
+}

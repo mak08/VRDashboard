@@ -9,107 +9,7 @@
     <meta charset="utf-8">
 	<title>VR Dashboard</title>
 	<link rel="icon" href="zicon.png">
-	<style>
-	  body {
-	  font-family: monospace;
-	  word-wrap: break-word;
-	  }
-
-	  .flexrow {
-	  display: flex;
-	  flex-direction: row;
-	  justify-content: space-between;
-	  flex-grow: 1;
-	  }
-	  
-	  .flexcolumn {
-	  display:inline-flex;
-	  flex-direction: column;
-	  flex-grow: 1;
-	  }
-	  
-	  #container {
-	  white-space: pre;
-	  }
-
-	  table {
-	  border: 1px solid black;
-	  border-collapse: collapse;
-	  }
-	  tr.sel {
-	  background: #eeeeee;
-	  }
-	  tr.sel:hover {
-	  background: #dddddd;
-	  }
-	  tr.hov:hover {
-	  background: #dddddd;
-	  }
-	  th {
-	  border: 1px solid black;
-	  padding: 2px;
-	  }
-	  td {
-	  border: 1px solid grey;
-	  padding: 2px;
-	  }
-	  span {
-	  white-space:nowrap;
-	  }
-	  td.tdc {
-	  cursor: pointer;
-	  font-weight: bold;
-	  font-size: 150%;
-	  text-align: center;
-	  padding-top: 0px;
-	  padding-bottom: 0px;
-	  }
-
-	  .tabs{
-	  display: block;
-	  position: relative;
-	  padding: 0px;
-	  }
-	  .tabs .tab{
-	  float: left;
-	  display: block;
-	  }
-	  .tabs .tab>input[type="radio"] {
-	  position: absolute;
-	  display: none;
-	  }
-	  .tabs .tab>label {
-	  display: block;
-	  padding: 6px 21px;
-	  font-size: 12px;
-	  text-transform: uppercase;
-	  cursor: pointer;
-	  position: relative;
-	  color: #000;
-	  background: #eee;
-	  }
-	  .tabs .content {
-	  display: none;
-	  overflow: hidden;
-	  width: 100%;
-	  position: absolute;
-	  top: auto;
-	  left: 0;
-	  opacity:0;
-	  transition: opacity 400ms ease-out;
-	  }
-	  .tabs>.tab>[id^="tab"]:checked + label {
-	  top: 0;
-	  background: #555;
-	  color: #F5F5F5;
-	  }
-	  .tabs>.tab>[id^="tab"]:checked ~ [id^="tab-content"] {
-	  display: block;
-	  opacity: 1;
-	  transition: opacity 400ms ease-out;
-	  }
-	</style>
-
+  	<link rel="stylesheet" href="style.css?v=1.0">
 	<script src="dashboard.js"></script>
   </head>
 
@@ -148,27 +48,27 @@
 	    <li class="tab">
 	      <input type="radio" name="tabs" checked="checked" id="tab1" />
 	      <label for="tab1">Race Log</label>
-	      <div id="tab-content1" class="content"/>
-		<div id="recordlog"></div>
-	      </div>
-	    </li>
-	    <li class="tab">
-	      <input type="radio" name="tabs" id="tab2" />
-	      <label for="tab2">Friends/Opponents</label>   
-	      <div id="tab-content2" class="content">
-		<div id="friendList">Friend Table</div>
-	      </div>
-	    </li>
-	    <li class="tab">
-	      <input type="radio" name="tabs" id="tab3" />
-	      <label for="tab3">Raw Log</label>   
-	      <div id="tab-content3" class="content">
-		<input type="checkbox" id="cb_rawlog">
-		<label>Log messages</label>
-		<button id="bt_clear">Clear log</button>
-		<div style="white-space: pre;" id="rawlog"></div>
-	      </div>
-	    </li>
+	      <div id="tab-content1" class="content">
+			<div id="recordlog"></div>
+		  </div>
+		</li>
+		<li class="tab">
+		  <input type="radio" name="tabs" id="tab2" />
+		  <label for="tab2">Friends/Opponents</label>   
+		  <div id="tab-content2" class="content">
+			<div id="friendList">Friend Table</div>
+		  </div>
+		</li>
+		<li class="tab">
+		  <input type="radio" name="tabs" id="tab3" />
+		  <label for="tab3">Raw Log</label>   
+		  <div id="tab-content3" class="content">
+			<input type="checkbox" id="cb_rawlog">
+			<label>Log messages</label>
+			<button id="bt_clear">Clear log</button>
+			<div style="white-space: pre;" id="rawlog"></div>
+		  </div>
+		</li>
 	  </ul>
 	</div>
   </body>
