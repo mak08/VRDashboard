@@ -525,10 +525,12 @@ var controller = function () {
     function tableClick(ev) {
         var call_rt = false;
         var friend=false;
+	var tabsel=false;
         var rmatch;
         var re_rttd = new RegExp("^rt:(.+)");
         var re_rsel = new RegExp("^rs:(.+)");
         var re_usel = new RegExp("^ui:(.+)");
+	var re_tsel = new RegExp("^ts:(.+)");
 
         for(var node = ev.target; node ; node = node.parentNode) {
             var id = node.id;
@@ -540,12 +542,22 @@ var controller = function () {
             } else if(match = re_usel.exec(id)) {
                 rmatch = match[1];
                 friend=true;
+            } else if(match = re_tsel.exec(id)) {
+                rmatch = match[1];
+		tabsel=true;
             }
         }
         if(rmatch) {
-            if(friend) {
+            if(tabsel) {
+		// Tab-Selection
+		document.getElementById("tab-content1").style.display = (rmatch == 1 ? 'block': 'none');
+		document.getElementById("tab-content2").style.display = (rmatch == 2 ? 'block': 'none');
+		document.getElementById("tab-content3").style.display = (rmatch == 3 ? 'block': 'none');
+            } else if(friend){
+		// Friend-Routing 
                 if(call_rt) callUrl(selRace.value,rmatch);
             } else {
+		// Race-Switching
                 if(call_rt) callUrl(rmatch);
                 enableRace(rmatch,true);
                 changeRace(rmatch);
