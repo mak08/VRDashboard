@@ -16,12 +16,14 @@ html, body {
 	flex-direction: row;
 	justify-content: space-between;
 	flex-grow: 1;
+    margin: 4px 4px 4px 4px;
 }
 
 .flexcolumn {
 	display:inline-flex;
 	flex-direction: column;
 	flex-grow: 1;
+    margin: 0px 2px 0px 2px;
 }
 
 .top {
@@ -34,6 +36,10 @@ html, body {
 
 .hidden {
 	display: none;
+}
+
+label, select, input, button {
+    vertical-align: middle;
 }
 
 table {
