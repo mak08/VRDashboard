@@ -223,7 +223,7 @@ var controller = function () {
                 }
             } 
 
-            var info;
+            var info = '-';
             if(r.type === "leg") {
                 info = "<span>" + r.legName + "</span>";
             } else if(r.type === "record") {
