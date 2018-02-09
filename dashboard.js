@@ -103,6 +103,7 @@ var controller = function () {
         + '<th>' + 'Rank' + '</th>'
         + '<th title="Distance To Finish">' + 'DTF' + '</th>'
         + '<th title="Distance To Us">' + 'DTU' + '</th>'
+        + '<th title="Bearing From Us">' + 'BRG' + '</th>'
         + '<th>' + 'Sail' + '</th>'
         + '<th>' + 'State' + '</th>'
         + '<th>' + 'Position' + '</th>'
@@ -260,14 +261,17 @@ var controller = function () {
             var r = this.uinfo[uid];
             var race = races.get(selRace.value);
             if ( r == undefined ) return "";
-            var nameBold = (r.mode == "followed") ?"font-weight: bold;":"";
+            var nameStyle = (r.mode == "followed") ?"font-weight: bold; ":"";
+	    if(r.type == "top") nameStyle += "color: DarkGoldenRod;";
+	    if(r.type == "real") nameStyle += "color: DarkGreen;";
             return "<tr class='hov' id='ui:" + uid + "'>"
                 + (race.url ? ("<td class='tdc' id='rt:" + uid + "'>&#x2388;</td>") : "<td>&nbsp;</td>")
-                + '<td style="' + nameBold + '">' + r.displayName + "</td>"
+                + '<td style="' + nameStyle + '">' + r.displayName + "</td>"
                 + "<td>" + formatDate(r.ts) + "</td>"
-                + "<td>" + ((r.rank)?r.rank:"-") + "</td>"
-                + "<td>" + ((r.distanceToEnd)?r.distanceToEnd:"-") + "</td>"
-                + "<td>" + ((r.distanceToUs)?r.distanceToUs:"-") + "</td>"
+                + "<td>" + (r.rank?r.rank:"-") + "</td>"
+                + "<td>" + (r.distanceToEnd?r.distanceToEnd:"-") + "</td>"
+                + "<td>" + (r.distanceToUs?r.distanceToUs:"-") + "</td>"
+                + "<td>" + (r.bearingFromUs?r.bearingFromUs+"&#x00B0;":"-") + "</td>"
                 + "<td>" + sailNames[r.sail] + "</td>"
                 + "<td>" + r.state + "</td>"
                 + "<td>" + formatPosition(r.pos.lat, r.pos.lon) + "</td>"
@@ -316,30 +320,67 @@ var controller = function () {
             data.mode = "opponents";
             data.ts = data.lastCalcDate;
         }
-        if(ndata.mode == "followed") data.mode = "followed"; // keep followed state if present
+	if(ndata.mode == "followed") data.mode = "followed"; // keep followed state if present
 
-        var elemlist = ["displayName", "ts", "rank", "type", "state", "pos","heading","twa","tws","speed","mode","distanceToEnd","sail"];
+        var elemlist = ["displayName", "ts", "type", "state", "pos","heading","twa","tws","speed","mode","distanceToEnd","sail"];
         // copy elems from data to uinfo
         elemlist.forEach(function(tag) {
-            if(data[tag]) {
+            if(tag in data) {
                 ndata[tag] = data[tag];
                 if(tag == "pos") { // calc gc distance to us
-                    ndata.distanceToUs = roundTo(gcDistance(race.curr.pos.lat,  race.curr.pos.lon, data.pos.lat, data.pos.lon) / 1.852,1);
+                    ndata.distanceToUs = roundTo(gcDistance(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon) / 1.852,1);
+		    ndata.bearingFromUs = roundTo(courseAngle(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon)*180/Math.PI,1);
                 }
             }
         });
+	if(data["rank"] > 0) ndata["rank"] = data["rank"];
+    }
+
+    // generate sorted list, expire old entries
+    function sortFriends(rid) {
+        var rfd = racefriends.get(rid);
+        var fln = new Array();
+
+	Object.keys(rfd.uinfo).forEach(function(key) {
+	    var elem = rfd.uinfo[key];
+	    // expire old uinfos from prior GetFollowed / GetOpponents
+	    if((rfd.ts - elem.ts) > 30) delete rfd.uinfo[key];
+	    else fln.push(key);
+        });
+
+	fln.sort(function(a,b) {
+	    var au = rfd.uinfo[a];
+	    var bu = rfd.uinfo[b];
+	    // followed before opponents
+	    if(au.mode != bu.mode) {
+		if(au.mode == "followed") return -1;
+		if(au.mode == "opponents") return 1;
+	    }
+	    if(au.mode == "opponents") {
+		if(au.type != bu.type) { // different types
+		    // order: (normal|sponsor|top) , real, pilotBoat
+		    if(au.type == "normal" || au.type == "sponsor" || au.type == "top") return -1;
+		    if(bu.type == "normal" || bu.type == "sponsor" || bu.type == "top") return 1;
+		    if(au.type == "real") return -1;
+		    if(bu.type == "real") return 1;
+		}
+		if(au.rank && bu.rank) {
+		    if(au.rank < bu.rank) return -1;
+		    if(au.rank > bu.rank) return 1;
+		    return 0;
+		}
+		if(au.rank && !bu.rank) return -1;
+		if(bu.rank && !au.rank) return 1;
+	    }
+	    // followed or no rank, same type, sort on name
+	    return au.displayName.localeCompare(bu.displayName);
+	});
+	rfd.table = fln;
     }
 
     function updateFriends(rid, mode, data) {
         var rfd = racefriends.get(rid);
-        var fln = new Array();
-        var flk = new Array();
-
-        /* keep old records of other types */
-        rfd.table.forEach(function(oelem) {
-            var ouser = rfd.uinfo[oelem];
-            if(ouser.mode != mode) flk.push(oelem);
-        });
+	rfd.lastUpdate = Date.now();
 
         data.forEach(function(delem) {
             delem.mode = mode;
@@ -351,16 +392,10 @@ var controller = function () {
                     delem.displayName = delem.extendedInfos.boatName;
                     delem.rank = delem.extendedInfos.rank;
                 }
-            }
-            fln.push(delem.userId);
-            updateFriendUinfo(rid, mode, delem.userId, delem);
-        });
-
-        if (mode == "followed") {
-            rfd.table = fln.concat(flk);
-        } else {
-            rfd.table = flk.concat(fln);
-        }
+	    }
+	    updateFriendUinfo(rid, mode, delem.userId, delem);
+	});
+	sortFriends(rid);
     }
 
     function formatSeconds (value) {
