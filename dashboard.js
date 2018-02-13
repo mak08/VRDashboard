@@ -344,7 +344,7 @@ var controller = function () {
 	Object.keys(rfd.uinfo).forEach(function(key) {
 	    var elem = rfd.uinfo[key];
 	    // expire old uinfos from prior GetFollowed / GetOpponents
-	    if((rfd.ts - elem.ts) > 30) delete rfd.uinfo[key];
+	    if((rfd.lastUpdate - elem.ts) > 30000) delete rfd.uinfo[key];
 	    else fln.push(key);
         });
 
