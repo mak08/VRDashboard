@@ -65,6 +65,7 @@ var controller = function () {
     var lbBoatname;
     var divPositionInfo, divRecordLog, divRawLog;
     var callUrlFunction;
+    var callWeatherFunction;
     var initialized = false;
 
     var tableHeader =  '<tr>'
@@ -82,6 +83,7 @@ var controller = function () {
 
     var raceStatusHeader =  '<tr>'
         + '<th title="Call Router">' + 'RT' + '</th>'
+        + '<th title="Call WindInfo">' + 'WI' + '</th>'
         + '<th>' + 'Race' + '</th>'
         + '<th>' + 'Leg' + '</th>'
         + commonHeaders()
@@ -237,9 +239,9 @@ var controller = function () {
             var trstyle = "hov";
             if(r.id === selRace.value) trstyle += " sel";
             return "<tr class='" + trstyle +"' id='rs:" + r.id + "'>"
-                + (r.url ? ("<td class='tdc' id='rt:" + r.id + "'>&#x2388;</td>") : "<td>&nbsp;</td>")
+                + (r.url? ("<td class='tdc'><span id='rt:" + r.id + "'>&#x2388;</span></td>") : "<td>&nbsp;</td>") 
+		+ (callWeatherFunction? ("<td class='tdc'><span id='wi:" + r.id + "'><img class='icon' src='wind.svg'/></span></td>") : "<td>&nbsp;</td>")
                 + "<td>" + r.name + "</td>"
-                + "<td>" + info + "</td>"
                 + commonTableLines(r)
                 + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
                 + "<td>" + ((r.curr.options.length == 8)?'Full':r.curr.options.join(' ')) + "</td>"
@@ -261,12 +263,17 @@ var controller = function () {
             var r = this.uinfo[uid];
             var race = races.get(selRace.value);
             if ( r == undefined ) return "";
+	    var name = r.displayName;
             var nameStyle = (r.mode == "followed") ?"font-weight: bold; ":"";
 	    if(r.type == "top") nameStyle += "color: DarkGoldenRod;";
 	    if(r.type == "real") nameStyle += "color: DarkGreen;";
+	    if(r.type == "sponsor") {
+		nameStyle += "color: BlueViolet;";
+		name += "(" + r.bname + ")";
+	    }
             return "<tr class='hov' id='ui:" + uid + "'>"
-                + (race.url ? ("<td class='tdc' id='rt:" + uid + "'>&#x2388;</td>") : "<td>&nbsp;</td>")
-                + '<td style="' + nameStyle + '">' + r.displayName + "</td>"
+                + (race.url ? ("<td class='tdc'><span id='rt:" + uid + "'>&#x2388;</span></td>") : "<td>&nbsp;</td>")
+                + '<td style="' + nameStyle + '">' + name + "</td>"
                 + "<td>" + formatDate(r.ts) + "</td>"
                 + "<td>" + (r.rank?r.rank:"-") + "</td>"
                 + "<td>" + (r.distanceToEnd?r.distanceToEnd:"-") + "</td>"
@@ -322,7 +329,7 @@ var controller = function () {
         }
 	if(ndata.mode == "followed") data.mode = "followed"; // keep followed state if present
 
-        var elemlist = ["displayName", "ts", "type", "state", "pos","heading","twa","tws","speed","mode","distanceToEnd","sail"];
+        var elemlist = ["displayName", "ts", "type", "state", "pos","heading","twa","tws","speed","mode","distanceToEnd","sail","bname"];
         // copy elems from data to uinfo
         elemlist.forEach(function(tag) {
             if(tag in data) {
@@ -357,12 +364,20 @@ var controller = function () {
 		if(au.mode == "opponents") return 1;
 	    }
 	    if(au.mode == "opponents") {
-		if(au.type != bu.type) { // different types
+		var classa = au.type;
+		var classb = bu.type;
+		// remap types sponsor and top to normal
+		if(classa == "sponsor") classa = "normal";
+		if(classb == "sponsor") classb = "normal";
+		if(classa == "top") classa = "normal";
+		if(classb == "top") classb = "normal";
+
+		if(classa != classb) { // different types
 		    // order: (normal|sponsor|top) , real, pilotBoat
-		    if(au.type == "normal" || au.type == "sponsor" || au.type == "top") return -1;
-		    if(bu.type == "normal" || bu.type == "sponsor" || bu.type == "top") return 1;
-		    if(au.type == "real") return -1;
-		    if(bu.type == "real") return 1;
+		    if(classa == "normal") return -1;
+		    if(classb == "normal") return 1;
+		    if(classa == "real") return -1;
+		    if(classb == "real") return 1;
 		}
 		if(au.rank && bu.rank) {
 		    if(au.rank < bu.rank) return -1;
@@ -385,13 +400,16 @@ var controller = function () {
         data.forEach(function(delem) {
             delem.mode = mode;
             if (!delem.ts) delem.ts = Date.now();
+	    if(delem.type == "sponsor") {
+		delem.bname = delem.branding.name;
+	    }
             if (mode == "opponents") {
                 if(delem.type == "pilotBoat") {
                     return;
                 } else if(delem.type == "real") {
                     delem.displayName = delem.extendedInfos.boatName;
-                    delem.rank = delem.extendedInfos.rank;
-                }
+		    delem.rank = delem.extendedInfos.rank;
+		}
 	    }
 	    updateFriendUinfo(rid, mode, delem.userId, delem);
 	});
@@ -562,19 +580,23 @@ var controller = function () {
 
     function tableClick(ev) {
         var call_rt = false;
+	var call_wi = false;
         var friend=false;
-    var tabsel=false;
+	var tabsel=false;
         var rmatch;
-        var re_rttd = new RegExp("^rt:(.+)");
-        var re_rsel = new RegExp("^rs:(.+)");
-        var re_usel = new RegExp("^ui:(.+)");
-    var re_tsel = new RegExp("^ts:(.+)");
+        var re_rtsp = new RegExp("^rt:(.+)"); // Call-Router
+        var re_wisp = new RegExp("^wi:(.+)"); // Weather-Info
+        var re_rsel = new RegExp("^rs:(.+)"); // Race-Selection
+        var re_usel = new RegExp("^ui:(.+)"); // User-Selection
+	var re_tsel = new RegExp("^ts:(.+)"); // Tab-Selection
 
         for(var node = ev.target; node ; node = node.parentNode) {
             var id = node.id;
             var match;
-            if(re_rttd.exec(id)) {
+            if(re_rtsp.exec(id)) {
                 call_rt = true;
+            } else if(re_wisp.exec(id)) {
+                call_wi = true;
             } else if(match = re_rsel.exec(id)) {
                 rmatch = match[1];
             } else if(match = re_usel.exec(id)) {
@@ -582,20 +604,21 @@ var controller = function () {
                 friend=true;
             } else if(match = re_tsel.exec(id)) {
                 rmatch = match[1];
-        tabsel=true;
+		tabsel=true;
             }
         }
         if(rmatch) {
             if(tabsel) {
         // Tab-Selection
-        document.getElementById("tab-content1").style.display = (rmatch == 1 ? 'block': 'none');
-        document.getElementById("tab-content2").style.display = (rmatch == 2 ? 'block': 'none');
-        document.getElementById("tab-content3").style.display = (rmatch == 3 ? 'block': 'none');
+		document.getElementById("tab-content1").style.display = (rmatch == 1 ? 'block': 'none');
+		document.getElementById("tab-content2").style.display = (rmatch == 2 ? 'block': 'none');
+		document.getElementById("tab-content3").style.display = (rmatch == 3 ? 'block': 'none');
             } else if(friend){
         // Friend-Routing 
                 if(call_rt) callUrl(selRace.value,rmatch);
             } else {
         // Race-Switching
+		if(call_wi) callUrl(rmatch, 0, true); // weather
                 if(call_rt) callUrl(rmatch);
                 enableRace(rmatch,true);
                 changeRace(rmatch);
@@ -832,6 +855,25 @@ var controller = function () {
             window.open(url, cbReuseTab.checked?urlBeta:'_blank');
         }
     }
+
+    function callWindy (raceId, userId, beta) {
+        var baseURL = 'https://www.windy.com';
+        var r = races.get(raceId);
+        var uinfo;
+
+        if(userId) {
+            uinfo = racefriends.get(raceId).uinfo[userId];
+            if(uinfo === undefined) {
+                alert("Can't find record for user id " + userId);
+                return;
+            }
+        }
+	var pos = r.curr.pos;
+	if(uinfo) pos = uinfo.pos;
+	var url = baseURL + '/overlays?gfs,' + pos.lat + ',' + pos.lon + ',6,i:pressure';
+	var tinfo = 'windy:' + r.url;
+	window.open(url, cbReuseTab.checked?tinfo:'_blank');
+    }
     
     // Greate circle distance in meters
     function gcDistance (lat0, lon0, lat1, lon1) {
@@ -962,6 +1004,7 @@ var controller = function () {
         cbRawLog =  document.getElementById("cb_rawlog");
         divRawLog = document.getElementById("rawlog");
         callUrlFunction = callUrlZezo;
+	callWeatherFunction = callWindy;
         initRaces();
         
         chrome.storage.local.get("polars", function(items) {
@@ -974,7 +1017,7 @@ var controller = function () {
         initialized = true;
     }
     
-    var callUrl = function (raceId, userId) {
+    var callUrl = function (raceId, userId, weather) {
         var beta = false;
 
         if (typeof raceId === "object") { // button event
@@ -993,7 +1036,9 @@ var controller = function () {
             alert('No position received yet. Please retry later.');
         } else if ( races.get(raceId).url === undefined ) {
             alert('Unsupported race, no router support yet.');
-        } else if ( callUrlFunction === undefined ) {
+        } else if ( weather && callWeatherFunction)  {
+	    callWeatherFunction(raceId, userId, beta);
+	} else if(callUrlFunction === undefined ) {
             // ?
         } else {
             callUrlFunction(raceId, userId, beta);
