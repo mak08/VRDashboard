@@ -240,7 +240,7 @@ var controller = function () {
             if(r.id === selRace.value) trstyle += " sel";
             return "<tr class='" + trstyle +"' id='rs:" + r.id + "'>"
                 + (r.url? ("<td class='tdc'><span id='rt:" + r.id + "'>&#x2388;</span></td>") : "<td>&nbsp;</td>") 
-		+ (callWeatherFunction? ("<td class='tdc'><span id='wi:" + r.id + "'><img class='icon' src='wind.svg'/></span></td>") : "<td>&nbsp;</td>")
+        + (callWeatherFunction? ("<td class='tdc'><span id='wi:" + r.id + "'><img class='icon' src='wind.svg'/></span></td>") : "<td>&nbsp;</td>")
                 + "<td>" + r.name + "</td>"
                 + commonTableLines(r)
                 + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
@@ -263,14 +263,14 @@ var controller = function () {
             var r = this.uinfo[uid];
             var race = races.get(selRace.value);
             if ( r == undefined ) return "";
-	    var name = r.displayName;
+        var name = r.displayName;
             var nameStyle = (r.mode == "followed") ?"font-weight: bold; ":"";
-	    if(r.type == "top") nameStyle += "color: DarkGoldenRod;";
-	    if(r.type == "real") nameStyle += "color: DarkGreen;";
-	    if(r.type == "sponsor") {
-		nameStyle += "color: BlueViolet;";
-		name += "(" + r.bname + ")";
-	    }
+        if(r.type == "top") nameStyle += "color: DarkGoldenRod;";
+        if(r.type == "real") nameStyle += "color: DarkGreen;";
+        if(r.type == "sponsor") {
+        nameStyle += "color: BlueViolet;";
+        name += "(" + r.bname + ")";
+        }
             return "<tr class='hov' id='ui:" + uid + "'>"
                 + (race.url ? ("<td class='tdc'><span id='rt:" + uid + "'>&#x2388;</span></td>") : "<td>&nbsp;</td>")
                 + '<td style="' + nameStyle + '">' + name + "</td>"
@@ -279,8 +279,8 @@ var controller = function () {
                 + "<td>" + (r.distanceToEnd?r.distanceToEnd:"-") + "</td>"
                 + "<td>" + (r.distanceToUs?r.distanceToUs:"-") + "</td>"
                 + "<td>" + (r.bearingFromUs?r.bearingFromUs+"&#x00B0;":"-") + "</td>"
-                + "<td>" + sailNames[r.sail] + "</td>"
-                + "<td>" + r.state + "</td>"
+                + "<td>" + (sailNames[r.sail] || '-') + "</td>"
+                + "<td>" + (r.state || '-') + "</td>"
                 + "<td>" + formatPosition(r.pos.lat, r.pos.lon) + "</td>"
                 + "<td>" + roundTo(r.heading, 1) + "</td>"
                 + "<td>" + roundTo(Math.abs(r.twa), 1) + "</td>"
@@ -327,7 +327,7 @@ var controller = function () {
             data.mode = "opponents";
             data.ts = data.lastCalcDate;
         }
-	if(ndata.mode == "followed") data.mode = "followed"; // keep followed state if present
+    if(ndata.mode == "followed") data.mode = "followed"; // keep followed state if present
 
         var elemlist = ["displayName", "ts", "type", "state", "pos","heading","twa","tws","speed","mode","distanceToEnd","sail","bname"];
         // copy elems from data to uinfo
@@ -336,11 +336,11 @@ var controller = function () {
                 ndata[tag] = data[tag];
                 if(tag == "pos") { // calc gc distance to us
                     ndata.distanceToUs = roundTo(gcDistance(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon) / 1.852,1);
-		    ndata.bearingFromUs = roundTo(courseAngle(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon)*180/Math.PI,1);
+            ndata.bearingFromUs = roundTo(courseAngle(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon)*180/Math.PI,1);
                 }
             }
         });
-	if(data["rank"] > 0) ndata["rank"] = data["rank"];
+    if(data["rank"] > 0) ndata["rank"] = data["rank"];
     }
 
     // generate sorted list, expire old entries
@@ -348,72 +348,72 @@ var controller = function () {
         var rfd = racefriends.get(rid);
         var fln = new Array();
 
-	Object.keys(rfd.uinfo).forEach(function(key) {
-	    var elem = rfd.uinfo[key];
-	    // expire old uinfos from prior GetFollowed / GetOpponents
-	    if((rfd.lastUpdate - elem.ts) > 30000) delete rfd.uinfo[key];
-	    else fln.push(key);
+    Object.keys(rfd.uinfo).forEach(function(key) {
+        var elem = rfd.uinfo[key];
+        // expire old uinfos from prior GetFollowed / GetOpponents
+        if((rfd.lastUpdate - elem.ts) > 30000) delete rfd.uinfo[key];
+        else fln.push(key);
         });
 
-	fln.sort(function(a,b) {
-	    var au = rfd.uinfo[a];
-	    var bu = rfd.uinfo[b];
-	    // followed before opponents
-	    if(au.mode != bu.mode) {
-		if(au.mode == "followed") return -1;
-		if(au.mode == "opponents") return 1;
-	    }
-	    if(au.mode == "opponents") {
-		var classa = au.type;
-		var classb = bu.type;
-		// remap types sponsor and top to normal
-		if(classa == "sponsor") classa = "normal";
-		if(classb == "sponsor") classb = "normal";
-		if(classa == "top") classa = "normal";
-		if(classb == "top") classb = "normal";
+    fln.sort(function(a,b) {
+        var au = rfd.uinfo[a];
+        var bu = rfd.uinfo[b];
+        // followed before opponents
+        if(au.mode != bu.mode) {
+        if(au.mode == "followed") return -1;
+        if(au.mode == "opponents") return 1;
+        }
+        if(au.mode == "opponents") {
+        var classa = au.type;
+        var classb = bu.type;
+        // remap types sponsor and top to normal
+        if(classa == "sponsor") classa = "normal";
+        if(classb == "sponsor") classb = "normal";
+        if(classa == "top") classa = "normal";
+        if(classb == "top") classb = "normal";
 
-		if(classa != classb) { // different types
-		    // order: (normal|sponsor|top) , real, pilotBoat
-		    if(classa == "normal") return -1;
-		    if(classb == "normal") return 1;
-		    if(classa == "real") return -1;
-		    if(classb == "real") return 1;
-		}
-		if(au.rank && bu.rank) {
-		    if(au.rank < bu.rank) return -1;
-		    if(au.rank > bu.rank) return 1;
-		    return 0;
-		}
-		if(au.rank && !bu.rank) return -1;
-		if(bu.rank && !au.rank) return 1;
-	    }
-	    // followed or no rank, same type, sort on name
-	    return au.displayName.localeCompare(bu.displayName);
-	});
-	rfd.table = fln;
+        if(classa != classb) { // different types
+            // order: (normal|sponsor|top) , real, pilotBoat
+            if(classa == "normal") return -1;
+            if(classb == "normal") return 1;
+            if(classa == "real") return -1;
+            if(classb == "real") return 1;
+        }
+        if(au.rank && bu.rank) {
+            if(au.rank < bu.rank) return -1;
+            if(au.rank > bu.rank) return 1;
+            return 0;
+        }
+        if(au.rank && !bu.rank) return -1;
+        if(bu.rank && !au.rank) return 1;
+        }
+        // followed or no rank, same type, sort on name
+        return au.displayName.localeCompare(bu.displayName);
+    });
+    rfd.table = fln;
     }
 
     function updateFriends(rid, mode, data) {
         var rfd = racefriends.get(rid);
-	rfd.lastUpdate = Date.now();
+    rfd.lastUpdate = Date.now();
 
         data.forEach(function(delem) {
             delem.mode = mode;
             if (!delem.ts) delem.ts = Date.now();
-	    if(delem.type == "sponsor") {
-		delem.bname = delem.branding.name;
-	    }
+        if(delem.type == "sponsor") {
+        delem.bname = delem.branding.name;
+        }
             if (mode == "opponents") {
                 if(delem.type == "pilotBoat") {
-                    return;
+                    delem.displayName = "Frigate";
                 } else if(delem.type == "real") {
                     delem.displayName = delem.extendedInfos.boatName;
-		    delem.rank = delem.extendedInfos.rank;
-		}
-	    }
-	    updateFriendUinfo(rid, mode, delem.userId, delem);
-	});
-	sortFriends(rid);
+                    delem.rank = delem.extendedInfos.rank;
+                }
+        }
+        updateFriendUinfo(rid, mode, delem.userId, delem);
+    });
+    sortFriends(rid);
     }
 
     function formatSeconds (value) {
@@ -520,7 +520,7 @@ var controller = function () {
             speedCStyle = 'style="background-color: ' + LightRed + ';"';
         } else if ( isDifferingSpeed(r.curr.speedC) ) {
             speedCStyle = 'style="background-color: yellow;"';
-        } else if ( isDifferingSpeed(r.curr.speedT.speed) ) {
+        } else if ( r.curr.speedT && isDifferingSpeed(r.curr.speedT.speed) ) {
             // Speed differs but not due to penalty - assume 'Bad Sail' and display theoretical delta
             speedTStyle = 'style="background-color: ' + LightRed + ';"';
             deltaDist = deltaDist + ' (' +  roundTo(r.curr.deltaD_T, 3) + ')';
@@ -580,15 +580,15 @@ var controller = function () {
 
     function tableClick(ev) {
         var call_rt = false;
-	var call_wi = false;
+    var call_wi = false;
         var friend=false;
-	var tabsel=false;
+    var tabsel=false;
         var rmatch;
         var re_rtsp = new RegExp("^rt:(.+)"); // Call-Router
         var re_wisp = new RegExp("^wi:(.+)"); // Weather-Info
         var re_rsel = new RegExp("^rs:(.+)"); // Race-Selection
         var re_usel = new RegExp("^ui:(.+)"); // User-Selection
-	var re_tsel = new RegExp("^ts:(.+)"); // Tab-Selection
+    var re_tsel = new RegExp("^ts:(.+)"); // Tab-Selection
 
         for(var node = ev.target; node ; node = node.parentNode) {
             var id = node.id;
@@ -604,21 +604,21 @@ var controller = function () {
                 friend=true;
             } else if(match = re_tsel.exec(id)) {
                 rmatch = match[1];
-		tabsel=true;
+        tabsel=true;
             }
         }
         if(rmatch) {
             if(tabsel) {
         // Tab-Selection
-		document.getElementById("tab-content1").style.display = (rmatch == 1 ? 'block': 'none');
-		document.getElementById("tab-content2").style.display = (rmatch == 2 ? 'block': 'none');
-		document.getElementById("tab-content3").style.display = (rmatch == 3 ? 'block': 'none');
+        document.getElementById("tab-content1").style.display = (rmatch == 1 ? 'block': 'none');
+        document.getElementById("tab-content2").style.display = (rmatch == 2 ? 'block': 'none');
+        document.getElementById("tab-content3").style.display = (rmatch == 3 ? 'block': 'none');
             } else if(friend){
         // Friend-Routing 
                 if(call_rt) callUrl(selRace.value,rmatch);
             } else {
         // Race-Switching
-		if(call_wi) callUrl(rmatch, 0, true); // weather
+        if(call_wi) callUrl(rmatch, 0, true); // weather
                 if(call_rt) callUrl(rmatch);
                 enableRace(rmatch,true);
                 changeRace(rmatch);
@@ -868,11 +868,11 @@ var controller = function () {
                 return;
             }
         }
-	var pos = r.curr.pos;
-	if(uinfo) pos = uinfo.pos;
-	var url = baseURL + '/overlays?gfs,' + pos.lat + ',' + pos.lon + ',6,i:pressure';
-	var tinfo = 'windy:' + r.url;
-	window.open(url, cbReuseTab.checked?tinfo:'_blank');
+    var pos = r.curr.pos;
+    if(uinfo) pos = uinfo.pos;
+    var url = baseURL + '/overlays?gfs,' + pos.lat + ',' + pos.lon + ',6,i:pressure';
+    var tinfo = 'windy:' + r.url;
+    window.open(url, cbReuseTab.checked?tinfo:'_blank');
     }
     
     // Greate circle distance in meters
@@ -1004,7 +1004,7 @@ var controller = function () {
         cbRawLog =  document.getElementById("cb_rawlog");
         divRawLog = document.getElementById("rawlog");
         callUrlFunction = callUrlZezo;
-	callWeatherFunction = callWindy;
+    callWeatherFunction = callWindy;
         initRaces();
         
         chrome.storage.local.get("polars", function(items) {
@@ -1037,8 +1037,8 @@ var controller = function () {
         } else if ( races.get(raceId).url === undefined ) {
             alert('Unsupported race, no router support yet.');
         } else if ( weather && callWeatherFunction)  {
-	    callWeatherFunction(raceId, userId, beta);
-	} else if(callUrlFunction === undefined ) {
+        callWeatherFunction(raceId, userId, beta);
+    } else if(callUrlFunction === undefined ) {
             // ?
         } else {
             callUrlFunction(raceId, userId, beta);
