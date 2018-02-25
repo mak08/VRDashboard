@@ -75,6 +75,10 @@ td.tdc {
 	padding-bottom: 0px;
 }
 
+#th_name, #th_rank, #th_dtf, #th_dtu, #th_state, #th_tws, #th_speed {
+	cursor: pointer;
+}
+
 .tabs{
 	display: block;
 	position: relative;
