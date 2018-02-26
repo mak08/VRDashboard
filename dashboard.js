@@ -100,23 +100,34 @@ var controller = function () {
         + '<th>' + 'Last Command' + '</th>'
         +  '</tr>';
 
-    var friendListHeader =  '<tr>'
-        + '<th id="th_rt" title="Call Router">' + 'RT' + '</th>'
-        + '<th id="th_name">' + 'Friend/Opponent' + '</th>'
-        + '<th id="th_lu">' + 'Last Update' + '</th>'
-        + '<th id="th_rank">' + 'Rank' + '</th>'
-        + '<th id="th_dtf" title="Distance To Finish">' + 'DTF' + '</th>'
-        + '<th id="th_dtu" title="Distance To Us">' + 'DTU' + '</th>'
-        + '<th id="th_brg" title="Bearing From Us">' + 'BRG' + '</th>'
-        + '<th id="th_sail">' + 'Sail' + '</th>'
-        + '<th id="th_state">' + 'State' + '</th>'
-        + '<th id="th_psn">' + 'Position' + '</th>'
-        + '<th id="th_hdg" title="Heading">' + 'HDG' + '</th>'
-        + '<th id="th_twa" title="True Wind Angle">' + 'TWA' + '</th>'
-        + '<th id="th_tws" title="True Wind Speed">' + 'TWS' + '</th>'
-        + '<th id="th_speed" title="Boat speed">' + 'Speed' + '</th>'
+    function friendListHeader() {
+        return '<tr>'
+        + genth("th_rt","RT","Call Router",sortField == 'none', undefined)
+        + genth("th_name","Friend/Opponent",undefined, sortField == 'displayName', currentSortOrder) 
+        + genth("th_lu","Last Update",undefined)
+        + genth("th_rank","Rank",undefined, sortField == 'rank', currentSortOrder)
+        + genth("th_dtf","DTH","Distance to Finish",sortField == 'distanceToEnd', currentSortOrder)
+        + genth("th_dtu","DTU","Distance to Us",sortField == 'distanceToUs', currentSortOrder) 
+        + genth("th_brg","BRG","Bearing from Us", currentSortOrder)
+        + genth("th_sail","Sail",undefined)
+        + genth("th_state","State",undefined,sortField=='state', currentSortOrder) 
+        + genth("th_psn","Position",undefined)
+        + genth("th_hdg","HDG","Heading")
+        + genth("th_twa","TWA","True Wind Angle")
+        + genth("th_tws","TWS","True Wind Speed",sortField == 'tws', currentSortOrder) 
+        + genth("th_speed","Speed","Boat Speed",sortField == 'speed', currentSortOrder) 
         +  '</tr>';
+    }
 
+    function genth(id,content,title,sortfield,sortmark) {
+	if(sortfield && sortmark != undefined) {
+		content = content + " " + (sortmark ? '&#x25b2;' : '&#x25bc;');
+	}
+        return "<th id='" + id + "'"
+            + (sortfield? " style='color:BlueViolet;'" : "")
+            + (title ? (" title='" + title + "'") : "")
+            + ">" + content + "</th>";
+    }
 
     function commonHeaders() {
         return '<th>' + 'Rank' + '</th>'
@@ -306,7 +317,7 @@ var controller = function () {
         } else {
             sortFriends(rf);
             return "<table style=\"width:100%\">"
-                + friendListHeader
+                + friendListHeader()
                 + Array.from(rf.table||[]).map(makeFriendListLine, rf).join(' ');
                 + "</table>";
         }
@@ -623,6 +634,7 @@ var controller = function () {
         var call_wi = false;
         var friend=false;
         var tabsel=false;
+        var dosort=true;
         var rmatch;
         var re_rtsp = new RegExp("^rt:(.+)"); // Call-Router
         var re_wisp = new RegExp("^wi:(.+)"); // Weather-Info
@@ -662,10 +674,13 @@ var controller = function () {
         case "th_twa":
             sortField="none";
             break;
+        default:
+            dosort=false;
+            break;
         }
 
         // Sort friends table
-        divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+        if(dosort) divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
 
         for(var node = ev.target; node ; node = node.parentNode) {
             var id = node.id;
