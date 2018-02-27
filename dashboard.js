@@ -108,7 +108,7 @@ var controller = function () {
         + genth("th_rank","Rank",undefined, sortField == 'rank', currentSortOrder)
         + genth("th_dtf","DTH","Distance to Finish",sortField == 'distanceToEnd', currentSortOrder)
         + genth("th_dtu","DTU","Distance to Us",sortField == 'distanceToUs', currentSortOrder) 
-        + genth("th_brg","BRG","Bearing from Us", currentSortOrder)
+        + genth("th_brg","BRG","Bearing from Us", undefined)
         + genth("th_sail","Sail",undefined)
         + genth("th_state","State",undefined,sortField=='state', currentSortOrder) 
         + genth("th_psn","Position",undefined)
@@ -120,9 +120,9 @@ var controller = function () {
     }
 
     function genth(id,content,title,sortfield,sortmark) {
-	if(sortfield && sortmark != undefined) {
-		content = content + " " + (sortmark ? '&#x25b2;' : '&#x25bc;');
-	}
+    if(sortfield && sortmark != undefined) {
+        content = content + " " + (sortmark ? '&#x25b2;' : '&#x25bc;');
+    }
         return "<th id='" + id + "'"
             + (sortfield? " style='color:BlueViolet;'" : "")
             + (title ? (" title='" + title + "'") : "")
