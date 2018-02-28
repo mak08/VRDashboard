@@ -198,8 +198,8 @@ var controller = function () {
                 || (r.curr.tsEndOfGybe  > r.curr.lastCalcDate)
                 || (r.curr.tsEndOfTack > r.curr.lastCalcDate);
 
-            var lastCommand = "";
-            var lastCommandBG = "white";
+            var lastCommand = "-";
+            var lastCommandBG = "";
             if ( r.lastCommand != undefined ) {
                 // ToDo: error handling; multiple commands; expiring?
                 var lcTime = formatTime(r.lastCommand.request.ts);
@@ -367,12 +367,6 @@ var controller = function () {
     }
 
     function sortFriendsByField(rf, field) {
-        if (field == currentSortField) {
-            currentSortOrder = 1 - currentSortOrder;
-        } else {
-            currentSortField = field;
-            currentSortOrder = 0;
-        }
         rf.table.sort(function(uidA, uidB) {
             if (rf.uinfo[uidA] == undefined && rf.uinfo[uidB] == undefined) return 0;
             if (rf.uinfo[uidB] == undefined) return -1;
@@ -680,7 +674,15 @@ var controller = function () {
         }
 
         // Sort friends table
-        if(dosort) divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+        if(dosort) {
+            if (sortField == currentSortField) {
+                currentSortOrder = 1 - currentSortOrder;
+            } else {
+                currentSortField = sortField;
+                currentSortOrder = 0;
+            }
+            divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+        }
 
         for(var node = ev.target; node ; node = node.parentNode) {
             var id = node.id;
