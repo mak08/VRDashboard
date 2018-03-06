@@ -350,8 +350,8 @@ var controller = function () {
             if(tag in data) {
                 ndata[tag] = data[tag];
                 if(tag == "pos") { // calc gc distance to us
-                    ndata.distanceToUs = roundTo(gcDistance(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon) / 1.852,1);
-                    ndata.bearingFromUs = roundTo(courseAngle(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon)*180/Math.PI,1);
+                    ndata.distanceToUs = roundTo(gcDistance(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon), 1);
+                    ndata.bearingFromUs = roundTo(courseAngle(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon)*180/Math.PI, 1);
                 }
             }
         });
@@ -969,7 +969,7 @@ var controller = function () {
         window.open(url, cbReuseTab.checked?tinfo:'_blank');
     }
     
-    // Greate circle distance in meters
+    // Greate circle distance
     function gcDistance (lat0, lon0, lat1, lon1) {
         // e = r · arccos(sin(φA) · sin(φB) + cos(φA) · cos(φB) · cos(λB – λA))
         var rlat0 = toRad(lat0);
