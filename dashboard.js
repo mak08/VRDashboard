@@ -106,7 +106,7 @@ var controller = function () {
         + genth("th_name","Friend/Opponent",undefined, sortField == 'displayName', currentSortOrder) 
         + genth("th_lu","Last Update",undefined)
         + genth("th_rank","Rank",undefined, sortField == 'rank', currentSortOrder)
-        + genth("th_dtf","DTH","Distance to Finish",sortField == 'distanceToEnd', currentSortOrder)
+        + genth("th_dtf","DTF","Distance to Finish",sortField == 'distanceToEnd', currentSortOrder)
         + genth("th_dtu","DTU","Distance to Us",sortField == 'distanceToUs', currentSortOrder) 
         + genth("th_brg","BRG","Bearing from Us", undefined)
         + genth("th_sail","Sail",undefined)
