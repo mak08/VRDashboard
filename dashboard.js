@@ -1271,13 +1271,10 @@ var controller = function () {
                             divRaceStatus.innerHTML = makeRaceStatusHTML();
                         }
                     } else if ( request.eventKey == "Meta_GetPolar" ) {
-                        if ( polars[response.scriptData.polar._id] == undefined ) {
-                            polars[response.scriptData.polar._id] = response.scriptData.polar;
-                            chrome.storage.local.set({"polars": polars});
-                            console.info("Stored new polars " + response.scriptData.polar.label);
-                        } else {
-                            console.info("Known polars " + response.scriptData.polar.label);
-                        }
+                        // Always overwrite cached data...
+                        polars[response.scriptData.polar._id] = response.scriptData.polar;
+                        chrome.storage.local.set({"polars": polars});
+                        console.info("Stored new polars " + response.scriptData.polar.label);
                     } else if ( request.eventKey == "Shop_GetCardsPack" ) {
                         var card = races.get(getRaceLegId(request)).curr.soloCard;
                         card.code = response.scriptData.packs[0].code;
