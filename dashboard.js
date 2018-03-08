@@ -819,10 +819,11 @@ var controller = function () {
             var options = message.options;
             var foil = foilingFactor(options, tws, twa, boatPolars.foil);
             var hull = options.includes("hull")?1.003:1.0;
+            var ratio = boatPolars.globalSpeedRatio;
             var twsLookup = fractionStep(tws, boatPolars.tws);
             var twaLookup = fractionStep(twa, boatPolars.twa);
             var speed = maxSpeed(options, twsLookup, twaLookup, boatPolars.sail);
-            return {"speed": roundTo(speed.speed * foil * hull, 2), "sail": shortNames[speed.sail]};
+            return {"speed": roundTo(speed.speed * foil * hull * ratio, 2), "sail": shortNames[speed.sail]};
         }
     }
 
