@@ -892,9 +892,16 @@ var controller = function () {
         while ( index < steps.length && steps[index]<= absVal ) {
             index++;
         }
-        return {
-            index: index,
-            fraction: (absVal - steps[index-1]) / (steps[index] - steps[index-1])
+        if (index < steps.length) {
+            return {
+                index: index,
+                fraction: (absVal - steps[index-1]) / (steps[index] - steps[index-1])
+            }
+        } else {
+            return {
+                index: index - 1,
+                fraction: 1.0
+            }
         }
     }
     
