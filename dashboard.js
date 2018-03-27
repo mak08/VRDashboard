@@ -18,7 +18,10 @@ var controller = function () {
     var currentSortField = "none";
     var currentSortOrder = 0;
 
-    var sailNames = [0, "Jib", "Spi", "Staysail", "Light Jib", "Code0", "Heavy Gnk", "Light Gnk", 8, 9, "Auto", "Jib (Auto)", "Spi (Auto)", "Staysail (Auto)", "Light Jib (Auto)", "Code0 (Auto)", "Heavy Gnk (Auto)", "Light Gnk (Auto)"];
+    
+    var sailNames = [0, "Jib", "Spi", "Stay", "LJ", "C0", "HG", "LG", 8, 9,
+                     // VR sends sailNo + 10 to indicate autoSail. We use sailNo mod 10 to find the sail name sans Auto indication.
+                     "Auto", "Jib (Auto)", "Spi (Auto)", "Stay (Auto)", "LJ (Auto)", "C0 (Auto)", "HG (Auto)", "LG (Auto)"];
 
     function addSelOption(race, beta, disabled) {
         var option = document.createElement("option");
@@ -93,7 +96,6 @@ var controller = function () {
         + '<th>' + 'Options' + '</th>'
         + '<th>' + 'Cards' + '</th>'
         + '<th title="Time to next barrel">' + 'Pack' + '</th>'
-        + '<th>' + 'Sail' + '</th>' // red if badsail
         + '<th title="Boat is aground">' + 'Agnd' + '</th>'
         + '<th title="Stealth mode">' + 'Stlt' + '</th>'
         + '<th title="Boat is maneuvering, half speed">' + 'Mnvr' + '</th>'
@@ -102,27 +104,27 @@ var controller = function () {
 
     function friendListHeader() {
         return '<tr>'
-        + genth("th_rt","RT","Call Router",sortField == 'none', undefined)
-        + genth("th_name","Friend/Opponent",undefined, sortField == 'displayName', currentSortOrder) 
-        + genth("th_lu","Last Update",undefined)
-        + genth("th_rank","Rank",undefined, sortField == 'rank', currentSortOrder)
-        + genth("th_dtf","DTF","Distance to Finish",sortField == 'distanceToEnd', currentSortOrder)
-        + genth("th_dtu","DTU","Distance to Us",sortField == 'distanceToUs', currentSortOrder) 
-        + genth("th_brg","BRG","Bearing from Us", undefined)
-        + genth("th_sail","Sail",undefined)
-        + genth("th_state","State",undefined,sortField=='state', currentSortOrder) 
-        + genth("th_psn","Position",undefined)
-        + genth("th_hdg","HDG","Heading")
-        + genth("th_twa","TWA","True Wind Angle")
-        + genth("th_tws","TWS","True Wind Speed",sortField == 'tws', currentSortOrder) 
-        + genth("th_speed","Speed","Boat Speed",sortField == 'speed', currentSortOrder) 
-        +  '</tr>';
+            + genth("th_rt","RT","Call Router",sortField == 'none', undefined)
+            + genth("th_name","Friend/Opponent",undefined, sortField == 'displayName', currentSortOrder) 
+            + genth("th_lu","Last Update",undefined)
+            + genth("th_rank","Rank",undefined, sortField == 'rank', currentSortOrder)
+            + genth("th_dtf","DTF","Distance to Finish",sortField == 'distanceToEnd', currentSortOrder)
+            + genth("th_dtu","DTU","Distance to Us",sortField == 'distanceToUs', currentSortOrder) 
+            + genth("th_brg","BRG","Bearing from Us", undefined)
+            + genth("th_sail","Sail",undefined)
+            + genth("th_state","State",undefined, sortField == 'state', currentSortOrder) 
+            + genth("th_psn","Position",undefined)
+            + genth("th_hdg","HDG","Heading", sortField == 'heading', currentSortOrder)
+            + genth("th_twa","TWA","True Wind Angle", sortField == 'twa', currentSortOrder)
+            + genth("th_tws","TWS","True Wind Speed",sortField == 'tws', currentSortOrder) 
+            + genth("th_speed","Speed","Boat Speed",sortField == 'speed', currentSortOrder) 
+            +  '</tr>';
     }
 
     function genth(id,content,title,sortfield,sortmark) {
-    if(sortfield && sortmark != undefined) {
-        content = content + " " + (sortmark ? '&#x25b2;' : '&#x25bc;');
-    }
+        if(sortfield && sortmark != undefined) {
+            content = content + " " + (sortmark ? '&#x25b2;' : '&#x25bc;');
+        }
         return "<th id='" + id + "'"
             + (sortfield? " style='color:BlueViolet;'" : "")
             + (title ? (" title='" + title + "'") : "")
@@ -166,7 +168,15 @@ var controller = function () {
 
     function commonTableLines(r) {
 
-        var autoSail = formatHMS(r.curr.tsEndOfAutoSail - r.curr.lastCalcDate);
+        var sailInfo = sailNames[r.curr.sail % 10];
+        var isAutoSail = ((r.curr.tsEndOfAutoSail - r.curr.lastCalcDate) > 0);
+        if (isAutoSail) {
+            sailInfo = sailInfo + ' (Auto ' + formatHMS(r.curr.tsEndOfAutoSail - r.curr.lastCalcDate) + ')';
+        } else {
+            sailInfo = sailInfo + ' (manual)';
+        }
+        
+        var sailNameBG = r.curr.badSail?LightRed:"lightgreen";
 
         var twaFG = (r.curr.twa < 0)?"red":"green";
         var twaBold = r.curr.twaAuto?"font-weight: bold;":"";
@@ -182,7 +192,7 @@ var controller = function () {
             + "<td>" + roundTo(r.curr.tws, 2) + "</td>"
             + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
             + "<td>" + (r.curr.twaAuto?"Yes":"No") + "</td>"
-            + "<td>" + autoSail + "</td>";
+            + "<td style='background-color:" + sailNameBG +  ";'>" + sailInfo + "</td>";
     }
 
     function makeRaceStatusLine (pair) {
@@ -191,7 +201,6 @@ var controller = function () {
             return "";
         } else {
 
-            var sailNameBG = r.curr.badSail?LightRed:"lightgreen";
             var agroundBG = r.curr.aground?LightRed:"lightgreen";
 
             var manoeuvering = (r.curr.tsEndOfSailChange  > r.curr.lastCalcDate)
@@ -260,7 +269,6 @@ var controller = function () {
                 + "<td>" + ((r.curr.options.length == 8)?'Full':r.curr.options.join(' ')) + "</td>"
                 + "<td>" + cards + "</td>"
                 + "<td" + regColor + ">" + regPack + "</td>"
-                + '<td style="background-color:' + sailNameBG + ';">' + sailNames[r.curr.sail] + "</td>"
                 + '<td style="background-color:' + agroundBG +  ';">' + ((r.curr.aground)?"AGROUND":"No") + "</td>"
                 + "<td>" + ((r.curr.stealthMode > r.curr.lastCalcDate)?"Yes":"No") + "</td>"
                 + "<td>" + (manoeuvering?"Yes":"No") + "</td>"
@@ -281,12 +289,15 @@ var controller = function () {
             if(r.type == "top") nameStyle += "color: DarkGoldenRod;";
             if(r.type == "real") nameStyle += "color: DarkGreen;";
             if(r.type == "sponsor") {
-                nameStyle += "color: BlueViolet;";
+                nameStyle += "style='color: BlueViolet;'";
                 name += "(" + r.bname + ")";
             }
+            
+            var twaStyle = "style='color:" + ((r.twa < 0)?"red":"green") + ";'";
+
             return "<tr class='hov' id='ui:" + uid + "'>"
                 + (race.url ? ("<td class='tdc'><span id='rt:" + uid + "'>&#x2388;</span></td>") : "<td>&nbsp;</td>")
-                + '<td style="' + nameStyle + '">' + name + "</td>"
+                + "<td " + nameStyle + '>' + name + "</td>"
                 + "<td>" + formatDate(r.ts) + "</td>"
                 + "<td>" + (r.rank?r.rank:"-") + "</td>"
                 + "<td>" + (r.distanceToEnd?r.distanceToEnd:"-") + "</td>"
@@ -296,7 +307,7 @@ var controller = function () {
                 + "<td>" + (r.state || '-') + "</td>"
                 + "<td>" + formatPosition(r.pos.lat, r.pos.lon) + "</td>"
                 + "<td>" + roundTo(r.heading, 1) + "</td>"
-                + "<td>" + roundTo(Math.abs(r.twa), 1) + "</td>"
+                + "<td " + twaStyle + ">" + roundTo(Math.abs(r.twa), 1) + "</td>"
                 + "<td>" + roundTo(r.tws, 1) + "</td>"
                 + "<td>" + roundTo(r.speed, 2) + "</td>"
                 + "</tr>";
@@ -579,7 +590,7 @@ var controller = function () {
             + "<td>" + formatDate(r.curr.lastCalcDate) + "</td>"
             + commonTableLines(r) 
             + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
-            + "<td " + speedCStyle + ">" + roundTo(r.curr.speedC, 2) + "</td>"
+            + "<td " + speedCStyle + ">" + roundTo(r.curr.speedC, 2) + ' (' + sailNames[(r.curr.sail % 10)] + ')' + "</td>"
             + "<td " + speedTStyle + ">" + speedT + "</td>"
             + "<td " + speedTStyle + ">" + deltaDist + "</td>"
             + "<td>" + roundTo(r.curr.deltaT, 0) + "</td>"
@@ -652,6 +663,12 @@ var controller = function () {
         case "th_state":
             sortField = "state";
             break;
+        case "th_hdg":
+            sortField = "heading";
+            break;
+        case "th_twa":
+            sortField = "twa";
+            break;
         case "th_tws":
             sortField = "tws";
             break;
@@ -664,8 +681,6 @@ var controller = function () {
         case "th_brg":
         case "th_sail":
         case "th_psn":
-        case "th_hdg":
-        case "th_twa":
             sortField="none";
             break;
         default:
