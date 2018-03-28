@@ -171,9 +171,9 @@ var controller = function () {
         var sailInfo = sailNames[r.curr.sail % 10];
         var isAutoSail = ((r.curr.tsEndOfAutoSail - r.curr.lastCalcDate) > 0);
         if (isAutoSail) {
-            sailInfo = sailInfo + ' (Auto ' + formatHMS(r.curr.tsEndOfAutoSail - r.curr.lastCalcDate) + ')';
+            sailInfo = sailInfo + ' (A ' + formatHMS(r.curr.tsEndOfAutoSail - r.curr.lastCalcDate) + ')';
         } else {
-            sailInfo = sailInfo + ' (manual)';
+            sailInfo = sailInfo + ' (Man)';
         }
         
         var sailNameBG = r.curr.badSail?LightRed:"lightgreen";
@@ -289,7 +289,7 @@ var controller = function () {
             if(r.type == "top") nameStyle += "color: DarkGoldenRod;";
             if(r.type == "real") nameStyle += "color: DarkGreen;";
             if(r.type == "sponsor") {
-                nameStyle += "style='color: BlueViolet;'";
+                nameStyle += "color: BlueViolet;";
                 name += "(" + r.bname + ")";
             }
             
@@ -297,7 +297,7 @@ var controller = function () {
 
             return "<tr class='hov' id='ui:" + uid + "'>"
                 + (race.url ? ("<td class='tdc'><span id='rt:" + uid + "'>&#x2388;</span></td>") : "<td>&nbsp;</td>")
-                + "<td " + nameStyle + '>' + name + "</td>"
+                + '<td style="' + nameStyle + '">' + name + "</td>"
                 + "<td>" + formatDate(r.ts) + "</td>"
                 + "<td>" + (r.rank?r.rank:"-") + "</td>"
                 + "<td>" + (r.distanceToEnd?r.distanceToEnd:"-") + "</td>"
