@@ -355,12 +355,14 @@ var controller = function () {
         }
         if(ndata.mode == "followed") data.mode = "followed"; // keep followed state if present
 
-        var elemlist = ["displayName", "ts", "type", "state", "pos","heading","twa","tws","speed","mode","distanceToEnd","sail","bname"];
+        var elemlist = ["baseInfos", "displayName", "ts", "type", "state", "pos","heading","twa","tws","speed","mode","distanceToEnd","sail","bname"];
         // copy elems from data to uinfo
         elemlist.forEach(function(tag) {
             if(tag in data) {
                 ndata[tag] = data[tag];
-                if(tag == "pos") { // calc gc distance to us
+                if (tag == "baseInfos" ) {
+                    ndata.displayName = data["baseInfos"].displayName;
+                } else if (tag == "pos") { // calc gc distance to us
                     ndata.distanceToUs = roundTo(gcDistance(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon), 1);
                     ndata.bearingFromUs = roundTo(courseAngle(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon)*180/Math.PI, 1);
                 }
