@@ -17,7 +17,8 @@ var controller = function () {
     var sortField = "none";
     var currentSortField = "none";
     var currentSortOrder = 0;
-
+    var map_cur_race;
+    var arrow = { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW };
     
     var sailNames = [0, "Jib", "Spi", "Stay", "LJ", "C0", "HG", "LG", 8, 9,
                      // VR sends sailNo + 10 to indicate autoSail. We use sailNo mod 10 to find the sail name sans Auto indication.
@@ -617,6 +618,7 @@ var controller = function () {
         divRaceStatus.innerHTML = makeRaceStatusHTML();
         divRecordLog.innerHTML = makeTableHTML(races.get(race));
         divFriendList.innerHTML = makeFriendsHTML(racefriends.get(race));
+	if(document.getElementById("tab-content4").style.display == "block") initmap();
     }
 
     function getRaceLegId (id) {
@@ -721,9 +723,10 @@ var controller = function () {
         if(rmatch) {
             if(tabsel) {
                 // Tab-Selection
-                document.getElementById("tab-content1").style.display = (rmatch == 1 ? 'block': 'none');
-                document.getElementById("tab-content2").style.display = (rmatch == 2 ? 'block': 'none');
-                document.getElementById("tab-content3").style.display = (rmatch == 3 ? 'block': 'none');
+		for(var t = 1; t <= 4; t++) {
+                	document.getElementById("tab-content" + t).style.display = (rmatch == t ? 'block': 'none');
+		}
+		if(rmatch == 4) initmap(); // initialize google maps
             } else if(friend){
                 // Friend-Routing 
                 if(call_rt) callUrl(selRace.value,rmatch);
@@ -1073,6 +1076,123 @@ var controller = function () {
         return  latString + ((latDMS.u==1)?'N':'S') + ' ' + lonString + ((lonDMS.u==1)?'E':'W');
     }
 
+    function initmap() {
+	var divMap = document.getElementById("gmap");
+	var map;
+	var bounds = new google.maps.LatLngBounds();
+	var mapOptions = { mapTypeId: 'satellite' };
+	var race;
+
+	if(!selRace.value) {
+	    divMap.innerHTML = '';
+	    return;
+	}
+	if(map_cur_race != selRace.value) {
+	    map_cur_race = selRace.value;
+	    divMap.innerHTML = '';
+	} else {
+	    return;
+	}
+
+	race = races.get(map_cur_race);
+	if(race.legdata) {
+		console.log(race.legdata);
+	}
+	map = new google.maps.Map(divMap, mapOptions);
+	map.setTilt(45);
+	// Override our map zoom level once our fitBounds function runs (Make sure it only runs once)
+	//var boundsListener = google.maps.event.addListener((map), 'bounds_changed', function(event) {
+	//	this.setZoom(14);
+	//	google.maps.event.removeListener(boundsListener);
+	//});
+	
+	// start, finish
+	var pos = new google.maps.LatLng(race.legdata.start.lat, race.legdata.start.lon);
+	addmarker(map, bounds, pos, undefined, "S", 'Start: ' + race.legdata.start.name, 'S');
+	pos = new google.maps.LatLng(race.legdata.end.lat, race.legdata.end.lon);
+	addmarker(map, bounds, pos, undefined, "F", 'Finish: ' + race.legdata.end.name, 'F');
+
+	// course
+	var cpath = [];
+	for (var i = 0; i < race.legdata.course.length; i++) {
+		cpath.push(new google.maps.LatLng(race.legdata.course[i].lat,race.legdata.course[i].lon));
+	}
+	var ccpath = new google.maps.Polyline({
+	    path: cpath,
+	    icons: [{ icon: arrow, repeat: '50px'}],
+	    geodesic: true,
+	    strokeColor: '#FFF',
+	    strokeOpacity: 1.0,
+	    strokeWight: 1
+	});
+	ccpath.setMap(map);
+
+	// checkpoints
+	for (var i = 0; i < race.legdata.checkpoints.length; i++) {
+	    var cp = race.legdata.checkpoints[i];
+	    var cp_name = "invsible";
+	    if(cp.display != "none") cp_name = cp.display;
+	    var position_s = new google.maps.LatLng(cp.start.lat, cp.start.lon);
+	    var position_e = new google.maps.LatLng(cp.end.lat, cp.end.lon);
+	    addmarker(map, bounds, position_s, pinSymbol('#F00', "C"), undefined, 'checkpoint s' + i, i);
+	    addmarker(map, bounds, position_e, pinSymbol('#0F0', "C"), undefined, 'checkpoint e' + i, i);
+	    if(cp.side == "port") addmarker(map, bounds, position_s, pinSymbol('#0FF', "RP"), undefined, undefined, i);
+	    if(cp.side == "stdb") addmarker(map, bounds, position_e, pinSymbol('#0FF', "RS"), undefined, undefined, i);
+	    var path = [];
+	    path.push(position_s);
+	    path.push(position_e);
+	    var ppath = new google.maps.Polyline({
+		path: path,
+		//icons: [{ icon: arrow, repeat: '30px'}],
+		geodesic: true,
+		strokeColor: '#FF0',
+		strokeOpacity: 1.0,
+		strokeWight: 2
+	    });
+	    ppath.setMap(map);
+	}
+
+	// boat
+	pos = new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon);
+	addmarker(map, bounds, pos, pinSymbol('#4F4', "B",race.curr.heading), undefined,
+		'HDG:'+roundTo(race.curr.heading, 1)+',SPD:'+roundTo(race.curr.speed, 2),'me');
+
+	map.fitBounds(bounds);
+    }
+
+    function addmarker(map, bounds, pos, symbol, label, title, mref) {
+	var marker = new google.maps.Marker({
+	    position: pos,
+	    map: map,
+	    icon: symbol,
+	    label: label,
+	    title: title,
+	    mref: mref
+	});
+	bounds.extend(pos);
+	return marker;
+    }
+
+    var ps_pathmap = {
+	C: [ 'M 0 0 C -2 -20 -10 -22 -10 -30 A 10 10 0 1 1 10 -30 C 10 -22 2 -20 0 0 z M -2 -30 a 2 2 0 1 1 4 0 2 2 0 1 1 -4 0', 1, 1 ],
+	RP: [ 'M 0 -47 A 25 25 0 0 1 23.4923155196477 -13.4494964168583 M 3.9939080863394 -44.6505783192808 L 0 -47 L 4.68850079700712 -48.5898093313296 M 21.650635094611 -9.50000000000001 A 25 25 0 0 1 -19.1511110779744 -5.93030975783651 M 17.6190221917365 -7.2158849772096 L 21.650635094611 -9.50000000000001 L 20.6831999642124 -4.64473453846344 M -21.650635094611 -9.49999999999999 A 25 25 0 0 1 -4.34120444167328 -46.6201938253052 M -21.6129302780759 -14.1335367035096 L -21.650635094611 -9.49999999999999 L -25.3717007612195 -12.7654561302069', 1, 0 ],
+	RS: [ 'M 0 -47 A 25 25 0 0 1 23.4923155196477 -13.4494964168583 M 22.6505783192808 -18.0060919136606 L 23.4923155196477 -13.4494964168583 L 26.5898093313296 -17.3114992029929 M 21.650635094611 -9.50000000000001 A 25 25 0 0 1 -19.1511110779744 -5.93030975783651 M -14.7841150227904 -4.3809778082635 L -19.1511110779744 -5.93030975783651 L -17.3552654615366 -1.31680003578759 M -21.650635094611 -9.49999999999999 A 25 25 0 0 1 -4.34120444167328 -46.6201938253052 M -7.86646329649038 -43.6129302780759 L -4.34120444167328 -46.6201938253052 L -9.23454386979305 -47.3717007612195', 1, 0 ],
+	B: [ 'M -8 20 C -12 -5 0 -20 0 -20 C 0 -20 12 -5 8 20 L -8 20', 1, 1 ],
+	
+
+    };
+    function pinSymbol(color, objtyp, rotation) {
+	return {
+	    path: ps_pathmap[objtyp][0],
+	    fillColor: ps_pathmap[objtyp][2]? color : 'none',
+	    fillOpacity: 1,
+	    strokeColor: ps_pathmap[objtyp][2]? '#000' : color,
+	    strokeWeight: 2,
+	    scale: ps_pathmap[objtyp][1],
+	    rotation: rotation
+	};
+    }
+
     function saveOption(e) {
         localStorage["cb_" + this.id] = this.checked;
     }
@@ -1274,6 +1394,7 @@ var controller = function () {
                         // First boat state message, only sent for the race the UI is displaying
                         var raceId = getRaceLegId(response.scriptData.boatState._id);
                         var race =  races.get(raceId);
+			race.legdata = response.scriptData.leg;
                         // Don't try old race_id, messages will be misdirected
                         updatePosition(response.scriptData.boatState, race);
                         if (cbRouter.checked) {
