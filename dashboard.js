@@ -346,6 +346,8 @@ var controller = function () {
         var rfd = racefriends.get(rid);
         var race = races.get(rid);
         var ndata = rfd.uinfo[uid];
+
+	if(data.pos == undefined) return; // looked up user not in this race
         if(!ndata) {
             ndata = new Object();
             rfd.uinfo[uid] = ndata;
@@ -740,6 +742,13 @@ var controller = function () {
         }
     }
 
+    function resize(ev) {
+	for(var t = 1; t <= 4; t++) {
+		var tab = document.getElementById("tab-content" + t);
+		tab.style.height = window.innerHeight - tab.getBoundingClientRect().y;
+	}
+    }
+
     function enableRace(id,force) {
         for (var i = 0; i < selRace.options.length; i++) {
             if (selRace.options[i].value == id) {
@@ -811,6 +820,7 @@ var controller = function () {
 
             saveMessage(r);
         }
+	if(message.gateGroupCounters) r.gatecnt = message.gateGroupCounters;
         divRaceStatus.innerHTML = makeRaceStatusHTML();
     }
 
@@ -1082,6 +1092,10 @@ var controller = function () {
 	var bounds = new google.maps.LatLngBounds();
 	var mapOptions = { mapTypeId: 'satellite' };
 	var race;
+	var rfd;
+
+	// resize first
+	controller.resize(undefined);
 
 	if(!selRace.value) {
 	    divMap.innerHTML = '';
@@ -1095,9 +1109,8 @@ var controller = function () {
 	}
 
 	race = races.get(map_cur_race);
-	if(race.legdata) {
-		console.log(race.legdata);
-	}
+	rfd = racefriends.get(map_cur_race);
+
 	map = new google.maps.Map(divMap, mapOptions);
 	map.setTilt(45);
 	// Override our map zoom level once our fitBounds function runs (Make sure it only runs once)
@@ -1108,9 +1121,19 @@ var controller = function () {
 	
 	// start, finish
 	var pos = new google.maps.LatLng(race.legdata.start.lat, race.legdata.start.lon);
-	addmarker(map, bounds, pos, undefined, "S", 'Start: ' + race.legdata.start.name, 'S');
+	addmarker(map, bounds, pos, undefined, {color: "blue", text: "S"}, 'Start: ' + race.legdata.start.name, 'S', 10, 1);
 	pos = new google.maps.LatLng(race.legdata.end.lat, race.legdata.end.lon);
-	addmarker(map, bounds, pos, undefined, "F", 'Finish: ' + race.legdata.end.name, 'F');
+	addmarker(map, bounds, pos, undefined, {color: "yellow", text: "F"}, 'Finish: ' + race.legdata.end.name, 'F', 10, 1);
+	var fincircle = new google.maps.Circle({
+		strokeColor: '#F00',
+		strokeOpacity: 0.8,
+		strokeWeight: 2,
+		fillOpacity: 0,
+		map: map,
+		center: pos,
+		radius: race.legdata.end.radius * 1852.0,
+		zIndex: 9
+	});
 
 	// course
 	var cpath = [];
@@ -1122,10 +1145,28 @@ var controller = function () {
 	    icons: [{ icon: arrow, repeat: '50px'}],
 	    geodesic: true,
 	    strokeColor: '#FFF',
-	    strokeOpacity: 1.0,
-	    strokeWight: 1
+	    strokeOpacity: 0.5,
+	    strokeWeight: 1,
+	    zIndex: 4
 	});
 	ccpath.setMap(map);
+
+	// track
+	var tpath = [];
+	if(race.track) {
+	    for (var i = 0; i < race.track.length; i++) {
+		tpath.push(new google.maps.LatLng(race.track[i].lat,race.track[i].lon));
+	    }
+	    var ttpath = new google.maps.Polyline({
+		path: tpath,
+		geodesic: true,
+		strokeColor: '#6AF',
+		strokeOpacity: 0.7,
+		strokeWeight: 1,
+		zIndex: 4
+	    });
+	    ttpath.setMap(map);
+	}
 
 	// checkpoints
 	for (var i = 0; i < race.legdata.checkpoints.length; i++) {
@@ -1134,40 +1175,93 @@ var controller = function () {
 	    if(cp.display != "none") cp_name = cp.display;
 	    var position_s = new google.maps.LatLng(cp.start.lat, cp.start.lon);
 	    var position_e = new google.maps.LatLng(cp.end.lat, cp.end.lon);
-	    addmarker(map, bounds, position_s, pinSymbol('#F00', "C"), undefined, 'checkpoint s' + i, i);
-	    addmarker(map, bounds, position_e, pinSymbol('#0F0', "C"), undefined, 'checkpoint e' + i, i);
-	    if(cp.side == "port") addmarker(map, bounds, position_s, pinSymbol('#0FF', "RP"), undefined, undefined, i);
-	    if(cp.side == "stdb") addmarker(map, bounds, position_e, pinSymbol('#0FF', "RS"), undefined, undefined, i);
+	    var label_g = 'index: ' + i + ', id: ' + cp.id + ', group: ' + cp.group + ', type: ' + cp_name + ', engine: ' + cp.engine + ', side: ' + cp.side + ', name: ' + cp.name;
+	    var label_s = 'checkpoint s, ' + label_g;
+	    var label_e = 'checkpoint e, ' + label_g;
+	    var op = 1.0;
+	    var c_sb = "#0F0";
+	    var c_bb = "#F00";
+	    var zi = 8;
+	    if(race.gatecnt[cp.group-1]) op = 0.3; // mark/gate passed - semi transparent
+	    if(cp.display == "none") {
+		    c_sb = "#480";
+		    c_bb = "#840";
+		    zi = 6;
+	    }
+	    if(cp.side == "stbd") {
+		addmarker(map, bounds, position_s, pinSymbol(c_sb, "C"), undefined, label_s, i, zi, op);
+		addmarker(map, bounds, position_e, pinSymbol(c_bb, "C"), undefined, label_e, i, zi, op);
+	    } else {
+		addmarker(map, bounds, position_s, pinSymbol(c_bb, "C"), undefined, label_s, i, zi, op);
+		addmarker(map, bounds, position_e, pinSymbol(c_sb, "C"), undefined, label_e, i, zi, op);
+	    }
+	    if(cp.display == "gate") {
+		if(cp.side == "stbd") {
+		    addmarker(map, bounds, position_s, pinSymbol('#FF0', "RR"), undefined, label_s, i, 8, op);
+		    addmarker(map, bounds, position_e, pinSymbol('#FF0', "RL"), undefined, label_e, i, 8, op);
+		} else {
+		    addmarker(map, bounds, position_s, pinSymbol('#FF0', "RL"), undefined, label_s, i, 8, op);
+		    addmarker(map, bounds, position_e, pinSymbol('#FF0', "RR"), undefined, label_e, i, 8, op);
+		}
+	    } else {
+		if(cp.side == "port") addmarker(map, bounds, position_s, pinSymbol(c_bb, "RL"), undefined, label_s, i, 8, op);
+		if(cp.side == "stbd") addmarker(map, bounds, position_s, pinSymbol(c_sb, "RR"), undefined, label_e, i, 8, op);
+	    }
 	    var path = [];
 	    path.push(position_s);
 	    path.push(position_e);
 	    var ppath = new google.maps.Polyline({
 		path: path,
-		//icons: [{ icon: arrow, repeat: '30px'}],
+		strokeOpacity: 0.0,
+		icons: [{ icon: pinSymbol(cp.display == 'none' ? '#FF6600' : '#FFFF00', "DL", op), repeat: '16px'}],
 		geodesic: true,
-		strokeColor: '#FF0',
-		strokeOpacity: 1.0,
-		strokeWight: 2
+		//strokeColor: cp.display == 'none' ? '#FF6600' : '#FFFF00',
+		//strokeWeight: 0,
+		zIndex: cp.display == "none" ? 5 : 6
 	    });
 	    ppath.setMap(map);
 	}
 
 	// boat
 	pos = new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon);
-	addmarker(map, bounds, pos, pinSymbol('#4F4', "B",race.curr.heading), undefined,
-		'HDG:'+roundTo(race.curr.heading, 1)+',SPD:'+roundTo(race.curr.speed, 2),'me');
+	addmarker(map, bounds, pos, pinSymbol('#4F4', "B",0.7,race.curr.heading), undefined,
+		'HDG:'+roundTo(race.curr.heading, 1)+',SPD:'+roundTo(race.curr.speed, 2),'me', 20, 0.7);
 
+        Object.keys(rfd.uinfo).forEach(function(key) {
+            var elem = rfd.uinfo[key];
+	    var pos = new google.maps.LatLng(elem.pos.lat, elem.pos.lon);
+	    addmarker(map, bounds, pos, pinSymbol('#26A', "B",0.7,elem.heading), undefined,
+		    elem.displayName + '- HDG:'+roundTo(elem.heading, 1)+',SPD:'+roundTo(elem.speed, 2),'U:'+key, 18, 0.7);
+	    // track
+	    var tpath = [];
+	    if(elem.track) {
+		for (var i = 0; i < elem.track.length; i++) {
+		    tpath.push(new google.maps.LatLng(elem.track[i].lat,elem.track[i].lon));
+		}
+		var ttpath = new google.maps.Polyline({
+		    path: tpath,
+		    geodesic: true,
+		    strokeColor: '#44C',
+		    strokeOpacity: 0.6,
+		    strokeWeight: 1,
+		    zIndex: 4
+		});
+		ttpath.setMap(map);
+	    }
+        });
 	map.fitBounds(bounds);
     }
 
-    function addmarker(map, bounds, pos, symbol, label, title, mref) {
+    function addmarker(map, bounds, pos, symbol, label, title, mref, zi, op) {
 	var marker = new google.maps.Marker({
 	    position: pos,
 	    map: map,
 	    icon: symbol,
 	    label: label,
 	    title: title,
-	    mref: mref
+	    mref: mref,
+	    zIndex: zi,
+	    opacity: op
 	});
 	bounds.extend(pos);
 	return marker;
@@ -1175,19 +1269,21 @@ var controller = function () {
 
     var ps_pathmap = {
 	C: [ 'M 0 0 C -2 -20 -10 -22 -10 -30 A 10 10 0 1 1 10 -30 C 10 -22 2 -20 0 0 z M -2 -30 a 2 2 0 1 1 4 0 2 2 0 1 1 -4 0', 1, 1 ],
-	RP: [ 'M 0 -47 A 25 25 0 0 1 23.4923155196477 -13.4494964168583 M 3.9939080863394 -44.6505783192808 L 0 -47 L 4.68850079700712 -48.5898093313296 M 21.650635094611 -9.50000000000001 A 25 25 0 0 1 -19.1511110779744 -5.93030975783651 M 17.6190221917365 -7.2158849772096 L 21.650635094611 -9.50000000000001 L 20.6831999642124 -4.64473453846344 M -21.650635094611 -9.49999999999999 A 25 25 0 0 1 -4.34120444167328 -46.6201938253052 M -21.6129302780759 -14.1335367035096 L -21.650635094611 -9.49999999999999 L -25.3717007612195 -12.7654561302069', 1, 0 ],
-	RS: [ 'M 0 -47 A 25 25 0 0 1 23.4923155196477 -13.4494964168583 M 22.6505783192808 -18.0060919136606 L 23.4923155196477 -13.4494964168583 L 26.5898093313296 -17.3114992029929 M 21.650635094611 -9.50000000000001 A 25 25 0 0 1 -19.1511110779744 -5.93030975783651 M -14.7841150227904 -4.3809778082635 L -19.1511110779744 -5.93030975783651 L -17.3552654615366 -1.31680003578759 M -21.650635094611 -9.49999999999999 A 25 25 0 0 1 -4.34120444167328 -46.6201938253052 M -7.86646329649038 -43.6129302780759 L -4.34120444167328 -46.6201938253052 L -9.23454386979305 -47.3717007612195', 1, 0 ],
+	RL: [ 'M 0 -47 A 25 25 0 0 1 23.4923155196477 -13.4494964168583 M 3.9939080863394 -44.6505783192808 L 0 -47 L 4.68850079700712 -48.5898093313296 M 21.650635094611 -9.50000000000001 A 25 25 0 0 1 -19.1511110779744 -5.93030975783651 M 17.6190221917365 -7.2158849772096 L 21.650635094611 -9.50000000000001 L 20.6831999642124 -4.64473453846344 M -21.650635094611 -9.49999999999999 A 25 25 0 0 1 -4.34120444167328 -46.6201938253052 M -21.6129302780759 -14.1335367035096 L -21.650635094611 -9.49999999999999 L -25.3717007612195 -12.7654561302069', 1, 0 ],
+	RR: [ 'M 0 -47 A 25 25 0 0 1 23.4923155196477 -13.4494964168583 M 22.6505783192808 -18.0060919136606 L 23.4923155196477 -13.4494964168583 L 26.5898093313296 -17.3114992029929 M 21.650635094611 -9.50000000000001 A 25 25 0 0 1 -19.1511110779744 -5.93030975783651 M -14.7841150227904 -4.3809778082635 L -19.1511110779744 -5.93030975783651 L -17.3552654615366 -1.31680003578759 M -21.650635094611 -9.49999999999999 A 25 25 0 0 1 -4.34120444167328 -46.6201938253052 M -7.86646329649038 -43.6129302780759 L -4.34120444167328 -46.6201938253052 L -9.23454386979305 -47.3717007612195', 1, 0 ],
 	B: [ 'M -8 20 C -12 -5 0 -20 0 -20 C 0 -20 12 -5 8 20 L -8 20', 1, 1 ],
-	
-
+	DL: [ 'M 0,-1 0,1', 5, 0 ]
     };
-    function pinSymbol(color, objtyp, rotation) {
+    function pinSymbol(color, objtyp, opacity, rotation) {
+	if(!opacity) opacity = 1.0;
+	if(!rotation) rotation = 0.0;
 	return {
 	    path: ps_pathmap[objtyp][0],
-	    fillColor: ps_pathmap[objtyp][2]? color : 'none',
-	    fillOpacity: 1,
+	    fillColor: color,
+	    fillOpacity: ps_pathmap[objtyp][2]? 1.0 : 0.0,
 	    strokeColor: ps_pathmap[objtyp][2]? '#000' : color,
 	    strokeWeight: 2,
+	    strokeOpacity: opacity,
 	    scale: ps_pathmap[objtyp][1],
 	    rotation: rotation
 	};
@@ -1437,6 +1533,20 @@ var controller = function () {
                         if(raceId == selRace.value) {
                             divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
                         }
+                    } else if ( request.eventKey == "Game_GetBoatTrack" ) {
+                        var raceId = getRaceLegId(request);
+			var rfd = racefriends.get(raceId);
+			var race = races.get(raceId);
+			var uid = request.user_id;
+			var ndata = rfd.uinfo[uid];
+
+			if(race) {
+			    if(uid == race.curr._id.user_id) {
+				race.track = response.scriptData.track;
+			    } else if(ndata) {
+				ndata.track = response.scriptData.track;
+			    }
+			}
                     } else if ( request.eventKey == "User_GetCard" ) {
                         var raceId = getRaceLegId(request);
                         var uid = request.user_id;
@@ -1466,6 +1576,7 @@ var controller = function () {
         onEvent: onEvent,
         clearLog: clearLog,
         tableClick: tableClick,
+	resize: resize,
         readOptions: readOptions,
         addConfigListeners: addConfigListeners
     }
@@ -1483,6 +1594,7 @@ window.addEventListener("load", function() {
     document.getElementById("sel_race").addEventListener("change", controller.changeRace);
     document.getElementById("bt_clear").addEventListener("click", controller.clearLog);
     document.addEventListener("click", controller.tableClick);
+    document.addEventListener("resize", controller.resize);
 
     controller.readOptions();
     controller.addConfigListeners();
