@@ -17,9 +17,6 @@ var controller = function () {
     var sortField = "none";
     var currentSortField = "none";
     var currentSortOrder = 0;
-    var map_cur_race;
-    var arrow = { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW };
-    
     var sailNames = [0, "Jib", "Spi", "Stay", "LJ", "C0", "HG", "LG", 8, 9,
                      // VR sends sailNo + 10 to indicate autoSail. We use sailNo mod 10 to find the sail name sans Auto indication.
                      "Auto", "Jib (Auto)", "Spi (Auto)", "Stay (Auto)", "LJ (Auto)", "C0 (Auto)", "HG (Auto)", "LG (Auto)"];
@@ -278,6 +275,33 @@ var controller = function () {
         }
     }
 
+    function boatinfo(uinfo) {
+	var res = {
+	    name: uinfo.displayName,
+	    nameStyle: "",
+	    speed: roundTo(uinfo.speed, 2),
+	    heading: roundTo(uinfo.heading, 1),
+	    tws: roundTo(uinfo.tws, 1),
+	    twa: roundTo(Math.abs(uinfo.twa), 1),
+	    bcolor: '#26a'
+	};
+
+	if(uinfo.mode == "followed") {
+	    res.nameStyle = "font-weight: bold; ";
+	    res.bcolor = '#a6b';
+	}
+	if(uinfo.type == "top") { res.nameStyle += "color: DarkGoldenRod;"; res.bcolor = 'DarkGoldenRod'; }
+	if(uinfo.type == "real") { res.nameStyle += "color: DarkGreen;"; res.bcolor = 'DarkGreen'; }
+	if(uinfo.type == "sponsor") {
+	    res.nameStyle += "color: BlueViolet;";
+	    res.name += "(" + uinfo.bname + ")";
+	    res.bcolor = 'BlueViolet';
+	}
+	res.twaStyle = "style='color:" + ((uinfo.twa < 0)?"red":"green") + ";'";
+	res.sail = sailNames[uinfo.sail] || '-';
+	return(res);
+    }
+
     function makeFriendListLine (uid) {
         if ( uid == undefined ) {
             return "";
@@ -285,32 +309,23 @@ var controller = function () {
             var r = this.uinfo[uid];
             var race = races.get(selRace.value);
             if ( r == undefined ) return "";
-            var name = r.displayName;
-            var nameStyle = (r.mode == "followed") ?"font-weight: bold; ":"";
-            if(r.type == "top") nameStyle += "color: DarkGoldenRod;";
-            if(r.type == "real") nameStyle += "color: DarkGreen;";
-            if(r.type == "sponsor") {
-                nameStyle += "color: BlueViolet;";
-                name += "(" + r.bname + ")";
-            }
-            
-            var twaStyle = "style='color:" + ((r.twa < 0)?"red":"green") + ";'";
+	    var bi = boatinfo(r);
 
             return "<tr class='hov' id='ui:" + uid + "'>"
                 + (race.url ? ("<td class='tdc'><span id='rt:" + uid + "'>&#x2388;</span></td>") : "<td>&nbsp;</td>")
-                + '<td style="' + nameStyle + '">' + name + "</td>"
+                + '<td style="' + bi.nameStyle + '">' + bi.name + "</td>"
                 + "<td>" + formatDate(r.ts) + "</td>"
                 + "<td>" + (r.rank?r.rank:"-") + "</td>"
                 + "<td>" + (r.distanceToEnd?r.distanceToEnd:"-") + "</td>"
                 + "<td>" + (r.distanceToUs?r.distanceToUs:"-") + "</td>"
                 + "<td>" + (r.bearingFromUs?r.bearingFromUs+"&#x00B0;":"-") + "</td>"
-                + "<td>" + (sailNames[r.sail] || '-') + "</td>"
+                + "<td>" + bi.sail + "</td>"
                 + "<td>" + (r.state || '-') + "</td>"
                 + "<td>" + formatPosition(r.pos.lat, r.pos.lon) + "</td>"
-                + "<td>" + roundTo(r.heading, 1) + "</td>"
-                + "<td " + twaStyle + ">" + roundTo(Math.abs(r.twa), 1) + "</td>"
-                + "<td>" + roundTo(r.tws, 1) + "</td>"
-                + "<td>" + roundTo(r.speed, 2) + "</td>"
+                + "<td>" + bi.heading + "</td>"
+                + "<td " + bi.twaStyle + ">" + bi.twa + "</td>"
+                + "<td>" + bi.tws + "</td>"
+                + "<td>" + bi.speed + "</td>"
                 + "</tr>";
         }
     }
@@ -368,6 +383,10 @@ var controller = function () {
                 } else if (tag == "pos") { // calc gc distance to us
                     ndata.distanceToUs = roundTo(gcDistance(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon), 1);
                     ndata.bearingFromUs = roundTo(courseAngle(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon)*180/Math.PI, 1);
+		    var ad = ndata.bearingFromUs - race.curr.heading + 90;
+		    if(ad < 0) ad += 360;
+		    if(ad > 360) ad -= 360;
+		    if(ad > 180) ndata.distanceToUs = -ndata.distanceToUs; // 'behind' us
                 }
             }
         });
@@ -820,8 +839,12 @@ var controller = function () {
 
             saveMessage(r);
         }
-	if(message.gateGroupCounters) r.gatecnt = message.gateGroupCounters;
+	if(message.gateGroupCounters) {
+	    r.gatecnt = message.gateGroupCounters;
+	    updatemap(r,"cp");
+	}
         divRaceStatus.innerHTML = makeRaceStatusHTML();
+	updatemap(r,"me");
     }
 
     function angle (h0, h1) {
@@ -1087,37 +1110,37 @@ var controller = function () {
     }
 
     function initmap() {
-	var divMap = document.getElementById("gmap");
-	var map;
-	var bounds = new google.maps.LatLngBounds();
-	var mapOptions = { mapTypeId: 'satellite' };
 	var race;
-	var rfd;
+
+	race = races.get(selRace.value);
+
+	var divMap = race.gdiv;
+	var map = race.gmap;
+
+	if(!race.gdiv) { // no div yet
+	    divMap = race.gdiv = document.createElement("div");
+	    divMap.style.height = "100%";
+	    divMap.style.display = "none";
+	    document.getElementById("tab-content4").appendChild(divMap);
+	}
+
+	races.forEach(function (race) { if(race.gdiv) race.gdiv.style.display = 'none'; });
+	divMap.style.display = 'block';
 
 	// resize first
 	controller.resize(undefined);
 
-	if(!selRace.value) {
-	    divMap.innerHTML = '';
-	    return;
-	}
-	if(map_cur_race != selRace.value) {
-	    map_cur_race = selRace.value;
-	    divMap.innerHTML = '';
-	} else {
-	    return;
+	if(map) {
+		google.maps.event.trigger(map, 'resize');
+		return;
 	}
 
-	race = races.get(map_cur_race);
-	rfd = racefriends.get(map_cur_race);
+	if(!race.legdata) return; // no legdata yet;
 
-	map = new google.maps.Map(divMap, mapOptions);
+	var bounds = race.gbounds = new google.maps.LatLngBounds();
+	var mapOptions = { mapTypeId: 'terrain' };
+	race.gmap = map = new google.maps.Map(divMap, mapOptions);
 	map.setTilt(45);
-	// Override our map zoom level once our fitBounds function runs (Make sure it only runs once)
-	//var boundsListener = google.maps.event.addListener((map), 'bounds_changed', function(event) {
-	//	this.setZoom(14);
-	//	google.maps.event.removeListener(boundsListener);
-	//});
 	
 	// start, finish
 	var pos = new google.maps.LatLng(race.legdata.start.lat, race.legdata.start.lon);
@@ -1140,6 +1163,7 @@ var controller = function () {
 	for (var i = 0; i < race.legdata.course.length; i++) {
 		cpath.push(new google.maps.LatLng(race.legdata.course[i].lat,race.legdata.course[i].lon));
 	}
+	var arrow = { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW };
 	var ccpath = new google.maps.Polyline({
 	    path: cpath,
 	    icons: [{ icon: arrow, repeat: '50px'}],
@@ -1151,105 +1175,142 @@ var controller = function () {
 	});
 	ccpath.setMap(map);
 
-	// track
-	var tpath = [];
-	if(race.track) {
-	    for (var i = 0; i < race.track.length; i++) {
-		tpath.push(new google.maps.LatLng(race.track[i].lat,race.track[i].lon));
-	    }
-	    var ttpath = new google.maps.Polyline({
-		path: tpath,
-		geodesic: true,
-		strokeColor: '#6AF',
-		strokeOpacity: 0.7,
-		strokeWeight: 1,
-		zIndex: 4
-	    });
-	    ttpath.setMap(map);
-	}
+
+	updatemap(race,"cp");
+	updatemap(race,"opponents");
+	updatemap(race,"me");
+	map.fitBounds(bounds);
+    }
+
+    function updatemap(race, mode) {
+	var map = race.gmap;
+	var bounds = race.gbounds;
+
+	if(!map) return; // no map yet
+
 
 	// checkpoints
-	for (var i = 0; i < race.legdata.checkpoints.length; i++) {
-	    var cp = race.legdata.checkpoints[i];
-	    var cp_name = "invsible";
-	    if(cp.display != "none") cp_name = cp.display;
-	    var position_s = new google.maps.LatLng(cp.start.lat, cp.start.lon);
-	    var position_e = new google.maps.LatLng(cp.end.lat, cp.end.lon);
-	    var label_g = 'index: ' + i + ', id: ' + cp.id + ', group: ' + cp.group + ', type: ' + cp_name + ', engine: ' + cp.engine + ', side: ' + cp.side + ', name: ' + cp.name;
-	    var label_s = 'checkpoint s, ' + label_g;
-	    var label_e = 'checkpoint e, ' + label_g;
-	    var op = 1.0;
-	    var c_sb = "#0F0";
-	    var c_bb = "#F00";
-	    var zi = 8;
-	    if(race.gatecnt[cp.group-1]) op = 0.3; // mark/gate passed - semi transparent
-	    if(cp.display == "none") {
-		    c_sb = "#480";
-		    c_bb = "#840";
-		    zi = 6;
-	    }
-	    if(cp.side == "stbd") {
-		addmarker(map, bounds, position_s, pinSymbol(c_sb, "C"), undefined, label_s, i, zi, op);
-		addmarker(map, bounds, position_e, pinSymbol(c_bb, "C"), undefined, label_e, i, zi, op);
-	    } else {
-		addmarker(map, bounds, position_s, pinSymbol(c_bb, "C"), undefined, label_s, i, zi, op);
-		addmarker(map, bounds, position_e, pinSymbol(c_sb, "C"), undefined, label_e, i, zi, op);
-	    }
-	    if(cp.display == "gate") {
-		if(cp.side == "stbd") {
-		    addmarker(map, bounds, position_s, pinSymbol('#FF0', "RR"), undefined, label_s, i, 8, op);
-		    addmarker(map, bounds, position_e, pinSymbol('#FF0', "RL"), undefined, label_e, i, 8, op);
-		} else {
-		    addmarker(map, bounds, position_s, pinSymbol('#FF0', "RL"), undefined, label_s, i, 8, op);
-		    addmarker(map, bounds, position_e, pinSymbol('#FF0', "RR"), undefined, label_e, i, 8, op);
+	if(mode == "cp") {
+	    if(!race.legdata) return;
+	    if(map._db_cp) for (var i = 0; i < map._db_cp.length; i++) map._db_cp[i].setMap(null);
+	    map._db_cp = new Array();
+	    for (var i = 0; i < race.legdata.checkpoints.length; i++) {
+		var cp = race.legdata.checkpoints[i];
+		var cp_name = "invsible";
+		if(cp.display != "none") cp_name = cp.display;
+		var position_s = new google.maps.LatLng(cp.start.lat, cp.start.lon);
+		var position_e = new google.maps.LatLng(cp.end.lat, cp.end.lon);
+		//var label_g = 'index: ' + i + ', id: ' + cp.id + ', group: ' + cp.group + ', type: ' + cp_name + ', engine: ' + cp.engine + ', side: ' + cp.side + ', name: ' + cp.name;
+		var label_g = cp.id + ', group: ' + cp.group + ', type: ' + cp_name + ', engine: ' + cp.engine + ', side: ' + cp.side + ', name: ' + cp.name;
+		var label_s = 'checkpoint ' + label_g;
+		var label_e = 'checkpoint ' + label_g;
+		var op = 1.0;
+		var c_sb = "#0F0";
+		var c_bb = "#F00";
+		var zi = 8;
+		if(race.gatecnt[cp.group-1]) op = 0.3; // mark/gate passed - semi transparent
+		if(cp.display == "none") {
+			c_sb = "#480";
+			c_bb = "#840";
+			zi = 6;
 		}
-	    } else {
-		if(cp.side == "port") addmarker(map, bounds, position_s, pinSymbol(c_bb, "RL"), undefined, label_s, i, 8, op);
-		if(cp.side == "stbd") addmarker(map, bounds, position_s, pinSymbol(c_sb, "RR"), undefined, label_e, i, 8, op);
+		if(cp.side == "stbd") {
+		    map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_sb, "C"), undefined, label_s, i, zi, op));
+		    map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol(c_bb, "C"), undefined, label_e, i, zi, op));
+		} else {
+		    map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_bb, "C"), undefined, label_s, i, zi, op));
+		    map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol(c_sb, "C"), undefined, label_e, i, zi, op));
+		}
+		if(cp.display == "gate") {
+		    if(cp.side == "stbd") {
+			map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol('#FF0', "RR"), undefined, label_s, i, 8, op));
+			map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol('#FF0', "RL"), undefined, label_e, i, 8, op));
+		    } else {
+			map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol('#FF0', "RL"), undefined, label_s, i, 8, op));
+			map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol('#FF0', "RR"), undefined, label_e, i, 8, op));
+		    }
+		} else {
+		    if(cp.side == "port") map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_bb, "RL"), undefined, label_s, i, 8, op));
+		    if(cp.side == "stbd") map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_sb, "RR"), undefined, label_e, i, 8, op));
+		}
+		var path = [];
+		path.push(position_s);
+		path.push(position_e);
+		var ppath = new google.maps.Polyline({
+		    path: path,
+		    strokeOpacity: 0.0,
+		    icons: [{ icon: pinSymbol(cp.display == 'none' ? '#FF6600' : '#FFFF00', "DL", op), repeat: '16px'}],
+		    geodesic: true,
+		    //strokeColor: cp.display == 'none' ? '#FF6600' : '#FFFF00',
+		    //strokeWeight: 0,
+		    zIndex: cp.display == "none" ? 5 : 6
+		});
+		ppath.setMap(map);
+		map._db_cp.push(ppath);
 	    }
-	    var path = [];
-	    path.push(position_s);
-	    path.push(position_e);
-	    var ppath = new google.maps.Polyline({
-		path: path,
-		strokeOpacity: 0.0,
-		icons: [{ icon: pinSymbol(cp.display == 'none' ? '#FF6600' : '#FFFF00', "DL", op), repeat: '16px'}],
-		geodesic: true,
-		//strokeColor: cp.display == 'none' ? '#FF6600' : '#FFFF00',
-		//strokeWeight: 0,
-		zIndex: cp.display == "none" ? 5 : 6
-	    });
-	    ppath.setMap(map);
 	}
 
-	// boat
-	pos = new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon);
-	addmarker(map, bounds, pos, pinSymbol('#4F4', "B",0.7,race.curr.heading), undefined,
-		'HDG:'+roundTo(race.curr.heading, 1)+',SPD:'+roundTo(race.curr.speed, 2),'me', 20, 0.7);
+	// me
+	if(mode == "me") {
+	    if(map._db_me) for (var i = 0; i < map._db_me.length; i++) map._db_me[i].setMap(null);
+	    map._db_me = new Array();
 
-        Object.keys(rfd.uinfo).forEach(function(key) {
-            var elem = rfd.uinfo[key];
-	    var pos = new google.maps.LatLng(elem.pos.lat, elem.pos.lon);
-	    addmarker(map, bounds, pos, pinSymbol('#26A', "B",0.7,elem.heading), undefined,
-		    elem.displayName + '- HDG:'+roundTo(elem.heading, 1)+',SPD:'+roundTo(elem.speed, 2),'U:'+key, 18, 0.7);
 	    // track
 	    var tpath = [];
-	    if(elem.track) {
-		for (var i = 0; i < elem.track.length; i++) {
-		    tpath.push(new google.maps.LatLng(elem.track[i].lat,elem.track[i].lon));
+	    if(race.track) {
+		for (var i = 0; i < race.track.length; i++) {
+		    tpath.push(new google.maps.LatLng(race.track[i].lat,race.track[i].lon));
 		}
 		var ttpath = new google.maps.Polyline({
 		    path: tpath,
 		    geodesic: true,
-		    strokeColor: '#44C',
-		    strokeOpacity: 0.6,
+		    strokeColor: '#4F4',
+		    strokeOpacity: 0.7,
 		    strokeWeight: 1,
 		    zIndex: 4
 		});
 		ttpath.setMap(map);
+		map._db_me.push(ttpath);
 	    }
-        });
-	map.fitBounds(bounds);
+
+
+	    // boat
+	    pos = new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon);
+	    map._db_me.push(addmarker(map, bounds, pos, pinSymbol('#4F4', "B",0.7,race.curr.heading), undefined,
+		'HDG:'+roundTo(race.curr.heading, 1)+',SPD:'+roundTo(race.curr.speed, 2),'me', 20, 0.7));
+	}
+
+	// opponents
+	if(mode == "opponents") {
+	    var rfd = racefriends.get(race.id);
+	    if(map._db_op) for (var i = 0; i < map._db_op.length; i++) map._db_op[i].setMap(null);
+	    map._db_op = new Array();
+
+	    Object.keys(rfd.uinfo).forEach(function(key) {
+		var elem = rfd.uinfo[key];
+		var bi = boatinfo(elem);
+		var pos = new google.maps.LatLng(elem.pos.lat, elem.pos.lon);
+		map._db_op.push(addmarker(map, bounds, pos, pinSymbol(bi.bcolor, "B",0.7,elem.heading), undefined,
+			bi.name + '- HDG:'+bi.heading+',SPD:'+bi.speed,'U:'+key, 18, 0.7));
+		// track
+		var tpath = [];
+		if(elem.track) {
+		    for (var i = 0; i < elem.track.length; i++) {
+			tpath.push(new google.maps.LatLng(elem.track[i].lat,elem.track[i].lon));
+		    }
+		    var ttpath = new google.maps.Polyline({
+			path: tpath,
+			geodesic: true,
+			strokeColor: bi.bcolor,
+			strokeOpacity: 0.6,
+			strokeWeight: 1,
+			zIndex: 4
+		    });
+		    ttpath.setMap(map);
+		    map._db_op.push(ttpath);
+		}
+	    });
+	}
     }
 
     function addmarker(map, bounds, pos, symbol, label, title, mref, zi, op) {
@@ -1488,8 +1549,8 @@ var controller = function () {
                         divRaceStatus.innerHTML = makeRaceStatusHTML();
                     } else if ( request.eventKey == "Game_GetBoatState" ) {
                         // First boat state message, only sent for the race the UI is displaying
-                        var raceId = getRaceLegId(response.scriptData.boatState._id);
-                        var race =  races.get(raceId);
+			var raceId = getRaceLegId(response.scriptData.boatState._id);
+			var race =  races.get(raceId);
 			race.legdata = response.scriptData.leg;
                         // Don't try old race_id, messages will be misdirected
                         updatePosition(response.scriptData.boatState, race);
@@ -1529,7 +1590,9 @@ var controller = function () {
                         }
                     } else if ( request.eventKey == "Game_GetOpponents" ) {
                         var raceId = getRaceLegId(request);
+			var race = races.get(raceId);
                         updateFriends(raceId, "opponents", response.scriptData.res);
+			updatemap(race,"opponents");
                         if(raceId == selRace.value) {
                             divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
                         }
@@ -1543,8 +1606,10 @@ var controller = function () {
 			if(race) {
 			    if(uid == race.curr._id.user_id) {
 				race.track = response.scriptData.track;
+				updatemap(race,"me");
 			    } else if(ndata) {
 				ndata.track = response.scriptData.track;
+				updatemap(race,"opponents");
 			    }
 			}
                     } else if ( request.eventKey == "User_GetCard" ) {
@@ -1555,6 +1620,8 @@ var controller = function () {
                         if(raceId == selRace.value) {
                             divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
                         }
+			var race = races.get(raceId);
+			updatemap(race,"opponents");
                     }
                 } else if ( responseClass == ".ScriptMessage" ) {
                     // There is no request for .ScriptMessages.
