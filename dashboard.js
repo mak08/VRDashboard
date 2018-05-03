@@ -370,6 +370,7 @@ var controller = function () {
         if(mode == "usercard") {
             data.mode = "opponents";
             data.ts = data.lastCalcDate;
+	    if(data.ts < ndata.ts) data.ts = ndata.ts;
         }
         if(ndata.mode == "followed") data.mode = "followed"; // keep followed state if present
 
