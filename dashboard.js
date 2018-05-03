@@ -1584,7 +1584,9 @@ var controller = function () {
                         divRaceStatus.innerHTML = makeRaceStatusHTML();
                     } else if ( request.eventKey == "Game_GetFollowedBoats") {
                         var raceId = getRaceLegId(request);
+			var race = races.get(raceId);
                         updateFriends(raceId, "followed", response.scriptData.res);
+			updatemap(race,"opponents");
                         if(raceId == selRace.value) {
                             divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
                         }
