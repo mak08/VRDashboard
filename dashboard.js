@@ -1202,14 +1202,16 @@ var controller = function () {
 		var position_s = new google.maps.LatLng(cp.start.lat, cp.start.lon);
 		var position_e = new google.maps.LatLng(cp.end.lat, cp.end.lon);
 		//var label_g = 'index: ' + i + ', id: ' + cp.id + ', group: ' + cp.group + ', type: ' + cp_name + ', engine: ' + cp.engine + ', side: ' + cp.side + ', name: ' + cp.name;
-		var label_g = cp.id + ', group: ' + cp.group + ', type: ' + cp_name + ', engine: ' + cp.engine + ', side: ' + cp.side + ', name: ' + cp.name;
-		var label_s = 'checkpoint ' + label_g;
-		var label_e = 'checkpoint ' + label_g;
-		var op = 1.0;
 		var c_sb = "#0F0";
 		var c_bb = "#F00";
 		var zi = 8;
-		if(race.gatecnt[cp.group-1]) op = 0.3; // mark/gate passed - semi transparent
+		var op = 1.0;
+		var g_passed = false;
+		if(race.gatecnt[cp.group-1]) { g_passed = true ; op = 0.3; } // mark/gate passed - semi transparent
+		var label_g = cp.id + ', group: ' + cp.group + ', type: ' + cp_name + ', engine: ' + cp.engine + ', side: ' + cp.side + ', name: ' + cp.name + (g_passed ? ", PASSED" : "");
+		var label_s = 'checkpoint ' + label_g;
+		var label_e = 'checkpoint ' + label_g;
+
 		if(cp.display == "none") {
 			c_sb = "#480";
 			c_bb = "#840";
