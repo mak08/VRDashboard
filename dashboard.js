@@ -77,6 +77,7 @@ var controller = function () {
         + '<th title="Reported speed">' + 'vR (kn)' + '</th>'
         + '<th title="Calculated speed (Δd/Δt)">' + 'vC (kn)' + '</th>'
         + '<th title="Polar-derived speed">' + 'vT (kn)' + '</th>'
+        + '<th title="Foiling factor">' + 'Foils' + '</th>'
         + '<th title="Calculated distance">' + 'Δd (nm)' + '</th>'
         + '<th title="Time between positions">' + 'Δt (s)' + '</th>'
         + '<th title="Sail change time remaining">' + 'Sail' + '</th>'
@@ -309,15 +310,24 @@ var controller = function () {
         } else {
             var r = this.uinfo[uid];
             var race = races.get(selRace.value);
-            if ( r == undefined ) return "";
-        var bi = boatinfo(r);
 
+            if ( r == undefined ) {
+                return "";
+            }
+            
+            var bi = boatinfo(r);
+
+            var dtf = r.distanceToEnd;
+            if (!dtf) {
+                dtf = '(' + roundTo(gcDistance(r.pos.lat, r.pos.lon, race.legdata.end.lat, race.legdata.end.lon), 1) + ')';
+            }
+            
             return "<tr class='hov' id='ui:" + uid + "'>"
                 + (race.url ? ("<td class='tdc'><span id='rt:" + uid + "'>&#x2388;</span></td>") : "<td>&nbsp;</td>")
                 + '<td style="' + bi.nameStyle + '">' + bi.name + "</td>"
                 + "<td>" + formatDate(r.ts) + "</td>"
                 + "<td>" + (r.rank?r.rank:"-") + "</td>"
-                + "<td>" + (r.distanceToEnd?r.distanceToEnd:"-") + "</td>"
+                + "<td>" + dtf + "</td>"
                 + "<td>" + (r.distanceToUs?r.distanceToUs:"-") + "</td>"
                 + "<td>" + (r.bearingFromUs?r.bearingFromUs+"&#x00B0;":"-") + "</td>"
                 + "<td>" + bi.sail + "</td>"
@@ -618,6 +628,7 @@ var controller = function () {
             + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
             + "<td " + speedCStyle + ">" + roundTo(r.curr.speedC, 2) + ' (' + sailNames[(r.curr.sail % 10)] + ')' + "</td>"
             + "<td " + speedTStyle + ">" + speedT + "</td>"
+            + "<td>" + (r.curr.speedT?(roundTo(r.curr.speedT.foiling, 0) + '%'):'-') + "</td>"
             + "<td " + speedTStyle + ">" + deltaDist + "</td>"
             + "<td>" + roundTo(r.curr.deltaT, 0) + "</td>"
             + "<td " + getBG(r.curr.tsEndOfSailChange) + ">" + sailChange + "</td>"
@@ -845,7 +856,6 @@ var controller = function () {
             if ( r.curr.speedT ) {
                 r.curr.deltaD_T = r.curr.deltaD /  r.curr.speedC * r.curr.speedT.speed;
             }
-
             saveMessage(r);
         }
     if(message.gateGroupCounters) {
@@ -880,12 +890,15 @@ var controller = function () {
             var twa = message.twa;
             var options = message.options;
             var foil = foilingFactor(options, tws, twa, boatPolars.foil);
+            var foiling = (foil-1.0)*100/(boatPolars.foil.speedRatio-1.0);
             var hull = options.includes("hull")?1.003:1.0;
             var ratio = boatPolars.globalSpeedRatio;
             var twsLookup = fractionStep(tws, boatPolars.tws);
             var twaLookup = fractionStep(twa, boatPolars.twa);
             var speed = maxSpeed(options, twsLookup, twaLookup, boatPolars.sail);
-            return {"speed": roundTo(speed.speed * foil * hull * ratio, 2), "sail": shortNames[speed.sail]};
+            return {"speed": roundTo(speed.speed * foil * hull * ratio, 2),
+                    "sail": shortNames[speed.sail],
+                    "foiling": foiling};
         }
     }
 
