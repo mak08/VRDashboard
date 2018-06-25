@@ -1,6 +1,5 @@
 // UI Controller
 
-
 var controller = function () {
 
     const LightRed = '#ffa0a0';
@@ -1523,7 +1522,7 @@ var controller = function () {
                 divRawLog.innerHTML = divRawLog.innerHTML + '\n' +  '<<< ' + params.response.payloadData;
             }
             // Work around broken message
-            var jsonString = params.response.payloadData.replace(/\bNaN\b/g, "null");
+            var jsonString = params.response.payloadData.replace(/\bNaN\b|\bInfinity\b/g, "null");
             var response = JSON.parse(jsonString);
             if ( response == undefined ) {
                 console.log("Invalid JSON in payload");
