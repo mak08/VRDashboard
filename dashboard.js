@@ -317,7 +317,7 @@ var controller = function () {
             var bi = boatinfo(r);
 
             var dtf = r.distanceToEnd;
-            if (!dtf) {
+            if (!dtf || dtf == "null") {
                 dtf = '(' + roundTo(gcDistance(r.pos.lat, r.pos.lon, race.legdata.end.lat, race.legdata.end.lon), 1) + ')';
             }
             
