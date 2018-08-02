@@ -1,19 +1,17 @@
 {
-    "name": "VR Dashboard",
-    "description": "Monitor boat position & call virtual sailor weather router",
-    "version": "2.3.2",
-    "permissions": [
-        "debugger",
-        "tabs",
-        "storage"
-    ],
-    "content_security_policy": "script-src 'self' https://maps.googleapis.com/; object-src 'self'",
-    "background": {
-        "scripts": ["background.js"]
-    },
-    "page_action": {
-        "default_icon": "zicon.png",
-        "default_title": "VR Dashboard"
-    },
-    "manifest_version": 2
+   "background": {
+      "scripts": [ "background.js" ]
+   },
+   "content_security_policy": "script-src 'self' https://maps.googleapis.com/; object-src 'self'",
+   "description": "Monitor boat position & call virtual sailor weather router",
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAloVmPBp/Poi0AVR6sLMWaOcUAHst+YvlZxQyuWirer27Q7xB79RWTfKKlAmB9Rgo/n+b7XCRbLhqVwH0fdTPSL/zOMNo2N+29pHL5VJSB3ik94oOT9150MtNTfSQ6VnlvU47a8DOeTTZuM83JH78onIzGCN9Pg4ylk2GBmLirvvedrfsw9aPXBXU4dqxaY/fNDsBGt4Q9VPR7cpVX4uXa3SGqdKJUOUT6o4dwxCZe6fcmALjP3kezI4e4aO4Um+VeJ5eoVg9cxkLc/Mwd9qeCDOZxP3fzf798n+mzpJdjjKP3Uk5lwogdweQE+AdylW3oLKmbE/Bk8ggjvZGvuH+vwIDAQAB",
+   "manifest_version": 2,
+   "name": "VR Dashboard",
+   "page_action": {
+      "default_icon": "zicon.png",
+      "default_title": "VR Dashboard"
+   },
+   "permissions": [ "debugger", "tabs", "storage" ],
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "2.3.2.6"
 }

@@ -16,6 +16,8 @@ var controller = function () {
     var sortField = "none";
     var currentSortField = "none";
     var currentSortOrder = 0;
+    var raceclsmt = new Map();   // add Guy
+   
     var sailNames = [0, "Jib", "Spi", "Stay", "LJ", "C0", "HG", "LG", 8, 9,
                      // VR sends sailNo + 10 to indicate autoSail. We use sailNo mod 10 to find the sail name sans Auto indication.
                      "Auto", "Jib (Auto)", "Spi (Auto)", "Stay (Auto)", "LJ (Auto)", "C0 (Auto)", "HG (Auto)", "LG (Auto)"];
@@ -36,6 +38,10 @@ var controller = function () {
         rfdef.table = new Array();
         rfdef.uinfo = new Object();
         racefriends.set(race.id, rfdef);
+        var clsmntdef = new Map();
+        clsmntdef.table = new Array();
+        clsmntdef.uinfo = new Object();
+        raceclsmt.set(race.id, clsmntdef);
         addSelOption(race, false, disabled);
         if (race.has_beta) {
             addSelOption(race, true, disabled);
@@ -55,6 +61,8 @@ var controller = function () {
             divRaceStatus.innerHTML = makeRaceStatusHTML();
             divFriendList = document.getElementById("friendList");
             divFriendList.innerHTML = "No friend positions received yet";
+            divClsmntList = document.getElementById("classement");
+            divClsmntList.innerHTML = "No rank list yet";
         }
         xhr.open('GET', 'http://zezo.org/races2.json');
         //xhr.open('GET', 'races2.json');
@@ -66,7 +74,7 @@ var controller = function () {
 
     var selRace, cbRouter, cbReuseTab, cbLocalTime;
     var lbBoatname;
-    var divPositionInfo, divRecordLog, divRawLog;
+    var divPositionInfo, divRecordLog, divRawLog, divClsmntList ;
     var callRouterFunction;
     var initialized = false;
 
@@ -82,6 +90,7 @@ var controller = function () {
         + '<th title="Sail change time remaining">' + 'Sail' + '</th>'
         + '<th title="Gybing time remaining">' + 'Gybe' + '</th>'
         + '<th title="Tacking time remaining">' + 'Tack' + '</th>'
+        + '<th title="Speed to Finish">' + 'vF (kn)' + '</th>'
         + '</tr>';
 
     var raceStatusHeader =  '<tr>'
@@ -116,8 +125,38 @@ var controller = function () {
             + genth("th_twa","TWA","True Wind Angle", sortField == 'twa', currentSortOrder)
             + genth("th_tws","TWS","True Wind Speed",sortField == 'tws', currentSortOrder) 
             + genth("th_speed","Speed","Boat Speed",sortField == 'speed', currentSortOrder) 
+            + genth("th_speedF","SpeedF","Speed to Finish",sortField == 'speedF', currentSortOrder) 
             +  '</tr>';
     }
+
+// en-tête classement Guy 
+     function boatsListHeader() {
+		nuline = 0;
+        return '<tr>'
+        + genth("th_name","Boat Name",undefined, sortField == 'displayName', currentSortOrder) 
+        + genth("th_nl","Range",undefined,sortField == 'clsmt', currentSortOrder)
+        + genth("th_id","Identifier",undefined)
+        + genth("th_country","Pays",undefined, sortField == 'country', currentSortOrder) 
+        + genth("th_date","LastDate",undefined)
+        + genth("th_VSR_lvl","VSR_lvl",undefined, sortField == 'VSR_lvl', currentSortOrder)
+        + genth("th_VSR_Points","VSR_Points",undefined, sortField == 'VSR_points', currentSortOrder)
+        + genth("th_VSR_Rank","VSR_Rank",undefined, sortField == 'VSR_rank', currentSortOrder)
+        + genth("th_Rank","Rank",undefined, sortField == 'rank', currentSortOrder)
+        + genth("th_dtf","DTF","Distance to Finish",sortField == 'distanceToEnd', currentSortOrder)
+        + genth("th_date_100s","LastDate",undefined)
+        + genth("th_dtu","DTU","Distance to Us",sortField == 'distanceToUs', currentSortOrder) 
+        + genth("th_brg","BRG","Bearing from Us", undefined)
+        + genth("th_sail","Sail",undefined)
+        + genth("th_state","State",undefined,sortField=='state', currentSortOrder) 
+		+ genth("th_lu","Last Update",undefined)
+        + genth("th_psn","Position",undefined)
+        + genth("th_hdg","HDG","Heading")
+        + genth("th_twa","TWA","True Wind Angle")
+        + genth("th_tws","TWS","True Wind Speed",sortField == 'tws', currentSortOrder) 
+        + genth("th_speed","Speed","Boat Speed",sortField == 'speed', currentSortOrder) 
+        +  '</tr>';
+    }
+// fin en-tête classement Guy
 
     function genth(id,content,title,sortfield,sortmark) {
         if(sortfield && sortmark != undefined) {
@@ -164,6 +203,122 @@ var controller = function () {
         return lastCommand;
     }
 
+	
+// lignes de classement Guy  voir listes ci-dessous 
+	function saveBoatsDatas(q,r,k) {
+// q : question : request / r : réponse (me : de mon bateau, res (max 50) du groupe) Guy
+// save user me (réduit)
+// save users liste (minimum)
+// si "Game_GetOpponents" : 1 / q : legNum et raceId / r : seulement : res
+// si "Game_GetFollowedBoats" : 1 / q : legNum et raceId / r : seulement : res
+// si "LDB_GetLegRank" ou "LDB_GetGateRank" : 2 / q : legNum, raceId et userId / r : réponse (me : du bateau "userId", res (max 50) du groupe) Guy
+//
+//  similaire à function updateFriends(rid, mode, data) {
+		var rid = getRaceLegId(q);
+        var rfd = raceclsmt.get(rid);
+        rfd.lastUpdate = Date.now();
+		if (k == "2" ) { 
+			r.me.event = q.eventKey;
+			saveBoatDatas(rid, r.me._id, r.me, "3");  // infos persos mini : country date displayName distance rank _id
+		}
+		data = r.res;
+        data.forEach(function(delem) {
+			if (!delem.ts) delem.ts = Date.now();
+			delem.event = q.eventKey;
+			if(delem.type == "sponsor") {
+				delem.bname = delem.branding.name;
+			}
+			if(delem.type == "pilotBoat") {
+				delem.displayName = "Frigate";
+			} else if(delem.type == "real") {
+				delem.displayName = delem.extendedInfos.boatName;
+				delem.rank = delem.extendedInfos.rank;
+			}
+			if (k == "2" ) {
+				saveBoatDatas(rid, delem._id, delem, k); // infos 1 boat du group mini : country date displayName distance _id + (type, bname, real_rank)
+			} else {
+				saveBoatDatas(rid, delem.userId, delem, k); // infos 1 boat du group mini : country date displayName distance userId + (type, bname, real_rank)		
+			}
+		});
+		sortBoats(rfd);
+    }
+	
+	function saveBoatDatas(c,u,v,k) {
+// equivalent à updateFriendUinfo()
+// c : course_id / u : user_id, v : valeurs 
+// k = 0 = vsr, legInfos et baseInfos (complet) 
+// k = 1 = res seulement Guy 
+// k = 2 = me + res Guy 
+// k = 3 = 1 boat (mini) : country date displayName distance _id + (rank) + (type, bname, real_rank)
+// save user datas (complet)
+        var rfd = raceclsmt.get(c);
+        var race = races.get(c);
+        var ndata = rfd.uinfo[u];
+        if(!ndata) {
+            ndata = new Object();
+			if (k == "0") {
+				rfd.uinfo[u] = v.legInfos;
+			} else {
+				rfd.uinfo[u] = v;
+			}
+        }
+
+// elemlist fonction de l'entrée (0, 1, 2, 3) 
+		if (k == "0") { 
+			var elemlist = ["lastCalcDate", "type", "state", "pos","heading","twa","tws","speed","distanceToEnd","sail","rank"];
+			(v.event?ndata.event = v.event:ndata.event = "click");
+			ndata["country"] = v.baseInfos["country"];
+			ndata["displayName"] = v.baseInfos["displayName"];			
+			ndata["VSR_lvl"] = v.baseInfos.VSR["level"];
+			ndata["VSR_Points"] = v.baseInfos.VSR["points"];
+			if(v.baseInfos.VSR["level"] > 13) ndata["VSR_Rank"] = v.baseInfos.VSR["rank"];
+			v = v.legInfos;
+		} else if (k == "1") {  
+			var elemlist = ["country", "date", "displayName", "distance"];
+			(v.event?ndata.event = v.event:ndata.event = "Game_Get");
+		} else if (k == "2") {
+			var elemlist = ["country", "date", "displayName", "distance"];
+			(v.event?ndata.event = v.event:ndata.event = "GetRank");
+		} else if (k == "3") {  
+			var elemlist = ["country", "date", "displayName", "distance", "rank"];
+		}
+        // copy elems from data to uinfo
+        elemlist.forEach(function(tag) {
+            if(tag in v) {
+                ndata[tag] = v[tag];
+				if(tag == "pos") { // calc gc distance to us
+                    ndata.distanceToUs = roundTo(gcDistance(race.curr.pos.lat, race.curr.pos.lon, ndata.pos.lat, ndata.pos.lon), 1);
+                    ndata.bearingFromUs = roundTo(courseAngle(race.curr.pos.lat, race.curr.pos.lon, ndata.pos.lat, ndata.pos.lon)*180/Math.PI, 1);
+					ndata.dtfC = gcDistance(ndata.pos.lat, ndata.pos.lon, race.legdata.end.lat, race.legdata.end.lon);  // Guy : distance to Finish calculate
+					v.dtfC = ndata.dtfC;
+               }
+            }
+        });
+    }
+
+/* 	function commonClsmtLines(r) {
+
+        var autoSail = formatHMS(r.curr.tsEndOfAutoSail - r.curr.lastCalcDate);
+
+        var twaFG = (r.curr.twa < 0)?"red":"green";
+        var twaBold = r.curr.twaAuto?"font-weight: bold;":"";
+        var hdgFG = r.curr.twaAuto?"black":"blue";
+        var hdgBold = r.curr.twaAuto?"font-weight: normal;":"font-weight: bold;";
+
+        return "<td>" + ((r.rank)?r.rank:"-") + "</td>"
+            + "<td>" + ((r.dtl)?r.dtl:"-") + "</td>"
+            + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
+            + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
+            + '<td style="color:' + hdgFG + ';' + hdgBold + '">' + roundTo(r.curr.heading, 1) + "</td>"
+            + '<td style="color:' + twaFG + ';' + twaBold + '">' + roundTo(Math.abs(r.curr.twa), 1) + "</td>"
+            + "<td>" + roundTo(r.curr.tws, 2) + "</td>"
+            + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
+            + "<td>" + (r.curr.twaAuto?"Yes":"No") + "</td>"
+            + "<td>" + autoSail + "</td>";
+    }
+ */
+ // fin lignes de classement Guy 
+	
     function commonTableLines(r) {
 
         var sailInfo = sailNames[r.curr.sail % 10];
@@ -276,14 +431,60 @@ var controller = function () {
         }
     }
 
+// Guy : line Boat (classement) Start
+	function makeBoatsListLine (uid) {
+        if ( uid == undefined ) {
+            return "";
+        } else {
+			var r = this.uinfo[uid];
+            if ( r == undefined ) return "";
+			nuline += 1;
+            var race = races.get(selRace.value);
+            var name = r.displayName;
+            var nameStyle = (r.mode == "followed") ?"font-weight: bold; ":"";
+            if(r.type == "top") nameStyle += "color: DarkGoldenRod;";
+            if(r.type == "real") nameStyle += "color: DarkGreen;";
+            var rankStyle = (r.event == "click") ?"color: DarkGreen":"color: DarkRed";	
+            if(r.type == "sponsor") {
+                nameStyle += "color: BlueViolet;";
+                name += "(" + r.bname + ")";
+            }
+            return "<tr class='hov' id='ui:" + uid + "'>"
+                + '<td style="' + nameStyle + '">' + name + "</td>"
+                + "<td>" + nuline + "</td>"
+                + "<td>" + uid + "</td>"
+                + '<td style="' + nameStyle + '">' + (r.country?r.country:"-") + "</td>"
+                + "<td>" + (r.date?formatDate(r.date):"-") + "</td>"
+                + "<td>" + (r.VSR_lvl?r.VSR_lvl:"-") + "</td>"
+                + "<td>" + (r.VSR_Points?r.VSR_Points:"-") + "</td>"
+                + "<td>" + (r.VSR_Rank?r.VSR_Rank:"-") + "</td>"
+                + '<td style="' + rankStyle + '">' + (r.rank?r.rank:"-") + "</td>"
+                + "<td>" + (r.distance?r.distance:(r.distanceToEnd?r.distanceToEnd:"-")) + "</td>"
+                + "<td>" + (r.date?r.date:"-") + "</td>"
+                + "<td>" + (r.distanceToUs?r.distanceToUs:"-") + "</td>"
+                + "<td>" + (r.bearingFromUs?r.bearingFromUs+"&#x00B0;":"-") + "</td>"
+                + "<td>" + (sailNames[r.sail] || '-') + "</td>"
+                + "<td>" + (r.state || '-') + "</td>"
+                + "<td>" + formatDate(r.td) + "</td>"
+                + "<td>" + (r.pos?formatPosition(r.pos.lat, r.pos.lon):"-") + "</td>"
+                + "<td>" + (r.heading?roundTo(r.heading,1):"-") + "</td>"
+                + "<td>" + (r.twa?roundTo(Math.abs(r.twa), 1):"-") + "</td>"
+                + "<td>" + (r.tws?roundTo(r.tws, 1):"-") + "</td>"
+                + "<td>" + (r.speed?roundTo(r.speed, 2):"-") + "</td>"
+                + "</tr>";
+		}
+    }
+// Guy : End 
+
+
     function boatinfo(uinfo) {
     var res = {
         name: uinfo.displayName,
         nameStyle: "",
-        speed: roundTo(uinfo.speed, 2),
-        heading: roundTo(uinfo.heading, 1),
-        tws: roundTo(uinfo.tws, 1),
-        twa: roundTo(Math.abs(uinfo.twa), 1),
+        speed: roundTo(uinfo.speed, 3),
+        heading: roundTo(uinfo.heading, 2),
+        tws: roundTo(uinfo.tws, 2),
+        twa: roundTo(Math.abs(uinfo.twa), 2),
         bcolor: '#26a'
     };
 
@@ -309,24 +510,42 @@ var controller = function () {
         } else {
             var r = this.uinfo[uid];
             var race = races.get(selRace.value);
-
-            if ( r == undefined ) {
-                return "";
+            if ( r == undefined ) return "";
+            var name = r.displayName;
+            var nameStyle = (r.mode == "followed") ?"font-weight: bold; ":"";
+            if(r.type == "top") nameStyle += "color: DarkGoldenRod;";
+            if(r.type == "real") nameStyle += "color: DarkGreen;";
+            if(r.type == "sponsor") {
+                nameStyle += "color: BlueViolet;";
+                name += "(" + r.bname + ")";
             }
+            
+            var twaStyle = "style='color:" + ((r.twa < 0)?"red":"green") + ";'";
             
             var bi = boatinfo(r);
 
-            var dtf = r.distanceToEnd;
-            if (!dtf || dtf == "null") {
-                dtf = '(' + roundTo(gcDistance(r.pos.lat, r.pos.lon, race.legdata.end.lat, race.legdata.end.lon), 1) + ')';
+            r.dtf = r.distanceToEnd;
+//			r.dtfC = gcDistance(r.pos.lat, r.pos.lon, race.legdata.end.lat, race.legdata.end.lon);  // Guy : distance to Finish calculate
+            if (!r.dtf || r.dtf == "null") {
+                r.dtf = '(' + roundTo(r.dtfC, 2) + ')';
             }
-            
+            if (!r.dtfC_old || r.dtfC_old == "null") {
+				r.vtf = "-";
+			} else {
+				if (r.ts_old == r.ts) {
+					// not change ... 
+				} else {
+					r.vtf = (r.dtfC_old - r.dtfC)*3600*1000/(r.ts - r.ts_old);
+				}
+            }
+            r.dtfC_old = r.dtfC;
+			r.ts_old = r.ts;
             return "<tr class='hov' id='ui:" + uid + "'>"
                 + (race.url ? ("<td class='tdc'><span id='rt:" + uid + "'>&#x2388;</span></td>") : "<td>&nbsp;</td>")
                 + '<td style="' + bi.nameStyle + '">' + bi.name + "</td>"
                 + "<td>" + formatDate(r.ts) + "</td>"
                 + "<td>" + (r.rank?r.rank:"-") + "</td>"
-                + "<td>" + dtf + "</td>"
+                + "<td>" + r.dtf + "</td>"
                 + "<td>" + (r.distanceToUs?r.distanceToUs:"-") + "</td>"
                 + "<td>" + (r.bearingFromUs?r.bearingFromUs+"&#x00B0;":"-") + "</td>"
                 + "<td>" + bi.sail + "</td>"
@@ -336,6 +555,7 @@ var controller = function () {
                 + "<td " + bi.twaStyle + ">" + bi.twa + "</td>"
                 + "<td>" + bi.tws + "</td>"
                 + "<td>" + bi.speed + "</td>"
+                + "<td>" + roundTo(r.vtf,4) + "</td>"     // Guy : speed to finish
                 + "</tr>";
         }
     }
@@ -367,12 +587,26 @@ var controller = function () {
             + "</table>";
     }
 
+// fonction similaire à makeFriendsHTML   Guy
+    function makeClsmtHTML(boatsList) {
+        if (boatsList === undefined) {
+            return "No rank list yet";
+        } else {
+			sortBoats(boatsList);
+            return "<table style=\"width:100%\">"
+                + boatsListHeader()
+                + Array.from(boatsList.table||[]).map(makeBoatsListLine, boatsList).join(' ');
+                + "</table>";
+        }
+    }
+// fin fonction similaire à makeFriendsHTML   Guy
+
     function updateFriendUinfo(rid, mode, uid, data) {
         var rfd = racefriends.get(rid);
         var race = races.get(rid);
         var ndata = rfd.uinfo[uid];
 
-    if(data.pos == undefined) return; // looked up user not in this race
+//    if(data.pos == undefined) return; // looked up user not in this race
         if(!ndata) {
             ndata = new Object();
             rfd.uinfo[uid] = ndata;
@@ -380,18 +614,21 @@ var controller = function () {
         if(mode == "usercard") {
             data.mode = "opponents";
             data.ts = data.lastCalcDate;
-        if(data.ts < ndata.ts) data.ts = ndata.ts;
+//        if(data.ts < ndata.ts) data.ts = ndata.ts;
         }
         if(ndata.mode == "followed") data.mode = "followed"; // keep followed state if present
 
-        var elemlist = ["baseInfos", "displayName", "ts", "type", "state", "pos","heading","twa","tws","speed","mode","distanceToEnd","sail","bname"];
+        var elemlist = ["baseInfos", "displayName", "ts", "type", "state", "pos","heading","twa","tws","speed","mode","distanceToEnd","sail","bname","rank"];
+//        var elemlist = ["baseInfos", "displayName", "ts", "type", "state", "pos","heading","twa","tws","speed","mode","distanceToEnd","sail","bname"];
         // copy elems from data to uinfo
         elemlist.forEach(function(tag) {
             if(tag in data) {
                 ndata[tag] = data[tag];
                 if (tag == "baseInfos" ) {
                     ndata.displayName = data["baseInfos"].displayName;
-                } else if (tag == "pos") { // calc gc distance to us
+                } else if (tag == "pos") { // calc gc distance to us  
+					ndata.dtfC = gcDistance(data.pos.lat, data.pos.lon, race.legdata.end.lat, race.legdata.end.lon);  // Guy : distance to Finish calculate
+					data.dtfC = ndata.dtfC;
                     ndata.distanceToUs = roundTo(gcDistance(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon), 1);
                     ndata.bearingFromUs = roundTo(courseAngle(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon)*180/Math.PI, 1);
             var ad = ndata.bearingFromUs - race.curr.heading + 90;
@@ -404,6 +641,24 @@ var controller = function () {
         if(data["rank"] > 0) ndata["rank"] = data["rank"];
     }
 
+    function sortBoats(rfd) {
+//        if (sortField != "none") {
+//            sortFriendsByField(rfd, sortField);
+//        } else {
+//            sortFriendsByCategory(rfd);
+//        }
+		sortBoatsBy(rfd);
+    }
+	
+    function sortBoatsBy(rfd) {
+        var fln = new Array();
+        Object.keys(rfd.uinfo).forEach(function(key) {
+            var elem = rfd.uinfo[key];
+            fln.push(key);
+        });
+        rfd.table = fln;
+    }
+	
     function sortFriends(rfd) {
         if (sortField != "none") {
             sortFriendsByField(rfd, sortField);
@@ -412,6 +667,8 @@ var controller = function () {
         }
     }
 
+	
+	
     function sortFriendsByField(rf, field) {
         rf.table.sort(function(uidA, uidB) {
             if (rf.uinfo[uidA] == undefined && rf.uinfo[uidB] == undefined) return 0;
@@ -420,11 +677,29 @@ var controller = function () {
             var entryA = rf.uinfo[uidA][field];
             var entryB = rf.uinfo[uidB][field];
             if (entryA == undefined && entryB == undefined) return 0;
+//            if (entryB == undefined) entryB = 0;   
+//            if (entryA == undefined) entryA = 0;   
             if (entryB == undefined) return -1;
             if (entryA == undefined) return 1;
-            if (isNaN(entryA)) entryA = entryA.toUpperCase();
-            if (isNaN(entryB)) entryB = entryB.toUpperCase();
-            if (currentSortOrder == 0) {
+	        if (entryA == "-") entryA = 0;   // Guy
+            if (entryB == "-") entryB = 0;   // Guy
+            if (isNaN(entryA)) {
+				if (entryA.substr(0,1)=="(") {
+					entryA = entryA.slice(1,-1);
+				} else {
+					entryA = entryA.toUpperCase();
+				}
+			}
+            if (isNaN(entryB)) {
+				if (entryB.substr(0,1)=="(") {
+					entryB = entryB.slice(1,-1);
+				} else {
+					entryB = entryB.toUpperCase();	
+				}
+			}
+			console.log("A = " + isNaN(entryA) + " : " + entryA);
+			console.log("B = " + isNaN(entryB) + " : " + entryB);
+			if (currentSortOrder == 0) {
                 if (entryA < entryB) return -1;
                 if (entryA > entryB) return 1;
             } else {
@@ -572,7 +847,7 @@ var controller = function () {
             "<tr>"
                 + "<td>" + formatDate(r.lastCommand.request.ts) + "</td>" 
                 + '<td colspan="3">Command @' + formatTime() + "</td>" 
-                + '<td colspan="16">Actions:' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
+                + '<td colspan="17">Actions:' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
                 + "</tr>");
         if (r.id == selRace.value) {
             divRecordLog.innerHTML = makeTableHTML(r);
@@ -633,6 +908,7 @@ var controller = function () {
             + "<td " + getBG(r.curr.tsEndOfSailChange) + ">" + sailChange + "</td>"
             + "<td " + getBG(r.curr.tsEndOfGybe) + ">" + gybing + "</td>"
             + "<td " + getBG(r.curr.tsEndOfTack) + ">" + tacking + "</td>"
+            + "<td>" + roundTo(r.vtf,4) + "</td>"   // guy speed to finish
             + "</tr>";
     }
 
@@ -651,7 +927,8 @@ var controller = function () {
         divRaceStatus.innerHTML = makeRaceStatusHTML();
         divRecordLog.innerHTML = makeTableHTML(races.get(race));
         divFriendList.innerHTML = makeFriendsHTML(racefriends.get(race));
-    if(document.getElementById("tab-content4").style.display == "block") initmap();
+        divClsmntList.innerHTML = makeClsmtHTML(raceclsmt.get(race));
+		if(document.getElementById("tab-content5").style.display == "block") initmap();
     }
 
     function getRaceLegId (id) {
@@ -670,7 +947,8 @@ var controller = function () {
     function clearLog() {
         divRawLog.innerHTML = "";
     }
-
+// fonction ci-dessous à reprendre pour classement (optionel) Guy 
+ 
     function tableClick(ev) {
         var call_rt = false;
         var call_wi = false;
@@ -694,7 +972,8 @@ var controller = function () {
             sortField = "rank";
             break;
         case "th_dtf":
-            sortField = "distanceToEnd";
+//            sortField = "distanceToEnd";   // Guy
+            sortField = "dtf";    // Guy
             break;
         case "th_dtu":
             sortField = "distanceToUs";
@@ -713,6 +992,9 @@ var controller = function () {
             break;
         case "th_speed":
             sortField = "speed";
+            break;
+        case "th_speedF":
+            sortField = "vtf";
             break;
 
         case "th_rt":
@@ -760,10 +1042,10 @@ var controller = function () {
         if (rmatch) {
             if (tabsel) {
                 // Tab-Selection
-                for(var t = 1; t <= 4; t++) {
+                for(var t = 1; t <= 5; t++) {
                     document.getElementById("tab-content" + t).style.display = (rmatch == t ? 'block': 'none');
                 }
-                if ( rmatch == 4) {
+                if ( rmatch == 5) {
                     initmap(); // initialize google maps
                 }
             } else if ( friend ) {
@@ -834,6 +1116,7 @@ var controller = function () {
         r.prev = r.curr;
         r.curr = message;
         r.curr.speedT =  theoreticalSpeed(message);
+		r.curr.dtfC = gcDistance(r.curr.pos.lat, r.curr.pos.lon, r.legdata.end.lat, r.legdata.end.lon);  // Guy : distance to Finish calculate
         if ( r.prev != undefined ) {
             var d = gcDistance(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon);
             var delta = courseAngle(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon);
@@ -855,6 +1138,7 @@ var controller = function () {
             if ( r.curr.speedT ) {
                 r.curr.deltaD_T = r.curr.deltaD /  r.curr.speedC * r.curr.speedT.speed;
             }
+            r.vtf = (r.prev.dtfC - r.curr.dtfC)*3600/r.curr.deltaT;   // guy : Speed to Finish
             saveMessage(r);
         }
     if(message.gateGroupCounters) {
@@ -994,7 +1278,7 @@ var controller = function () {
             }
         }
 
-        var options = 0;
+        var options = 2;  // default time shift Guy
         for (var key in r.curr.options) {
             if (optionBits[r.curr.options[key]]) {
                 options |= optionBits[r.curr.options[key]];
@@ -1027,7 +1311,7 @@ var controller = function () {
                 type = "friend";
             }
             var url = baseURL + '/' + urlBeta + '/chart.pl?lat=' + pos.lat + '&lon=' + pos.lon +
-                '&options=' + options + '&twa=' + twa + '&userid=' + uid + '&type=' + type;
+                '&o=' + options + '&twa=' + twa + '&userid=' + uid + '&type=' + type;    // Guy
             window.open(url, cbReuseTab.checked?urlBeta:'_blank');
         }
     }
@@ -1158,7 +1442,7 @@ var controller = function () {
         divMap = race.gdiv = document.createElement("div");
         divMap.style.height = "100%";
         divMap.style.display = "none";
-        document.getElementById("tab-content4").appendChild(divMap);
+        document.getElementById("tab-content5").appendChild(divMap);
     }
 
     races.forEach(function (race) { if(race.gdiv) race.gdiv.style.display = 'none'; });
@@ -1489,6 +1773,8 @@ var controller = function () {
             divRaceStatus.innerHTML = makeRaceStatusHTML();
             divRecordLog.innerHTML = makeTableHTML();
             divFriendList.innerHTML = makeFriendsHTML();
+//            divClsmntList.innerHTML = makeClsmtHTML();   // création table classement   Guy
+			
         };
     }
     
@@ -1556,6 +1842,10 @@ var controller = function () {
                             race.dtl = roundTo(response.scriptData.me.distance - response.scriptData.res[0].distance,2);
                             divRaceStatus.innerHTML = makeRaceStatusHTML();
                         }
+						saveBoatsDatas(request,response.scriptData,"2");  // memo datas classement par groupe Guy	
+                        if(raceId == selRace.value) {
+ 							divClsmntList.innerHTML = makeClsmtHTML(raceclsmt.get(selRace.value));
+                        }
                     } else if ( request.eventKey == "Leg_GetList" ) {
                         // Contains destination coords, ice limits
                         // ToDo: contains Bad Sail warnings. Show in race status table?
@@ -1620,16 +1910,20 @@ var controller = function () {
             var race = races.get(raceId);
                         updateFriends(raceId, "followed", response.scriptData.res);
             updatemap(race,"opponents");
+						saveBoatsDatas(request,response.scriptData,"1");  // memo datas classement par groupe Guy
                         if(raceId == selRace.value) {
                             divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+ 							divClsmntList.innerHTML = makeClsmtHTML(raceclsmt.get(selRace.value));
                         }
                     } else if ( request.eventKey == "Game_GetOpponents" ) {
                         var raceId = getRaceLegId(request);
             var race = races.get(raceId);
                         updateFriends(raceId, "opponents", response.scriptData.res);
             updatemap(race,"opponents");
+ 						saveBoatsDatas(request,response.scriptData,"1");  // memo datas classement par groupe Guy
                         if(raceId == selRace.value) {
                             divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+ 							divClsmntList.innerHTML = makeClsmtHTML(raceclsmt.get(selRace.value));
                         }
                     } else if ( request.eventKey == "Game_GetBoatTrack" ) {
                         var raceId = getRaceLegId(request);
@@ -1650,10 +1944,12 @@ var controller = function () {
                     } else if ( request.eventKey == "User_GetCard" ) {
                         var raceId = getRaceLegId(request);
                         var uid = request.user_id;
+						saveBoatDatas(raceId,uid,response.scriptData,"0");  // memo datas classement pour 1 boat legInfos et baseInfos Guy
                         response.scriptData.legInfos.baseInfos = response.scriptData.baseInfos; // tweak record
                         updateFriendUinfo(raceId, "usercard", uid, response.scriptData.legInfos);
                         if(raceId == selRace.value) {
                             divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+ 							divClsmntList.innerHTML = makeClsmtHTML(raceclsmt.get(selRace.value));
                         }
             var race = races.get(raceId);
             updatemap(race,"opponents");
