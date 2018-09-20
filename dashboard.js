@@ -1054,9 +1054,12 @@ var controller = function () {
     function callPolars (raceId) {
         var baseURL = "http://toxcct.free.fr/polars/?race_id=" + raceId;
         var race = races.get(raceId);
+        if (!race.curr.tws || !race.curr.twa ) {
+            alert("Missing TWA and/or TWS, calling polars with TWA=20°, TWS=4kn");
+        }
         var url = baseURL
-            + "&tws=" + roundTo(race.curr.tws,1)
-            + "&twa=" + Math.abs(roundTo(race.curr.twa, 1));
+            + "&tws=" + roundTo(race.curr.tws || 4, 1)
+            + "&twa=" + Math.abs(roundTo(race.curr.twa || 20, 1));
 
         for ( option in race.curr.options ) {
             url += "&" + race.curr.options[option] + "=true";
