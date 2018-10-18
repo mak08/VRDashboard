@@ -90,7 +90,7 @@ var controller = function () {
         + '<th title="Sail change time remaining">' + 'Sail' + '</th>'
         + '<th title="Gybing time remaining">' + 'Gybe' + '</th>'
         + '<th title="Tacking time remaining">' + 'Tack' + '</th>'
-        + '<th title="Speed to Finish">' + 'vF (kn)' + '</th>'
+        + '<th title="Speed to Finish">' + 'speedF' + '</th>'
         + '</tr>';
 
     var raceStatusHeader =  '<tr>'
@@ -121,6 +121,7 @@ var controller = function () {
             + genth("th_sail","Sail",undefined)
             + genth("th_state","State",undefined, sortField == 'state', currentSortOrder) 
             + genth("th_psn","Position",undefined)
+            + genth("th_htg","HtG","Heading to Go", undefined)
             + genth("th_hdg","HDG","Heading", sortField == 'heading', currentSortOrder)
             + genth("th_twa","TWA","True Wind Angle", sortField == 'twa', currentSortOrder)
             + genth("th_tws","TWS","True Wind Speed",sortField == 'tws', currentSortOrder) 
@@ -131,7 +132,7 @@ var controller = function () {
 
 // en-tête classement Guy 
      function boatsListHeader() {
-		nuline = 0;
+		nuline = 0;		
         return '<tr>'
         + genth("th_name","Boat Name",undefined, sortField == 'displayName', currentSortOrder) 
         + genth("th_nl","Range",undefined,sortField == 'clsmt', currentSortOrder)
@@ -149,6 +150,10 @@ var controller = function () {
         + genth("th_sail","Sail",undefined)
         + genth("th_state","State",undefined,sortField=='state', currentSortOrder) 
 		+ genth("th_lu","Last Update",undefined)
+        + genth("th_start","StartDate",undefined)
+        + genth("th_dtfs","DTFS","Distance Traveled From Start")
+        + genth("th_dfs","DFS","Distance From Start")
+        + genth("th_moy","aSpeed","Average Speed")
         + genth("th_psn","Position",undefined)
         + genth("th_hdg","HDG","Heading")
         + genth("th_twa","TWA","True Wind Angle")
@@ -266,6 +271,7 @@ var controller = function () {
 // elemlist fonction de l'entrée (0, 1, 2, 3) 
 		if (k == "0") { 
 			var elemlist = ["lastCalcDate", "type", "state", "pos","heading","twa","tws","speed","distanceToEnd","sail","rank"];
+			if (race.type == "record") elemlist = ["lastCalcDate", "type", "state", "pos","heading","twa","tws","speed","distanceToEnd","sail","rank","startDate","distanceFromStart"];
 			(v.event?ndata.event = v.event:ndata.event = "click");
 			ndata["country"] = v.baseInfos["country"];
 			ndata["displayName"] = v.baseInfos["displayName"];			
@@ -280,7 +286,7 @@ var controller = function () {
 			var elemlist = ["country", "date", "displayName", "distance"];
 			(v.event?ndata.event = v.event:ndata.event = "GetRank");
 		} else if (k == "3") {  
-			var elemlist = ["country", "date", "displayName", "distance", "rank"];
+			var elemlist = ["country", "date", "displayName", "distance", "rank", "startDate", "distanceFromStart"];
 		}
         // copy elems from data to uinfo
         elemlist.forEach(function(tag) {
@@ -290,9 +296,16 @@ var controller = function () {
                     ndata.distanceToUs = roundTo(gcDistance(race.curr.pos.lat, race.curr.pos.lon, ndata.pos.lat, ndata.pos.lon), 1);
                     ndata.bearingFromUs = roundTo(courseAngle(race.curr.pos.lat, race.curr.pos.lon, ndata.pos.lat, ndata.pos.lon)*180/Math.PI, 1);
 					ndata.dtfC = gcDistance(ndata.pos.lat, ndata.pos.lon, race.legdata.end.lat, race.legdata.end.lon);  // Guy : distance to Finish calculate
-					v.dtfC = ndata.dtfC;
-               }
-            }
+					ndata.dfsC = gcDistance(ndata.pos.lat, ndata.pos.lon, race.legdata.start.lat, race.legdata.start.lon);  // Guy : distance from start calculate
+					v.dfsC = ndata.dfsC;  // distance from start Computed
+					v.dtfC = ndata.dtfC;  // distance to Finish calculate
+                }
+				if(tag == "distanceFromStart") {
+//					ndata.aSpeed = ndata.distanceFromStart*3600*1000/(ndata.lastCalcDate-ndata.startDate);
+					ndata.aSpeed = ndata.dfsC*3600*1000/(ndata.lastCalcDate-ndata.startDate);
+					v.aSpeed = ndata.aSpeed;
+				}
+			}
         });
     }
 
@@ -336,8 +349,8 @@ var controller = function () {
         var hdgFG = r.curr.twaAuto?"black":"blue";
         var hdgBold = r.curr.twaAuto?"font-weight: normal;":"font-weight: bold;";
 
-        return "<td>" + ((r.rank)?r.rank:"-") + "</td>"
-            + "<td>" + ((r.dtl)?r.dtl:"-") + "</td>"
+        return "<td>" + ((r.rank)?r.rank:'-') + "</td>"
+            + "<td>" + ((r.dtl)?r.dtl:'-') + "</td>"
             + "<td>" + roundTo(r.curr.distanceToEnd, 1) + "</td>"
             + "<td>" + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + "</td>"
             + '<td style="color:' + hdgFG + ';' + hdgBold + '">' + roundTo(r.curr.heading, 1) + "</td>"
@@ -420,7 +433,7 @@ var controller = function () {
                 + "<td>" + r.name + "</td>"
                 + commonTableLines(r)
                 + "<td>" + roundTo(r.curr.speed, 2) + "</td>"
-                + "<td>" + ((r.curr.options.length == 8)?'Full':r.curr.options.join(' ')) + "</td>"
+                + "<td>" + ((r.curr.options.length == 8)?((cards == 'Full')?'Full':'All'):r.curr.options.join(' ')) + "</td>"
                 + "<td>" + cards + "</td>"
                 + "<td" + regColor + ">" + regPack + "</td>"
                 + '<td style="background-color:' + agroundBG +  ';">' + ((r.curr.aground)?"AGROUND":"No") + "</td>"
@@ -455,22 +468,26 @@ var controller = function () {
                 + "<td>" + uid + "</td>"
                 + '<td style="' + nameStyle + '">' + (r.country?r.country:"-") + "</td>"
                 + "<td>" + (r.date?formatDate(r.date):"-") + "</td>"
-                + "<td>" + (r.VSR_lvl?r.VSR_lvl:"-") + "</td>"
-                + "<td>" + (r.VSR_Points?r.VSR_Points:"-") + "</td>"
-                + "<td>" + (r.VSR_Rank?r.VSR_Rank:"-") + "</td>"
-                + '<td style="' + rankStyle + '">' + (r.rank?r.rank:"-") + "</td>"
-                + "<td>" + (r.distance?r.distance:(r.distanceToEnd?r.distanceToEnd:"-")) + "</td>"
+                + "<td>" + (r.VSR_lvl?r.VSR_lvl:'-') + "</td>"
+                + "<td>" + (r.VSR_Points?r.VSR_Points:'-') + "</td>"
+                + "<td>" + (r.VSR_Rank?r.VSR_Rank:'-') + "</td>"
+                + '<td style="' + rankStyle + '">' + (r.rank?r.rank:'-') + "</td>"
+                + "<td>" + (r.distance?r.distance:(r.distanceToEnd?r.distanceToEnd:'-')) + "</td>"
                 + "<td>" + (r.date?r.date:"-") + "</td>"
-                + "<td>" + (r.distanceToUs?r.distanceToUs:"-") + "</td>"
-                + "<td>" + (r.bearingFromUs?r.bearingFromUs+"&#x00B0;":"-") + "</td>"
+                + "<td>" + (r.distanceToUs?r.distanceToUs:'-') + "</td>"
+                + "<td>" + (r.bearingFromUs?r.bearingFromUs+"&#x00B0;":'-') + "</td>"
                 + "<td>" + (sailNames[r.sail] || '-') + "</td>"
                 + "<td>" + (r.state || '-') + "</td>"
-                + "<td>" + formatDate(r.td) + "</td>"
+                + "<td>" + formatDate(r.ts) + "</td>"
+                + "<td>" + (r.startDate?formatDate(r.startDate):"-") + "</td>"
+                + "<td>" + (r.distanceFromStart?r.distanceFromStart:'-') + "</td>"
+                + "<td>" + (r.dfsC?roundTo(r.dfsC,2):"-") + "</td>"
+                + "<td>" + (r.aSpeed?roundTo(r.aSpeed, 2):'-') + "</td>"
                 + "<td>" + (r.pos?formatPosition(r.pos.lat, r.pos.lon):"-") + "</td>"
-                + "<td>" + (r.heading?roundTo(r.heading,1):"-") + "</td>"
-                + "<td>" + (r.twa?roundTo(Math.abs(r.twa), 1):"-") + "</td>"
+                + "<td>" + (r.heading?roundTo(r.heading,1):'-') + "</td>"
+                + "<td>" + (r.twa?roundTo(Math.abs(r.twa), 1):'-') + "</td>"
                 + "<td>" + (r.tws?roundTo(r.tws, 1):"-") + "</td>"
-                + "<td>" + (r.speed?roundTo(r.speed, 2):"-") + "</td>"
+                + "<td>" + (r.speed?roundTo(r.speed, 2):'-') + "</td>"
                 + "</tr>";
 		}
     }
@@ -525,37 +542,33 @@ var controller = function () {
             var bi = boatinfo(r);
 
             r.dtf = r.distanceToEnd;
-//			r.dtfC = gcDistance(r.pos.lat, r.pos.lon, race.legdata.end.lat, race.legdata.end.lon);  // Guy : distance to Finish calculate
+			r.dtfC = gcDistance(r.pos.lat, r.pos.lon, race.legdata.end.lat, race.legdata.end.lon);  // Guy : distance to Finish calculate
             if (!r.dtf || r.dtf == "null") {
                 r.dtf = '(' + roundTo(r.dtfC, 2) + ')';
             }
-            if (!r.dtfC_old || r.dtfC_old == "null") {
-				r.vtf = "-";
-			} else {
-				if (r.ts_old == r.ts) {
-					// not change ... 
-				} else {
-					r.vtf = (r.dtfC_old - r.dtfC)*3600*1000/(r.ts - r.ts_old);
-				}
-            }
-            r.dtfC_old = r.dtfC;
-			r.ts_old = r.ts;
+			
+// calcul vitesse to end
+			r.bearingToEnd = courseAngle(r.pos.lat, r.pos.lon, race.legdata.end.lat, race.legdata.end.lon)*180/Math.PI;
+			var ad = (r.bearingToEnd - bi.heading)*Math.PI/180;   // angle "utile"
+			r.vtfn = bi.speed * Math.cos(ad);
             return "<tr class='hov' id='ui:" + uid + "'>"
                 + (race.url ? ("<td class='tdc'><span id='rt:" + uid + "'>&#x2388;</span></td>") : "<td>&nbsp;</td>")
                 + '<td style="' + bi.nameStyle + '">' + bi.name + "</td>"
                 + "<td>" + formatDate(r.ts) + "</td>"
-                + "<td>" + (r.rank?r.rank:"-") + "</td>"
+                + "<td>" + (r.rank?r.rank:'-') + "</td>"
                 + "<td>" + r.dtf + "</td>"
-                + "<td>" + (r.distanceToUs?r.distanceToUs:"-") + "</td>"
-                + "<td>" + (r.bearingFromUs?r.bearingFromUs+"&#x00B0;":"-") + "</td>"
+                + "<td>" + (r.distanceToUs?r.distanceToUs:'-') + "</td>"
+                + "<td>" + (r.bearingFromUs?r.bearingFromUs+"&#x00B0;":'-') + "</td>"
                 + "<td>" + bi.sail + "</td>"
                 + "<td>" + (r.state || '-') + "</td>"
-                + "<td>" + formatPosition(r.pos.lat, r.pos.lon) + "</td>"
-                + "<td>" + bi.heading + "</td>"
+                + "<td>" + (r.pos?formatPosition(r.pos.lat, r.pos.lon):"-") + "</td>"
+//                 + "<td>" + roundTo(r.bearingToEnd,2) + '-' + roundTo(bi.heading,2) + '=' + roundTo(ad*180/Math.PI,2) + "</td>"
+                + "<td>" + roundTo(r.bearingToEnd,2) + "</td>"
+				+ "<td>" + roundTo(bi.heading,2) + "</td>"
                 + "<td " + bi.twaStyle + ">" + bi.twa + "</td>"
                 + "<td>" + bi.tws + "</td>"
                 + "<td>" + bi.speed + "</td>"
-                + "<td>" + roundTo(r.vtf,4) + "</td>"     // Guy : speed to finish
+                + "<td>" + roundTo(r.vtfn,4) + "</td>"     // Guy : speed to finish
                 + "</tr>";
         }
     }
@@ -635,7 +648,7 @@ var controller = function () {
             if(ad < 0) ad += 360;
             if(ad > 360) ad -= 360;
             if(ad > 180) ndata.distanceToUs = -ndata.distanceToUs; // 'behind' us
-                }
+				}
             }
         });
         if(data["rank"] > 0) ndata["rank"] = data["rank"];
@@ -677,12 +690,10 @@ var controller = function () {
             var entryA = rf.uinfo[uidA][field];
             var entryB = rf.uinfo[uidB][field];
             if (entryA == undefined && entryB == undefined) return 0;
-//            if (entryB == undefined) entryB = 0;   
-//            if (entryA == undefined) entryA = 0;   
             if (entryB == undefined) return -1;
             if (entryA == undefined) return 1;
-	        if (entryA == "-") entryA = 0;   // Guy
-            if (entryB == "-") entryB = 0;   // Guy
+	        if (entryA.toString() == "NaN") entryA = 0;   // Guy
+            if (entryB.toString() == "NaN") entryB = 0;   // Guy
             if (isNaN(entryA)) {
 				if (entryA.substr(0,1)=="(") {
 					entryA = entryA.slice(1,-1);
@@ -697,8 +708,6 @@ var controller = function () {
 					entryB = entryB.toUpperCase();	
 				}
 			}
-			console.log("A = " + isNaN(entryA) + " : " + entryA);
-			console.log("B = " + isNaN(entryB) + " : " + entryB);
 			if (currentSortOrder == 0) {
                 if (entryA < entryB) return -1;
                 if (entryA > entryB) return 1;
@@ -908,7 +917,8 @@ var controller = function () {
             + "<td " + getBG(r.curr.tsEndOfSailChange) + ">" + sailChange + "</td>"
             + "<td " + getBG(r.curr.tsEndOfGybe) + ">" + gybing + "</td>"
             + "<td " + getBG(r.curr.tsEndOfTack) + ">" + tacking + "</td>"
-            + "<td>" + roundTo(r.vtf,4) + "</td>"   // guy speed to finish
+//            + "<td>" + roundTo(r.vtf,4) + "/" + roundTo(r.vtfn,4) + "</td>"   // guy speed to finish
+            + "<td>" + (r.vtfn?roundTo(r.vtfn,4):"-") + "</td>"   // guy speed to finish
             + "</tr>";
     }
 
@@ -994,7 +1004,7 @@ var controller = function () {
             sortField = "speed";
             break;
         case "th_speedF":
-            sortField = "vtf";
+            sortField = "vtfn";
             break;
 
         case "th_rt":
@@ -1063,7 +1073,7 @@ var controller = function () {
     }
 
     function resize(ev) {
-        for(var t = 1; t <= 4; t++) {
+        for(var t = 1; t <= 5; t++) {
             var tab = document.getElementById("tab-content" + t);
             tab.style.height = window.innerHeight - tab.getBoundingClientRect().y;
         }
@@ -1116,7 +1126,6 @@ var controller = function () {
         r.prev = r.curr;
         r.curr = message;
         r.curr.speedT =  theoreticalSpeed(message);
-		r.curr.dtfC = gcDistance(r.curr.pos.lat, r.curr.pos.lon, r.legdata.end.lat, r.legdata.end.lon);  // Guy : distance to Finish calculate
         if ( r.prev != undefined ) {
             var d = gcDistance(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon);
             var delta = courseAngle(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon);
@@ -1138,7 +1147,11 @@ var controller = function () {
             if ( r.curr.speedT ) {
                 r.curr.deltaD_T = r.curr.deltaD /  r.curr.speedC * r.curr.speedT.speed;
             }
-            r.vtf = (r.prev.dtfC - r.curr.dtfC)*3600/r.curr.deltaT;   // guy : Speed to Finish
+// calcul vitesse to end
+			r.bearingToEnd = courseAngle(r.curr.pos.lat, r.curr.pos.lon, r.legdata.end.lat, r.legdata.end.lon)*180/Math.PI;
+			var ad = (r.bearingToEnd - r.curr.heading)*Math.PI/180;   // angle "utile"
+			r.vtfn = r.curr.speedC * Math.cos(ad);
+//            r.vtf = (r.prev.dtfC - r.curr.dtfC)*3600/r.curr.deltaT;   // guy : Speed to Finish
             saveMessage(r);
         }
     if(message.gateGroupCounters) {
@@ -1954,6 +1967,12 @@ var controller = function () {
             var race = races.get(raceId);
             updatemap(race,"opponents");
                     }
+// Game_ChooseRegPack	réponse : givenCards":[{"code":"HL","nb":2.0},{"code":"WF","nb":1.0}]﻿
+
+// request "LDB_GetRaceRank","race_id":370,"value":"0","friends":[" ... ", ... ," ... "],"partition":"friends","requestId":"636726439455280000_18"}
+// reponse "LogEventResponse","requestId":" ... ","scriptData":{"me":{"_id":" ... ","displayName":"...","country":"FR","points":2124.0,"nbLeg":3.0,"rank":7.0}
+// puis .... rc":"ok","res":[{ "_id" : " ... " , "displayName" : " ... " , "country" : "FR" , "points" : 3114.0 , "nbLeg" : 3.0},},{ "_id" : ....... }],"nbLegs":3.0}} 
+
                 } else if ( responseClass == ".ScriptMessage" ) {
                     // There is no request for .ScriptMessages.
                     // The only ScriptMessage type is extCode=boatStatePush
