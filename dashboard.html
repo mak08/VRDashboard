@@ -10,7 +10,7 @@
     <title>VR Dashboard</title>
     <link rel="icon" href="zicon.png">
     <link rel="stylesheet" href="style.css">
-    <script src="https://maps.googleapis.com/maps/api/js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC6bZY8_KuFSGpU5CybugndmQmbFM4fLuU"></script>
     <script src="dashboard.js"></script>
   </head>
 
@@ -60,7 +60,11 @@
 	      </li>
 	      <li class="tab">
 	        <input type="radio" name="tabs" id="ts:4" />
-	        <label for="ts:4">Classement</label>   
+	        <label for="ts:4">Classements</label>   
+	      </li>
+	      <li class="tab">
+	        <input type="radio" name="tabs" id="ts:5" />
+	        <label for="ts:5">Map</label>   
 	      </li>
 	    </ul>
       </div>
@@ -76,7 +80,7 @@
 	    <button id="bt_clear">Clear log</button>
 	    <div style="white-space: pre;" id="rawlog"></div>
       </div>
-	  <div id="tab-content4" class="content hidden">
+      <div id="tab-content4" class="content hidden">
 	    <div id="classement"></div>
       </div>
       <div id="tab-content5" class="content hidden">
