@@ -490,11 +490,22 @@ var controller = function () {
 
         data.forEach(function(delem) {
             delem.mode = mode;
+            if(mode === "fleet") {
+                if(delem.followed) {
+                    delem.mode = "followed";
+                } else if(delem.opponent) {
+                    delem.mode = "opponents";
+                } else {
+                    delem.mode = "other";
+                }
+            } else {
+                delem.mode = mode;
+            }
             if (!delem.ts) delem.ts = Date.now();
             if(delem.type == "sponsor") {
                 delem.bname = delem.branding.name;
             }
-            if (mode == "opponents") {
+            if (delem.mode == "opponents") {
                 if(delem.type == "pilotBoat") {
                     delem.displayName = "Frigate";
                 } else if(delem.type == "real") {
@@ -862,7 +873,7 @@ var controller = function () {
         updatemap(r,"cp");
     }
         divRaceStatus.innerHTML = makeRaceStatusHTML();
-    updatemap(r,"me");
+        updatemap(r,"me");
     }
 
     function angle (h0, h1) {
@@ -1220,7 +1231,7 @@ var controller = function () {
 
 
     updatemap(race,"cp");
-    updatemap(race,"opponents");
+    updatemap(race,"fleet");
     updatemap(race,"me");
     map.fitBounds(bounds);
     }
@@ -1325,8 +1336,8 @@ var controller = function () {
         'HDG:'+roundTo(race.curr.heading, 1)+',SPD:'+roundTo(race.curr.speed, 2),'me', 20, 0.7));
     }
 
-    // opponents
-    if(mode == "opponents") {
+    // opponents/followed
+    if(mode == "fleet") {
         var rfd = racefriends.get(race.id);
         if(map._db_op) for (var i = 0; i < map._db_op.length; i++) map._db_op[i].setMap(null);
         map._db_op = new Array();
@@ -1588,9 +1599,9 @@ var controller = function () {
                         divRaceStatus.innerHTML = makeRaceStatusHTML();
                     } else if ( request.eventKey == "Game_GetBoatState" ) {
                         // First boat state message, only sent for the race the UI is displaying
-            var raceId = getRaceLegId(response.scriptData.boatState._id);
-            var race =  races.get(raceId);
-            race.legdata = response.scriptData.leg;
+                        var raceId = getRaceLegId(response.scriptData.boatState._id);
+                        var race =  races.get(raceId);
+                        race.legdata = response.scriptData.leg;
                         // Don't try old race_id, messages will be misdirected
                         updatePosition(response.scriptData.boatState, race);
                         if (cbRouter.checked) {
@@ -1623,36 +1634,44 @@ var controller = function () {
                         divRaceStatus.innerHTML = makeRaceStatusHTML();
                     } else if ( request.eventKey == "Game_GetFollowedBoats") {
                         var raceId = getRaceLegId(request);
-            var race = races.get(raceId);
+                        var race = races.get(raceId);
                         updateFriends(raceId, "followed", response.scriptData.res);
-            updatemap(race,"opponents");
+                        updatemap(race,"fleet");
                         if(raceId == selRace.value) {
                             divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
                         }
                     } else if ( request.eventKey == "Game_GetOpponents" ) {
                         var raceId = getRaceLegId(request);
-            var race = races.get(raceId);
+                        var race = races.get(raceId);
                         updateFriends(raceId, "opponents", response.scriptData.res);
-            updatemap(race,"opponents");
+                        updatemap(race,"fleet");
+                        if(raceId == selRace.value) {
+                            divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+                        }
+                    } else if ( request.eventKey == "Game_GetFleet" ) {
+                        var raceId = getRaceLegId(request);
+                        var race = races.get(raceId);
+                        updateFriends(raceId, "fleet", response.scriptData.res);
+                        updatemap(race,"fleet");
                         if(raceId == selRace.value) {
                             divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
                         }
                     } else if ( request.eventKey == "Game_GetBoatTrack" ) {
                         var raceId = getRaceLegId(request);
-            var rfd = racefriends.get(raceId);
-            var race = races.get(raceId);
-            var uid = request.user_id;
-            var ndata = rfd.uinfo[uid];
+                        var rfd = racefriends.get(raceId);
+                        var race = races.get(raceId);
+                        var uid = request.user_id;
+                        var ndata = rfd.uinfo[uid];
 
-            if(race) {
-                if(uid == race.curr._id.user_id) {
-                race.track = response.scriptData.track;
-                updatemap(race,"me");
-                } else if(ndata) {
-                ndata.track = response.scriptData.track;
-                updatemap(race,"opponents");
-                }
-            }
+                        if(race) {
+                            if(uid == race.curr._id.user_id) {
+                                race.track = response.scriptData.track;
+                                updatemap(race,"me");
+                            } else if(ndata) {
+                                ndata.track = response.scriptData.track;
+                                updatemap(race,"fleet");
+                            }
+                        }
                     } else if ( request.eventKey == "User_GetCard" ) {
                         var raceId = getRaceLegId(request);
                         var uid = request.user_id;
@@ -1661,8 +1680,8 @@ var controller = function () {
                         if(raceId == selRace.value) {
                             divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
                         }
-            var race = races.get(raceId);
-            updatemap(race,"opponents");
+                        var race = races.get(raceId);
+                        updatemap(race,"fleet");
                     }
                 } else if ( responseClass == ".ScriptMessage" ) {
                     // There is no request for .ScriptMessages.
