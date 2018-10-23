@@ -304,6 +304,8 @@ var controller = function () {
         }
         res.twaStyle = "style='color:" + ((uinfo.twa < 0)?"red":"green") + ";'";
         res.sail = sailNames[uinfo.sail] || '-';
+
+        res.xfactorStyle = "style='color:" + ((uinfo.xplained)?"black":"red") + ";'";
         return(res);
     }
 
@@ -340,7 +342,7 @@ var controller = function () {
                 + "<td " + bi.twaStyle + ">" + bi.twa + "</td>"
                 + "<td>" + bi.tws + "</td>"
                 + "<td>" + bi.speed + "</td>"
-                + "<td>" + roundTo(r.xfactor, 4) + "</td>"
+                + "<td " + bi.xfactorStyle + ">" + roundTo(r.xfactor, 4) + "</td>"
                 + "<td>" + (r.xoption_foils || '?') + "</td>"
                 + "<td>" + (r.xoption_hull || '?') + "</td>"
                 + "</tr>";
@@ -415,43 +417,67 @@ var controller = function () {
             var sailDef = getSailDef(boatPolars.sail, sailName);
             var iA = fractionStep(data.twa, boatPolars.twa);
             var iS = fractionStep(data.tws, boatPolars.tws);
+
+            // 'Plain' speed 
             var speedT = pSpeed(iA, iS, sailDef.speed);
+            // Speedup factors
             var foilFactor = foilingFactor(["foil"], data.tws, data.twa, boatPolars.foil);
             var hullFactor = boatPolars.hull.speedRatio;
-            ndata.xfactor = ndata.speed / speedT;
-            ndata.xoption_foils = 'unknown';
-            ndata.xoption_hull = 'no';
-            if (epsEqual(ndata.speed, speedT * hullFactor)) {
-                if (epsEqual(ndata.speed, speedT * foilFactor)) {
-                    ndata.xoption_hull = 'maybe';
-                    ndata.xoption_foils = 'maybe';
+
+            // Explain ndata.speed from plain speed and speedup factors
+            explain(ndata, foilFactor, hullFactor, speedT);
+
+        } else {
+            ndata.xplained = true;
+            ndata.xfactor = 1.0;
+            ndata.xoption_foils = '---';
+            ndata.xoption_hull = '---';
+        }
+        
+        if(data["rank"] > 0) ndata["rank"] = data["rank"];
+    }
+
+    function explain (ndata, foilFactor, hullFactor, speedT) {
+        ndata.xfactor = ndata.speed / speedT;
+        ndata.xoption_foils = '?';
+        ndata.xoption_hull = 'no';
+        ndata.xplained = false;
+
+        if ( epsEqual(ndata.xfactor, 1.0) ) {
+            // Speed agrees with 'plain' speed.
+            // Explanation: 1. no hull and 2. foiling condition => no foils.
+            ndata.xplained = true;
+            if ( foilFactor > 1.0 ) {
+                ndata.xoption_foils = 'no';
+            }
+        } else {
+            // Speed does not agree with plain speed.
+            // Check if hull, foil or hull+foil can explain the observed speed.
+            if ( epsEqual(ndata.speed, speedT * hullFactor) ) {
+                ndata.xplained = true;
+                if (epsEqual(hullFactor, foilFactor)) {
+                    // Both hull and foil match.
+                    ndata.xoption_hull = '(yes)';
+                    ndata.xoption_foils = '(yes)';
                 } else {
                     ndata.xoption_hull = 'yes';
                     if (foilFactor > 1.0) {
                         ndata.xoption_foils = 'no';
                     }
                 }
-            } else if (foilFactor > 1.0) {
-                if (epsEqual(ndata.speed, speedT * foilFactor)) {
-                    ndata.xoption_foils = 'yes';
-                } else if (epsEqual(ndata.speed, speedT * foilFactor * hullFactor)) {
-                    ndata.xoption_hull = 'yes';
-                    ndata.xoption_foils = 'yes';
-                } else {
-                    ndata.xoption_foils = 'no';
-                }
+            } else if ( epsEqual(ndata.speed, speedT * foilFactor) ) {
+                ndata.xplained = true;
+                ndata.xoption_foils = 'yes';
+            } else if (epsEqual(ndata.speed, speedT * foilFactor * hullFactor)) {
+                ndata.xplained = true;
+                ndata.xoption_hull = 'yes';
+                ndata.xoption_foils = 'yes';
             }
-        } else {
-            ndata.xfactor = 1.0;
-            ndata.xoption_foils = undefined;
-            ndata.xoption_hull = undefined;
         }
-        
-        if(data["rank"] > 0) ndata["rank"] = data["rank"];
     }
 
     function epsEqual(a,b) {
-        return Math.abs(b-a) < 0.00005;
+        return Math.abs(b-a) < 0.00001;
     }
     
     function sortFriends(rfd) {
