@@ -427,7 +427,9 @@ var controller = function () {
                     ndata.xoption_foils = 'maybe';
                 } else {
                     ndata.xoption_hull = 'yes';
-                    ndata.xoption_foils = 'no';
+                    if (foilFactor > 1.0) {
+                        ndata.xoption_foils = 'no';
+                    }
                 }
             } else if (foilFactor > 1.0) {
                 if (epsEqual(ndata.speed, speedT * foilFactor)) {
