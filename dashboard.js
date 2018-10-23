@@ -340,7 +340,6 @@ var controller = function () {
                 + "<td " + bi.twaStyle + ">" + bi.twa + "</td>"
                 + "<td>" + bi.tws + "</td>"
                 + "<td>" + bi.speed + "</td>"
-                + "<td>" + roundTo(r.xfoil, 4) + "</td>"
                 + "<td>" + roundTo(r.xfactor, 4) + "</td>"
                 + "<td>" + (r.xoption_foils || '?') + "</td>"
                 + "<td>" + (r.xoption_hull || '?') + "</td>"
