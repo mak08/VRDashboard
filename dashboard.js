@@ -118,8 +118,8 @@ var controller = function () {
             + genth("th_tws","TWS","True Wind Speed",sortField == 'tws', currentSortOrder) 
             + genth("th_speed","Speed","Boat Speed",sortField == 'speed', currentSortOrder) 
             + genth("th_factor","Factor", "Factor w.r.t TWA speed", undefined) 
-            + genth("th_foils","Foils", "Boat has Foils", undefined) 
-            + genth("th_hull","Hull", "Boat has Hull polish", undefined) 
+            + genth("th_foils","Foils", "Boat assumed to have Foils. Unknown if no foiling conditions", undefined) 
+            + genth("th_hull","Hull", "Boat assumed to have Hull polish", undefined) 
             +  '</tr>';
     }
 
@@ -340,6 +340,7 @@ var controller = function () {
                 + "<td " + bi.twaStyle + ">" + bi.twa + "</td>"
                 + "<td>" + bi.tws + "</td>"
                 + "<td>" + bi.speed + "</td>"
+                + "<td>" + roundTo(r.xfoil, 4) + "</td>"
                 + "<td>" + roundTo(r.xfactor, 4) + "</td>"
                 + "<td>" + (r.xoption_foils || '?') + "</td>"
                 + "<td>" + (r.xoption_hull || '?') + "</td>"
@@ -424,9 +425,10 @@ var controller = function () {
             if (epsEqual(ndata.speed, speedT * hullFactor)) {
                 if (epsEqual(ndata.speed, speedT * foilFactor)) {
                     ndata.xoption_hull = 'maybe';
-                    ndata.xoption_foil = 'maybe';
+                    ndata.xoption_foils = 'maybe';
                 } else {
                     ndata.xoption_hull = 'yes';
+                    ndata.xoption_foils = 'no';
                 }
             } else if (foilFactor > 1.0) {
                 if (epsEqual(ndata.speed, speedT * foilFactor)) {
@@ -448,7 +450,7 @@ var controller = function () {
     }
 
     function epsEqual(a,b) {
-        return Math.abs(b-a) < 0.00001;
+        return Math.abs(b-a) < 0.00005;
     }
     
     function sortFriends(rfd) {
