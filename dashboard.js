@@ -117,7 +117,7 @@ var controller = function () {
             + genth("th_twa","TWA","True Wind Angle", sortField == 'twa', currentSortOrder)
             + genth("th_tws","TWS","True Wind Speed",sortField == 'tws', currentSortOrder) 
             + genth("th_speed","Speed","Boat Speed",sortField == 'speed', currentSortOrder) 
-            + genth("th_factor","Factor", "Factor w.r.t TWA speed", undefined) 
+            + genth("th_factor","Factor", "Speed factor w.r.t TWA speed", undefined) 
             + genth("th_foils","Foils", "Boat assumed to have Foils. Unknown if no foiling conditions", undefined) 
             + genth("th_hull","Hull", "Boat assumed to have Hull polish", undefined) 
             +  '</tr>';
