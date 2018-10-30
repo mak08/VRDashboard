@@ -34,5 +34,5 @@ function onAttach(tabId) {
     }
 
     chrome.tabs.create(
-        {url: "dashboard.html?" + tabId});
+        {url: "dashboard.html?" + tabId, active: false});
 }
