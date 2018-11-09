@@ -341,7 +341,7 @@ var controller = function () {
     }
 
     function makeRaceStatusHTML () {
-        return "<table style=\"width:100%\">"
+        return "<table>"
             + raceStatusHeader
             + Array.from(races||[]).map(makeRaceStatusLine).join(' ');
             + "</table>";
@@ -353,17 +353,25 @@ var controller = function () {
             return "No friend positions received yet";
         } else {
             sortFriends(rf);
-            return "<table style=\"width:100%\">"
+            return "<table>"
+                + "<thead>"
                 + friendListHeader()
+                + "</thead>"
+                + "<tbody>"
                 + Array.from(rf.table||[]).map(makeFriendListLine, rf).join(' ');
+                + "</tbody>"
                 + "</table>";
         }
     }
 
     function makeTableHTML (r) {
-        return '<table style="width:100%">'
+        return "<table>"
+            + "<thead>"
             + tableHeader
+            + "</thead>"
+            + "<tbody>"
             + (r === undefined?"":r.tableLines.join(' '))
+            + "</tbody>"
             + "</table>";
     }
 
