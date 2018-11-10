@@ -70,7 +70,7 @@ var controller = function () {
     var callRouterFunction;
     var initialized = false;
 
-    var tableHeader =  '<tr>'
+    var tableHeader =  '<thead class="sticky"><tr>'
         + '<th>' + 'Time' + '</th>'
         + commonHeaders()
         + '<th title="Reported speed">' + 'vR (kn)' + '</th>'
@@ -82,7 +82,7 @@ var controller = function () {
         + '<th title="Sail change time remaining">' + 'Sail' + '</th>'
         + '<th title="Gybing time remaining">' + 'Gybe' + '</th>'
         + '<th title="Tacking time remaining">' + 'Tack' + '</th>'
-        + '</tr>';
+        + '</tr></thead>';
 
     var raceStatusHeader =  '<tr>'
         + '<th title="Call Router">' + 'RT' + '</th>'
@@ -101,7 +101,7 @@ var controller = function () {
         +  '</tr>';
 
     function friendListHeader() {
-        return '<tr>'
+        return '<thead class="sticky"><tr>'
             + genth("th_rt","RT","Call Router",sortField == 'none', undefined)
             + genth("th_name","Friend/Opponent",undefined, sortField == 'displayName', currentSortOrder) 
             + genth("th_lu","Last Update",undefined)
@@ -116,7 +116,7 @@ var controller = function () {
             + genth("th_twa","TWA","True Wind Angle", sortField == 'twa', currentSortOrder)
             + genth("th_tws","TWS","True Wind Speed",sortField == 'tws', currentSortOrder) 
             + genth("th_speed","Speed","Boat Speed",sortField == 'speed', currentSortOrder) 
-            +  '</tr>';
+            +  '</tr></thead>';
     }
 
     function genth(id,content,title,sortfield,sortmark) {
@@ -353,25 +353,21 @@ var controller = function () {
             return "No friend positions received yet";
         } else {
             sortFriends(rf);
-            return "<table>"
-                + "<thead>"
+            return "<table style=\"width:100%\">"
                 + friendListHeader()
-                + "</thead>"
-                + "<tbody>"
+                + '<tbody>'
                 + Array.from(rf.table||[]).map(makeFriendListLine, rf).join(' ');
-                + "</tbody>"
+                + '</tbody>'
                 + "</table>";
         }
     }
 
     function makeTableHTML (r) {
-        return "<table>"
-            + "<thead>"
+        return '<table style="width:100%">'
             + tableHeader
-            + "</thead>"
-            + "<tbody>"
+            + '<tbody>'
             + (r === undefined?"":r.tableLines.join(' '))
-            + "</tbody>"
+            + '</tbody>'
             + "</table>";
     }
 
