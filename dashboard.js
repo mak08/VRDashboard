@@ -19,6 +19,7 @@ var controller = function () {
     var sailNames = [0, "Jib", "Spi", "Stay", "LJ", "C0", "HG", "LG", 8, 9,
                      // VR sends sailNo + 10 to indicate autoSail. We use sailNo mod 10 to find the sail name sans Auto indication.
                      "Auto", "Jib (Auto)", "Spi (Auto)", "Stay (Auto)", "LJ (Auto)", "C0 (Auto)", "HG (Auto)", "LG (Auto)"];
+    var longSailNames = ["", "JIB", "SPI", "STAYSAIL", "LIGHT_JIB", "CODE_0", "HEAVY_GNK", "LIGHT_GNK"];
 
     function addSelOption(race, beta, disabled) {
         var option = document.createElement("option");
@@ -116,6 +117,9 @@ var controller = function () {
             + genth("th_twa","TWA","True Wind Angle", sortField == 'twa', currentSortOrder)
             + genth("th_tws","TWS","True Wind Speed",sortField == 'tws', currentSortOrder) 
             + genth("th_speed","Speed","Boat Speed",sortField == 'speed', currentSortOrder) 
+            + genth("th_factor","Factor", "Speed factor over no-options boat", undefined) 
+            + genth("th_foils","Foils", "Boat assumed to have Foils. Unknown if no foiling conditions", undefined) 
+            + genth("th_hull","Hull", "Boat assumed to have Hull polish", undefined) 
             +  '</tr></thead>';
     }
 
@@ -298,6 +302,8 @@ var controller = function () {
         }
         res.twaStyle = "style='color:" + ((uinfo.twa < 0)?"red":"green") + ";'";
         res.sail = sailNames[uinfo.sail] || '-';
+
+        res.xfactorStyle = "style='color:" + ((uinfo.xplained)?"black":"red") + ";'";
         return(res);
     }
 
@@ -318,7 +324,7 @@ var controller = function () {
             if (!dtf || dtf == "null") {
                 dtf = '(' + roundTo(gcDistance(r.pos.lat, r.pos.lon, race.legdata.end.lat, race.legdata.end.lon), 1) + ')';
             }
-            
+                
             return "<tr class='hov' id='ui:" + uid + "'>"
                 + (race.url ? ("<td class='tdc'><span id='rt:" + uid + "'>&#x2388;</span></td>") : "<td>&nbsp;</td>")
                 + '<td style="' + bi.nameStyle + '">' + bi.name + "</td>"
@@ -334,6 +340,9 @@ var controller = function () {
                 + "<td " + bi.twaStyle + ">" + bi.twa + "</td>"
                 + "<td>" + bi.tws + "</td>"
                 + "<td>" + bi.speed + "</td>"
+                + "<td " + bi.xfactorStyle + ">" + roundTo(r.xfactor, 4) + "</td>"
+                + "<td>" + (r.xoption_foils || '?') + "</td>"
+                + "<td>" + (r.xoption_hull || '?') + "</td>"
                 + "</tr>";
         }
     }
@@ -373,6 +382,7 @@ var controller = function () {
         var rfd = racefriends.get(rid);
         var race = races.get(rid);
         var ndata = rfd.uinfo[uid];
+        var boatPolars = (data.boat)?polars[data.boat.polar_id]:undefined;
 
         if(data.pos == undefined) return; // looked up user not in this race
         if(!ndata) {
@@ -403,9 +413,79 @@ var controller = function () {
                 }
             }
         });
+
+        if (boatPolars) {
+            var sailName = longSailNames[data.sail%10];
+            var sailDef = getSailDef(boatPolars.sail, sailName);
+
+            // 'Real' boats have no sail info
+            if (sailDef) {
+                var iA = fractionStep(data.twa, boatPolars.twa);
+                var iS = fractionStep(data.tws, boatPolars.tws);
+                
+                // 'Plain' speed 
+                var speedT = pSpeed(iA, iS, sailDef.speed);
+                // Speedup factors
+                var foilFactor = foilingFactor(["foil"], data.tws, data.twa, boatPolars.foil);
+                var hullFactor = boatPolars.hull.speedRatio;
+                
+                // Explain ndata.speed from plain speed and speedup factors
+                explain(ndata, foilFactor, hullFactor, speedT);
+            }
+
+        } else {
+            ndata.xplained = true;
+            ndata.xfactor = 1.0;
+            ndata.xoption_foils = '---';
+            ndata.xoption_hull = '---';
+        }
+        
         if(data["rank"] > 0) ndata["rank"] = data["rank"];
     }
 
+    function explain (ndata, foilFactor, hullFactor, speedT) {
+        ndata.xfactor = ndata.speed / speedT;
+        ndata.xoption_foils = '?';
+        ndata.xoption_hull = 'no';
+        ndata.xplained = false;
+
+        if ( epsEqual(ndata.xfactor, 1.0) ) {
+            // Speed agrees with 'plain' speed.
+            // Explanation: 1. no hull and 2. foiling condition => no foils.
+            ndata.xplained = true;
+            if ( foilFactor > 1.0 ) {
+                ndata.xoption_foils = 'no';
+            }
+        } else {
+            // Speed does not agree with plain speed.
+            // Check if hull, foil or hull+foil can explain the observed speed.
+            if ( epsEqual(ndata.speed, speedT * hullFactor) ) {
+                ndata.xplained = true;
+                if (epsEqual(hullFactor, foilFactor)) {
+                    // Both hull and foil match.
+                    ndata.xoption_hull = '(yes)';
+                    ndata.xoption_foils = '(yes)';
+                } else {
+                    ndata.xoption_hull = 'yes';
+                    if (foilFactor > 1.0) {
+                        ndata.xoption_foils = 'no';
+                    }
+                }
+            } else if ( epsEqual(ndata.speed, speedT * foilFactor) ) {
+                ndata.xplained = true;
+                ndata.xoption_foils = 'yes';
+            } else if (epsEqual(ndata.speed, speedT * foilFactor * hullFactor)) {
+                ndata.xplained = true;
+                ndata.xoption_hull = 'yes';
+                ndata.xoption_foils = 'yes';
+            }
+        }
+    }
+
+    function epsEqual(a,b) {
+        return Math.abs(b-a) < 0.00001;
+    }
+    
     function sortFriends(rfd) {
         if (sortField != "none") {
             sortFriendsByField(rfd, sortField);
@@ -925,12 +1005,7 @@ var controller = function () {
                  || (sailDef.name === "CODE_0" && options.includes("reach"))
                  || (sailDef.name === "HEAVY_GNK" && options.includes("heavy"))
                  || (sailDef.name === "LIGHT_GNK" && options.includes("light")) ) {
-                var speeds = sailDef.speed;
-                var speed = bilinear(iA.fraction, iS.fraction,
-                                     speeds[iA.index - 1][iS.index - 1],
-                                     speeds[iA.index][iS.index - 1],
-                                     speeds[iA.index - 1][iS.index],
-                                     speeds[iA.index][iS.index]);
+                var speed = pSpeed(iA, iS, sailDef.speed);
                 if ( speed > maxSpeed ) {
                     maxSpeed = speed;
                     maxSail = sailDef.name;
@@ -941,6 +1016,23 @@ var controller = function () {
             speed: maxSpeed,
             sail: maxSail
         }
+    }
+
+    function getSailDef (sailDefs, name) {
+        for (const sailDef of sailDefs) {
+            if ( sailDef.name === name ) {
+                return sailDef;
+            }
+        }
+        return null;
+    }
+
+    function pSpeed (iA, iS, speeds) {
+        return bilinear(iA.fraction, iS.fraction,
+                        speeds[iA.index - 1][iS.index - 1],
+                        speeds[iA.index][iS.index - 1],
+                        speeds[iA.index - 1][iS.index],
+                        speeds[iA.index][iS.index]);
     }
 
     function bilinear (x, y, f00, f10, f01, f11) {
@@ -1167,7 +1259,6 @@ var controller = function () {
 
     function initmap() {
         var race;
-
         race = races.get(selRace.value);
 
         var divMap = race.gdiv;
