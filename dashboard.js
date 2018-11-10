@@ -138,7 +138,6 @@ var controller = function () {
             + '<th title="True Wind Angle">' + 'TWA' + '</th>'
             + '<th title="True Wind Speed">' + 'TWS' + '</th>'
             + '<th title="True Wind Direction"> ' + 'TWD' + '</th>'
-            + '<th title="Auto TWA activated">' + 'aTWA' + '</th>'
             + '<th title="Auto Sail time remaining">' + 'aSail' + '</th>';
     }
 
@@ -189,7 +188,6 @@ var controller = function () {
             + '<td style="color:' + twaFG + ';' + twaBold + '">' + roundTo(Math.abs(r.curr.twa), 1) + "</td>"
             + "<td>" + roundTo(r.curr.tws, 2) + "</td>"
             + "<td>" + roundTo(r.curr.twd, 1) + "</td>"
-            + "<td>" + (r.curr.twaAuto?"Yes":"No") + "</td>"
             + "<td style='background-color:" + sailNameBG +  ";'>" + sailInfo + "</td>";
     }
 
