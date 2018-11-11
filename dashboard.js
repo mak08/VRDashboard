@@ -71,7 +71,7 @@ var controller = function () {
     var callRouterFunction;
     var initialized = false;
 
-    var tableHeader =  '<thead class="sticky"><tr>'
+    var tableHeader = '<tr>'
         + '<th>' + 'Time' + '</th>'
         + commonHeaders()
         + '<th title="Reported speed">' + 'vR (kn)' + '</th>'
@@ -83,9 +83,9 @@ var controller = function () {
         + '<th title="Sail change time remaining">' + 'Sail' + '</th>'
         + '<th title="Gybing time remaining">' + 'Gybe' + '</th>'
         + '<th title="Tacking time remaining">' + 'Tack' + '</th>'
-        + '</tr></thead>';
+        + '</tr>';
 
-    var raceStatusHeader =  '<tr>'
+    var raceStatusHeader = '<tr>'
         + '<th title="Call Router">' + 'RT' + '</th>'
         + '<th title="Call Polars">' + 'PL' + '</th>'
         + '<th title="Call WindInfo">' + 'WI' + '</th>'
@@ -96,13 +96,12 @@ var controller = function () {
         + '<th>' + 'Cards' + '</th>'
         + '<th title="Time to next barrel">' + 'Pack' + '</th>'
         + '<th title="Boat is aground">' + 'Agnd' + '</th>'
-        + '<th title="Stealth mode">' + 'Stlt' + '</th>'
         + '<th title="Boat is maneuvering, half speed">' + 'Mnvr' + '</th>'
         + '<th>' + 'Last Command' + '</th>'
-        +  '</tr>';
+        + '</tr>';
 
     function friendListHeader() {
-        return '<thead class="sticky"><tr>'
+        return '<tr>'
             + genth("th_rt","RT","Call Router",sortField == 'none', undefined)
             + genth("th_name","Friend/Opponent",undefined, sortField == 'displayName', currentSortOrder) 
             + genth("th_lu","Last Update",undefined)
@@ -120,7 +119,7 @@ var controller = function () {
             + genth("th_factor","Factor", "Speed factor over no-options boat", undefined) 
             + genth("th_foils","Foils", "Boat assumed to have Foils. Unknown if no foiling conditions", undefined) 
             + genth("th_hull","Hull", "Boat assumed to have Hull polish", undefined) 
-            +  '</tr></thead>';
+            + '</tr>';
     }
 
     function genth(id,content,title,sortfield,sortmark) {
@@ -271,7 +270,6 @@ var controller = function () {
                 + "<td>" + cards + "</td>"
                 + "<td" + regColor + ">" + regPack + "</td>"
                 + '<td style="background-color:' + agroundBG +  ';">' + ((r.curr.aground)?"AGROUND":"No") + "</td>"
-                + "<td>" + ((r.curr.stealthMode > r.curr.lastCalcDate)?"Yes":"No") + "</td>"
                 + "<td>" + (manoeuvering?"Yes":"No") + "</td>"
                 + '<td style="background-color:' + lastCommandBG +  ';">' + lastCommand + "</td>"
                 + "</tr>";
@@ -360,19 +358,23 @@ var controller = function () {
             return "No friend positions received yet";
         } else {
             sortFriends(rf);
-            return "<table style=\"width:100%\">"
+            return "<table>"
+                + "<thead>"
                 + friendListHeader()
-                + '<tbody>'
+                + "</thead>"
+                + "<tbody>"
                 + Array.from(rf.table||[]).map(makeFriendListLine, rf).join(' ');
-                + '</tbody>'
+                + "</tbody>"
                 + "</table>";
         }
     }
 
     function makeTableHTML (r) {
-        return '<table style="width:100%">'
+        return "<table>"
+            + "<thead>"
             + tableHeader
-            + '<tbody>'
+            + "</thead>"
+            + "<tbody>"
             + (r === undefined?"":r.tableLines.join(' '))
             + '</tbody>'
             + "</table>";

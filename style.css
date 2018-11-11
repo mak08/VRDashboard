@@ -47,28 +47,35 @@ table {
 	border-collapse: collapse;
     width: 100%;
 }
+
 tr.sel {
 	background: #eeeeee;
 }
+
 tr.sel:hover {
 	background: #dddddd;
 }
+
 tr.hov:hover {
 	background: #dddddd;
 }
+
 th {
 	border: 1px solid black;
 	padding: 2px;
     background-color: #007CF7;
     color: white;
 }
+
 td {
 	border: 1px solid grey;
 	padding: 2px;
 }
+
 span {
 	white-space:nowrap;
 }
+
 td.tdc {
 	cursor: pointer;
 	font-weight: bold;
@@ -87,14 +94,17 @@ td.tdc {
 	position: relative;
 	padding: 0px;
 }
+
 .tabs .tab{
 	float: left;
 	display: block;
 }
+
 .tabs .tab>input[type="radio"] {
 	position: absolute;
 	display: none;
 }
+
 .tabs .tab>label {
 	display: block;
 	padding: 6px 21px;
@@ -111,6 +121,7 @@ td.tdc {
 	background: #555;
 	color: #F5F5F5;
 }
+
 .icon {
 	display: inline-flex;
 	align-self: center;
@@ -126,4 +137,3 @@ thead th {
     outline: 1px solid black;
     outline-offset: -1px; 
 }
-
