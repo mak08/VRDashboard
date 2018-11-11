@@ -45,7 +45,6 @@ label, select, input, button {
 table {
 	border: 1px solid black;
 	border-collapse: collapse;
-    width: 100%;
 }
 
 tr.sel {
@@ -63,7 +62,7 @@ tr.hov:hover {
 th {
 	border: 1px solid black;
 	padding: 2px;
-    background-color: #007CF7;
+    background-color: #398AF5;
     color: white;
 }
 
@@ -131,7 +130,7 @@ td.tdc {
 	bottom: -0.125em;
 }
 
-thead th {
+thead.sticky th {
     position: sticky;
     top: 0;
     outline: 1px solid black;

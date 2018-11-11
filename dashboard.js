@@ -346,7 +346,7 @@ var controller = function () {
     }
 
     function makeRaceStatusHTML () {
-        return "<table>"
+        return "<table style='width:100%'>"
             + raceStatusHeader
             + Array.from(races||[]).map(makeRaceStatusLine).join(' ');
             + "</table>";
@@ -358,8 +358,8 @@ var controller = function () {
             return "No friend positions received yet";
         } else {
             sortFriends(rf);
-            return "<table>"
-                + "<thead>"
+            return "<table style='width:100%'>"
+                + "<thead class='sticky'>"
                 + friendListHeader()
                 + "</thead>"
                 + "<tbody>"
@@ -370,8 +370,8 @@ var controller = function () {
     }
 
     function makeTableHTML (r) {
-        return "<table>"
-            + "<thead>"
+        return "<table style='width:100%'>"
+            + "<thead class='sticky'>"
             + tableHeader
             + "</thead>"
             + "<tbody>"
