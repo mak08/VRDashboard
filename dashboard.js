@@ -96,7 +96,6 @@ var controller = function () {
         + '<th>' + 'Cards' + '</th>'
         + '<th title="Time to next barrel">' + 'Pack' + '</th>'
         + '<th title="Boat is aground">' + 'Agnd' + '</th>'
-        + '<th title="Stealth mode">' + 'Stlt' + '</th>'
         + '<th title="Boat is maneuvering, half speed">' + 'Mnvr' + '</th>'
         + '<th>' + 'Last Command' + '</th>'
         +  '</tr>';
@@ -271,7 +270,6 @@ var controller = function () {
                 + "<td>" + cards + "</td>"
                 + "<td" + regColor + ">" + regPack + "</td>"
                 + '<td style="background-color:' + agroundBG +  ';">' + ((r.curr.aground)?"AGROUND":"No") + "</td>"
-                + "<td>" + ((r.curr.stealthMode > r.curr.lastCalcDate)?"Yes":"No") + "</td>"
                 + "<td>" + (manoeuvering?"Yes":"No") + "</td>"
                 + '<td style="background-color:' + lastCommandBG +  ';">' + lastCommand + "</td>"
                 + "</tr>";
