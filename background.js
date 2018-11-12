@@ -4,8 +4,10 @@
 
 var version = "1.0";
 
-chrome.pageAction.onClicked.addListener(function(tab) {
-    chrome.debugger.attach({tabId:tab.id}, version, onAttach.bind(null, tab.id));
+chrome.pageAction.onClicked.addListener(function (tab) {
+    chrome.debugger.attach({
+        tabId: tab.id
+    }, version, onAttach.bind(null, tab.id));
 });
 
 function checkForValidUrl(tabId, changeInfo, tabInfo) {
@@ -20,9 +22,9 @@ chrome.tabs.onUpdated.addListener(checkForValidUrl);
 // mostly useful for development - enable page action after 
 // ext reload
 
-chrome.tabs.onActivated.addListener(function(activeInfo) {
+chrome.tabs.onActivated.addListener(function (activeInfo) {
     chrome.tabs.get(activeInfo.tabId, function (tab) {
-        checkForValidUrl(activeInfo.tabId,null,tab);
+        checkForValidUrl(activeInfo.tabId, null, tab);
     });
 });
 
@@ -33,6 +35,8 @@ function onAttach(tabId) {
         return;
     }
 
-    chrome.tabs.create(
-        {url: "dashboard.html?" + tabId, active: false});
+    chrome.tabs.create({
+        url: "dashboard.html?" + tabId,
+        active: false
+    });
 }
