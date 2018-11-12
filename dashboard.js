@@ -106,7 +106,7 @@ var controller = function () {
             + genth("th_name","Friend/Opponent",undefined, sortField == 'displayName', currentSortOrder) 
             + genth("th_lu","Last Update",undefined)
             + genth("th_rank","Rank",undefined, sortField == 'rank', currentSortOrder)
-            + genth("th_dtf","DTF","Distance to Finish",sortField == 'distanceToEnd', currentSortOrder)
+            + genth("th_dtf","DTF","Distance to Finish",sortField == 'dtf', currentSortOrder)
             + genth("th_dtu","DTU","Distance to Us",sortField == 'distanceToUs', currentSortOrder) 
             + genth("th_brg","BRG","Bearing from Us", undefined)
             + genth("th_sail","Sail",undefined)
@@ -127,7 +127,7 @@ var controller = function () {
             content = content + " " + (sortmark ? '&#x25b2;' : '&#x25bc;');
         }
         return "<th id='" + id + "'"
-            + (sortfield? " style='color:BlueViolet;'" : "")
+            + (sortfield? " style='background:DarkBlue;'" : "")
             + (title ? (" title='" + title + "'") : "")
             + ">" + content + "</th>";
     }
