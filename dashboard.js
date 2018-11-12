@@ -318,22 +318,23 @@ var controller = function () {
             
             var bi = boatinfo(r);
 
-            var dtf = r.distanceToEnd;
-            if (!dtf || dtf == "null") {
-                dtf = '(' + roundTo(gcDistance(r.pos.lat, r.pos.lon, race.legdata.end.lat, race.legdata.end.lon), 1) + ')';
-            }
-                
+            r.dtf = r.distanceToEnd;                            // Guy : 3.1.0.1    
+            r.dtfC = gcDistance(r.pos.lat, r.pos.lon, race.legdata.end.lat, race.legdata.end.lon);  // Guy : 3.1.0.1
+            if (!r.dtf || r.dtf == "null") {                    // Guy : 3.1.0.1
+                r.dtf = '(' + roundTo(r.dtfC, 1) + ')';         // Guy : 3.1.0.1
+            }                                                   // Guy : 3.1.0.1
+                 
             return "<tr class='hov' id='ui:" + uid + "'>"
                 + (race.url ? ("<td class='tdc'><span id='rt:" + uid + "'>&#x2388;</span></td>") : "<td>&nbsp;</td>")
                 + '<td style="' + bi.nameStyle + '">' + bi.name + "</td>"
                 + "<td>" + formatDate(r.ts) + "</td>"
                 + "<td>" + (r.rank?r.rank:"-") + "</td>"
-                + "<td>" + dtf + "</td>"
+                + "<td>" + r.dtf + "</td>"                      // Guy : 3.1.0.1
                 + "<td>" + (r.distanceToUs?r.distanceToUs:"-") + "</td>"
                 + "<td>" + (r.bearingFromUs?r.bearingFromUs+"&#x00B0;":"-") + "</td>"
                 + "<td>" + bi.sail + "</td>"
                 + "<td>" + (r.state || '-') + "</td>"
-                + "<td>" + formatPosition(r.pos.lat, r.pos.lon) + "</td>"
+                + "<td>" + (r.pos?formatPosition(r.pos.lat, r.pos.lon):"-") + "</td>"    // guy 3.1.0.1
                 + "<td>" + bi.heading + "</td>"
                 + "<td " + bi.twaStyle + ">" + bi.twa + "</td>"
                 + "<td>" + bi.tws + "</td>"
@@ -502,8 +503,22 @@ var controller = function () {
             if (entryA == undefined && entryB == undefined) return 0;
             if (entryB == undefined) return -1;
             if (entryA == undefined) return 1;
-            if (isNaN(entryA)) entryA = entryA.toUpperCase();
-            if (isNaN(entryB)) entryB = entryB.toUpperCase();
+            if (entryA.toString() == "NaN") entryA = 0;   // Guy 3.1.0.1 start
+            if (entryB.toString() == "NaN") entryB = 0;   
+            if (isNaN(entryA)) {                           
+                if (entryA.substr(0,1)=="(") {
+                    entryA = entryA.slice(1,-1);
+                } else {
+                    entryA = entryA.toUpperCase();
+                }
+            }
+            if (isNaN(entryB)) {
+                if (entryB.substr(0,1)=="(") {
+                    entryB = entryB.slice(1,-1);
+                } else {
+                    entryB = entryB.toUpperCase();  
+                }
+            }                                           // Guy 3.1.0.1 end
             if (currentSortOrder == 0) {
                 if (entryA < entryB) return -1;
                 if (entryA > entryB) return 1;
@@ -663,7 +678,7 @@ var controller = function () {
             "<tr>"
                 + "<td>" + formatDate(r.lastCommand.request.ts) + "</td>" 
                 + '<td colspan="3">Command @' + formatTime() + "</td>" 
-                + '<td colspan="16">Actions:' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
+                + '<td colspan="15">Actions:' + printLastCommand(r.lastCommand.request.actions) + "</td>" 
                 + "</tr>");
         if (r.id == selRace.value) {
             divRecordLog.innerHTML = makeTableHTML(r);
@@ -785,7 +800,7 @@ var controller = function () {
             sortField = "rank";
             break;
         case "th_dtf":
-            sortField = "distanceToEnd";
+            sortField = "dtf";    // Guy 3.1.0.1
             break;
         case "th_dtu":
             sortField = "distanceToUs";
