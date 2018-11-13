@@ -12,7 +12,7 @@ chrome.pageAction.onClicked.addListener(function (tab) {
 
 function checkForValidUrl(tabId, changeInfo, tabInfo) {
 
-    if (tabInfo.url.indexOf('virtualregatta.com') >= 0) {
+    if (tabInfo.url.indexOf("virtualregatta.com") >= 0) {
         chrome.pageAction.show(tabId);
     }
 };

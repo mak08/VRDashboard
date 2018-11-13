@@ -1,7 +1,12 @@
 {
+    "manifest_version": 2,
     "name": "VR Dashboard",
     "description": "Monitor boat position & call virtual sailor weather router",
     "version": "3.1.0",
+    "page_action": {
+        "default_icon": "zicon.png",
+        "default_title": "VR Dashboard"
+    },
     "permissions": [
         "debugger",
         "tabs",
@@ -11,9 +16,4 @@
     "background": {
         "scripts": ["background.js"]
     },
-    "page_action": {
-        "default_icon": "zicon.png",
-        "default_title": "VR Dashboard"
-    },
-    "manifest_version": 2
 }
