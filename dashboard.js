@@ -98,7 +98,6 @@ var controller = function () {
         '<th>' + "Last Command" + '</th>' +
         '</tr>';
     
-    /* ---------- */  
     function friendListHeader() {
         return '<tr>' +
             genth("th_rt", "RT", "Call Router", sortField == "none", undefined) +
