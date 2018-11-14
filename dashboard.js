@@ -97,7 +97,8 @@ var controller = function () {
         '<th title="Boat is maneuvering, half speed">' + "Mnvr" + '</th>' +
         '<th>' + "Last Command" + '</th>' +
         '</tr>';
-
+    
+    /* ---------- */  
     function friendListHeader() {
         return '<tr>' +
             genth("th_rt", "RT", "Call Router", sortField == "none", undefined) +
@@ -124,9 +125,9 @@ var controller = function () {
         if (sortfield && sortmark != undefined) {
             content = content + " " + (sortmark ? "&#x25b2;" : "&#x25bc;");
         }
-        return '<th id="' + id + "'" +
-            (sortfield ? ' style="background: #00008B;"' : "") +
-            (title ? (' title="' + title + "'") : "") +
+        return '<th id="' + id + '"' +
+            (sortfield ? ' style="color: #00008B;"' : "") +
+            (title ? (' title="' + title + '"') : "") +
             '>' + content + '</th>';
     }
 
@@ -266,7 +267,7 @@ var controller = function () {
                 '<td>' + roundTo(r.curr.speed, 2) + '</td>' +
                 '<td>' + ((r.curr.options.length == 8) ? "Full" : r.curr.options.join(" ")) + '</td>' +
                 '<td>' + cards + '</td>' +
-                '<td ' + regColor + '>' + regPack + '</td>' +
+                '<td' + regColor + '>' + regPack + '</td>' +
                 '<td style="background-color:' + agroundBG + ';">' + ((r.curr.aground) ? "AGROUND" : "No") + '</td>' +
                 '<td>' + (manoeuvering ? "Yes" : "No") + '</td>' +
                 '<td style="background-color:' + lastCommandBG + ';">' + lastCommand + '</td>' +
@@ -290,15 +291,15 @@ var controller = function () {
             res.bcolor = "#AA66BB";
         }
         if (uinfo.type == "top") {
-            res.nameStyle += 'color: "#B8860B";';
+            res.nameStyle += "color: #B8860B;";
             res.bcolor = "#B8860B";
         }
         if (uinfo.type == "real") {
-            res.nameStyle += 'color: "#006400";';
+            res.nameStyle += "color: #006400;";
             res.bcolor = "#006400";
         }
         if (uinfo.type == "sponsor") {
-            res.nameStyle += 'color: "#8A2BE2";';
+            res.nameStyle += "color: #8A2BE2;";
             res.name += "(" + uinfo.bname + ")";
             res.bcolor = "#8A2BE2";
         }
@@ -323,9 +324,9 @@ var controller = function () {
             var bi = boatinfo(r);
 
             r.dtf = r.distanceToEnd;
-			r.dtfC = gcDistance(r.pos.lat, r.pos.lon, race.legdata.end.lat, race.legdata.end.lon);
+            r.dtfC = gcDistance(r.pos.lat, r.pos.lon, race.legdata.end.lat, race.legdata.end.lon);
             if (!r.dtf || r.dtf == "null") {
-				r.dtf = "(" + roundTo(r.dtfC, 1) + ")";
+                r.dtf = "(" + roundTo(r.dtfC, 1) + ")";
             }
 
             return '<tr class="hov" id="ui:' + uid + '">' +
@@ -1464,7 +1465,7 @@ var controller = function () {
                         repeat: "16px"
                     }],
                     geodesic: true,
-                    //strokeColor: cp.display == 'none' ? '#FF6600' : '#FFFF00',
+                    //strokeColor: cp.display == "none" ? "#FF6600" : "#FFFF00",
                     //strokeWeight: 0,
                     zIndex: cp.display == "none" ? 5 : 6
                 });
