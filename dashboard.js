@@ -1382,7 +1382,7 @@ var controller = function () {
                 repeat: "50px"
             }],
             geodesic: true,
-            strokeColor: "FFFFFF",
+            strokeColor: "#FFFFFF",
             strokeOpacity: 0.5,
             strokeWeight: 1,
             zIndex: 4
@@ -1488,7 +1488,7 @@ var controller = function () {
                 var ttpath = new google.maps.Polyline({
                     path: tpath,
                     geodesic: true,
-                    strokeColor: "#44FF44",
+                    strokeColor: /*"#44FF44"*/"#000000",
                     strokeOpacity: 0.7,
                     strokeWeight: 1,
                     zIndex: 4
@@ -1500,8 +1500,8 @@ var controller = function () {
 
             // boat
             pos = new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon);
-            map._db_me.push(addmarker(map, bounds, pos, pinSymbol("#44FF44", "B", 0.7, race.curr.heading), undefined,
-                "HDG:" + roundTo(race.curr.heading, 1) + ",SPD:" + roundTo(race.curr.speed, 2), 'me', 20, 0.7));
+            map._db_me.push(addmarker(map, bounds, pos, pinSymbol(/*"#44FF44"*/"#000000", "B", 0.7, race.curr.heading), undefined,
+                "HDG:" + roundTo(race.curr.heading, 1) + " | SPD:" + roundTo(race.curr.speed, 2), 'me', 20, 0.7));
         }
 
         // opponents/followed
@@ -1516,7 +1516,7 @@ var controller = function () {
                 var bi = boatinfo(elem);
                 var pos = new google.maps.LatLng(elem.pos.lat, elem.pos.lon);
                 map._db_op.push(addmarker(map, bounds, pos, pinSymbol(bi.bcolor, "B", 0.7, elem.heading), undefined,
-                    bi.name + "- HDG:" + bi.heading + ",SPD:" + bi.speed, "U:" + key, 18, 0.7));
+                    bi.name + " - HDG:" + bi.heading + " | SPD:" + bi.speed, "U:" + key, 18, 0.7));
                 // track
                 var tpath = [];
                 if (elem.track) {
