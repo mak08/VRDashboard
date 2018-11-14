@@ -52,15 +52,15 @@ table {
 }
 
 tr.sel {
-    background: #eeeeee;
+    background: #EEEEEE;
 }
 
 tr.sel:hover {
-    background: #dddddd;
+    background: #DDDDDD;
 }
 
 tr.hov:hover {
-    background: #dddddd;
+    background: #DDDDDD;
 }
 
 th {
@@ -124,13 +124,13 @@ td.tdc {
     text-transform: uppercase;
     cursor: pointer;
     position: relative;
-    color: #000;
-    background: #eee;
+    color: #000000;
+    background: #EEEEEE;
 }
 
 .tabs > .tab > [id^="ts:"]:checked + label {
     top: 0;
-    background: #555;
+    background: #555555;
     color: #F5F5F5;
 }
 
@@ -143,7 +143,7 @@ td.tdc {
     bottom: -0.125em;
 }
 
-thead th {
+thead.sticky th {
     position: sticky;
     top: 0;
     outline: 1px solid black;
