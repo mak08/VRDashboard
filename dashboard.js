@@ -445,13 +445,14 @@ var controller = function () {
     function explain (ndata, foilFactor, hullFactor, speedT) {
         ndata.xfactor = ndata.speed / speedT;
         ndata.xoption_foils = '?';
-        ndata.xoption_hull = 'no';
+        ndata.xoption_hull = '?';
         ndata.xplained = false;
 
         if ( epsEqual(ndata.xfactor, 1.0) ) {
             // Speed agrees with 'plain' speed.
             // Explanation: 1. no hull and 2. foiling condition => no foils.
             ndata.xplained = true;
+            ndata.xoption_hull = 'no';
             if ( foilFactor > 1.0 ) {
                 ndata.xoption_foils = 'no';
             }
@@ -472,6 +473,7 @@ var controller = function () {
                 }
             } else if ( epsEqual(ndata.speed, speedT * foilFactor) ) {
                 ndata.xplained = true;
+                ndata.xoption_hull = 'no';
                 ndata.xoption_foils = 'yes';
             } else if (epsEqual(ndata.speed, speedT * foilFactor * hullFactor)) {
                 ndata.xplained = true;
