@@ -323,7 +323,7 @@ var controller = function () {
             if (!r.dtf || r.dtf == "null") {                    // Guy : 3.1.0.1
                 r.dtf = '(' + roundTo(r.dtfC, 1) + ')';         // Guy : 3.1.0.1
             }                                                   // Guy : 3.1.0.1
-                 
+            
             return "<tr class='hov' id='ui:" + uid + "'>"
                 + (race.url ? ("<td class='tdc'><span id='rt:" + uid + "'>&#x2388;</span></td>") : "<td>&nbsp;</td>")
                 + '<td style="' + bi.nameStyle + '">' + bi.name + "</td>"
@@ -1274,72 +1274,75 @@ var controller = function () {
         var race;
         race = races.get(selRace.value);
 
-        var divMap = race.gdiv;
-        var map = race.gmap;
+        if (race) {
 
-        if(!race.gdiv) { // no div yet
-            divMap = race.gdiv = document.createElement("div");
-            divMap.style.height = "100%";
-            divMap.style.display = "none";
-            document.getElementById("tab-content4").appendChild(divMap);
+            var divMap = race.gdiv;
+            var map = race.gmap;
+
+            if(!race.gdiv) { // no div yet
+                divMap = race.gdiv = document.createElement("div");
+                divMap.style.height = "100%";
+                divMap.style.display = "none";
+                document.getElementById("tab-content4").appendChild(divMap);
+            }
+
+            races.forEach(function (race) { if(race.gdiv) race.gdiv.style.display = 'none'; });
+            divMap.style.display = 'block';
+
+            // resize first
+            controller.resize(undefined);
+
+            if(map) {
+                google.maps.event.trigger(map, 'resize');
+                return;
+            }
+
+            if(!race.legdata) return; // no legdata yet;
+
+            var bounds = race.gbounds = new google.maps.LatLngBounds();
+            var mapOptions = { mapTypeId: 'terrain' };
+            race.gmap = map = new google.maps.Map(divMap, mapOptions);
+            map.setTilt(45);
+            
+            // start, finish
+            var pos = new google.maps.LatLng(race.legdata.start.lat, race.legdata.start.lon);
+            addmarker(map, bounds, pos, undefined, {color: "blue", text: "S"}, 'Start: ' + race.legdata.start.name, 'S', 10, 1);
+            pos = new google.maps.LatLng(race.legdata.end.lat, race.legdata.end.lon);
+            addmarker(map, bounds, pos, undefined, {color: "yellow", text: "F"}, 'Finish: ' + race.legdata.end.name, 'F', 10, 1);
+            var fincircle = new google.maps.Circle({
+                strokeColor: '#F00',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillOpacity: 0,
+                map: map,
+                center: pos,
+                radius: race.legdata.end.radius * 1852.0,
+                zIndex: 9
+            });
+
+            // course
+            var cpath = [];
+            for (var i = 0; i < race.legdata.course.length; i++) {
+                cpath.push(new google.maps.LatLng(race.legdata.course[i].lat,race.legdata.course[i].lon));
+            }
+            var arrow = { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW };
+            var ccpath = new google.maps.Polyline({
+                path: cpath,
+                icons: [{ icon: arrow, repeat: '50px'}],
+                geodesic: true,
+                strokeColor: '#FFF',
+                strokeOpacity: 0.5,
+                strokeWeight: 1,
+                zIndex: 4
+            });
+            ccpath.setMap(map);
+
+
+            updatemap(race,"cp");
+            updatemap(race,"fleet");
+            updatemap(race,"me");
+            map.fitBounds(bounds);
         }
-
-        races.forEach(function (race) { if(race.gdiv) race.gdiv.style.display = 'none'; });
-        divMap.style.display = 'block';
-
-        // resize first
-        controller.resize(undefined);
-
-        if(map) {
-            google.maps.event.trigger(map, 'resize');
-            return;
-        }
-
-        if(!race.legdata) return; // no legdata yet;
-
-        var bounds = race.gbounds = new google.maps.LatLngBounds();
-        var mapOptions = { mapTypeId: 'terrain' };
-        race.gmap = map = new google.maps.Map(divMap, mapOptions);
-        map.setTilt(45);
-        
-        // start, finish
-        var pos = new google.maps.LatLng(race.legdata.start.lat, race.legdata.start.lon);
-        addmarker(map, bounds, pos, undefined, {color: "blue", text: "S"}, 'Start: ' + race.legdata.start.name, 'S', 10, 1);
-        pos = new google.maps.LatLng(race.legdata.end.lat, race.legdata.end.lon);
-        addmarker(map, bounds, pos, undefined, {color: "yellow", text: "F"}, 'Finish: ' + race.legdata.end.name, 'F', 10, 1);
-        var fincircle = new google.maps.Circle({
-            strokeColor: '#F00',
-            strokeOpacity: 0.8,
-            strokeWeight: 2,
-            fillOpacity: 0,
-            map: map,
-            center: pos,
-            radius: race.legdata.end.radius * 1852.0,
-            zIndex: 9
-        });
-
-        // course
-        var cpath = [];
-        for (var i = 0; i < race.legdata.course.length; i++) {
-            cpath.push(new google.maps.LatLng(race.legdata.course[i].lat,race.legdata.course[i].lon));
-        }
-        var arrow = { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW };
-        var ccpath = new google.maps.Polyline({
-            path: cpath,
-            icons: [{ icon: arrow, repeat: '50px'}],
-            geodesic: true,
-            strokeColor: '#FFF',
-            strokeOpacity: 0.5,
-            strokeWeight: 1,
-            zIndex: 4
-        });
-        ccpath.setMap(map);
-
-
-        updatemap(race,"cp");
-        updatemap(race,"fleet");
-        updatemap(race,"me");
-        map.fitBounds(bounds);
     }
 
     function updatemap(race, mode) {
