@@ -46,7 +46,7 @@ button {
 }
 
 table {
-    border: 1px solid black;
+    border: 1px solid #000000;
     border-collapse: collapse;
     width: 100%;
 }
@@ -64,14 +64,14 @@ tr.hov:hover {
 }
 
 th {
-    border: 1px solid black;
+    border: 1px solid #000000;
     padding: 2px;
     background-color: #398AF5;
-    color: white;
+    color: #FFFFFF;
 }
 
 td {
-    border: 1px solid grey;
+    border: 1px solid #808080;
     padding: 2px;
 }
 
@@ -146,6 +146,6 @@ td.tdc {
 thead.sticky th {
     position: sticky;
     top: 0;
-    outline: 1px solid black;
+    outline: 1px solid #000000;
     outline-offset: -1px;
 }
