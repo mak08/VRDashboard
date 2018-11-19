@@ -1314,8 +1314,10 @@ var controller = function () {
         var race;
         race = races.get(selRace.value);
 
-        var divMap = race.gdiv;
-        var map = race.gmap;
+        if (race) {
+
+            var divMap = race.gdiv;
+            var map = race.gmap;
 
         if (!race.gdiv) { // no div yet
             divMap = race.gdiv = document.createElement('div');
@@ -1391,10 +1393,11 @@ var controller = function () {
         ccpath.setMap(map);
 
 
-        updatemap(race, "cp");
-        updatemap(race, "fleet");
-        updatemap(race, "me");
-        map.fitBounds(bounds);
+            updatemap(race, "cp");
+            updatemap(race, "fleet");
+            updatemap(race, "me");
+            map.fitBounds(bounds);
+        }
     }
 
     function updatemap(race, mode) {
