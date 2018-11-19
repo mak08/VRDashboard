@@ -97,7 +97,7 @@ var controller = function () {
         '<th title="Boat is maneuvering, half speed">' + "Mnvr" + '</th>' +
         '<th>' + "Last Command" + '</th>' +
         '</tr>';
-    
+
     function friendListHeader() {
         return '<tr>' +
             genth("th_rt", "RT", "Call Router", sortField == "none", undefined) +
@@ -125,7 +125,7 @@ var controller = function () {
             content = content + " " + (sortmark ? "&#x25b2;" : "&#x25bc;");
         }
         return '<th id="' + id + '"' +
-            (sortfield ? ' style="color: #00008B;"' : "") +
+            (sortfield ? ' style="background: #00008B;"' : "") +
             (title ? (' title="' + title + '"') : "") +
             '>' + content + '</th>';
     }
@@ -464,6 +464,7 @@ var controller = function () {
             // Speed agrees with "plain" speed.
             // Explanation: 1. no hull and 2. foiling condition => no foils.
             ndata.xplained = true;
+            ndata.xoption_hull = "no";
             if (foilFactor > 1.0) {
                 ndata.xoption_foils = "no";
             }
@@ -484,6 +485,7 @@ var controller = function () {
                 }
             } else if (epsEqual(ndata.speed, speedT * foilFactor)) {
                 ndata.xplained = true;
+                ndata.xoption_hull = "no";
                 ndata.xoption_foils = "yes";
             } else if (epsEqual(ndata.speed, speedT * foilFactor * hullFactor)) {
                 ndata.xplained = true;
@@ -1488,7 +1490,7 @@ var controller = function () {
                 var ttpath = new google.maps.Polyline({
                     path: tpath,
                     geodesic: true,
-                    strokeColor: /*"#44FF44"*/"#000000",
+                    strokeColor: "#000000",
                     strokeOpacity: 0.7,
                     strokeWeight: 1,
                     zIndex: 4
@@ -1500,8 +1502,8 @@ var controller = function () {
 
             // boat
             pos = new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon);
-            map._db_me.push(addmarker(map, bounds, pos, pinSymbol(/*"#44FF44"*/"#000000", "B", 0.7, race.curr.heading), undefined,
-                "HDG:" + roundTo(race.curr.heading, 1) + " | SPD:" + roundTo(race.curr.speed, 2), 'me', 20, 0.7));
+            map._db_me.push(addmarker(map, bounds, pos, pinSymbol("#000000", "B", 0.7, race.curr.heading), undefined,
+                " | HDG:" + roundTo(race.curr.heading,1) + " | SPD:" + roundTo(race.curr.speed,2), 'me', 20, 0.7));
         }
 
         // opponents/followed
@@ -1516,7 +1518,7 @@ var controller = function () {
                 var bi = boatinfo(elem);
                 var pos = new google.maps.LatLng(elem.pos.lat, elem.pos.lon);
                 map._db_op.push(addmarker(map, bounds, pos, pinSymbol(bi.bcolor, "B", 0.7, elem.heading), undefined,
-                    bi.name + " - HDG:" + bi.heading + " | SPD:" + bi.speed, "U:" + key, 18, 0.7));
+                    bi.name + " | HDG:" + bi.heading + " | SPD:" + bi.speed, "U:" + key, 18, 0.7));
                 // track
                 var tpath = [];
                 if (elem.track) {
