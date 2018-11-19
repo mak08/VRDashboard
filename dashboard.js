@@ -457,7 +457,7 @@ var controller = function () {
     function explain(ndata, foilFactor, hullFactor, speedT) {
         ndata.xfactor = ndata.speed / speedT;
         ndata.xoption_foils = "?";
-        ndata.xoption_hull = "no";
+        ndata.xoption_hull = "?";
         ndata.xplained = false;
 
         if (epsEqual(ndata.xfactor, 1.0)) {
