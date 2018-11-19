@@ -304,8 +304,7 @@ var controller = function () {
         }
         res.twaStyle = 'style="color:' + ((uinfo.twa < 0) ? "#FF0000" : "#008000") + ';"';
         res.sail = sailNames[uinfo.sail] || "-";
-
-        res.xfactorStyle = 'style="color:' + ((uinfo.xplained) ? "#000000" : "#FF0000") + ';"';
+        //res.xfactorStyle = 'style="color: #000000' + (uinfo.xplained) + ';"';
         return (res);
     }
 
