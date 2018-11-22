@@ -425,8 +425,9 @@ var controller = function () {
             var sailName = longSailNames[data.sail % 10];
             var sailDef = getSailDef(boatPolars.sail, sailName);
 
-            // "Real" boats have no sail info
-            if (sailDef) {
+            // 'Real' boats have no sail info,
+            // 'Waiting' boats have no TWA
+            if (sailDef && data.twa && data.tws) {
                 var iA = fractionStep(data.twa, boatPolars.twa);
                 var iS = fractionStep(data.tws, boatPolars.tws);
 
