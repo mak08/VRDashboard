@@ -687,10 +687,10 @@ var controller = function () {
     function addTableCommandLine(r) {
         r.tableLines.unshift(
             '<tr>'
-            + '<td>' + formatDate(r.lastCommand.request.ts) + '</td>'
-            + '<td colspan="3">Command @' + formatTime() + '</td>'
-            + '<td colspan="15">Actions:' + printLastCommand(r.lastCommand.request.actions) + '</td>'
-            + '</tr>');
+                + '<td>' + formatDate(r.lastCommand.request.ts) + '</td>'
+                + '<td colspan="3">Command @' + formatTime() + '</td>'
+                + '<td colspan="15">Actions:' + printLastCommand(r.lastCommand.request.actions) + '</td>'
+                + '</tr>');
         if (r.id == selRace.value) {
             divRecordLog.innerHTML = makeTableHTML(r);
         }
@@ -960,9 +960,9 @@ var controller = function () {
             // Epoch timestamps are milliseconds since 00:00:00 UTC on 1 January 1970.
             r.curr.deltaT = (r.curr.lastCalcDate - r.prev.lastCalcDate) / 1000;
             if (r.curr.deltaT > 0
-                 && Math.abs(toDeg(gamma) - 180) > 1
-                 && toDeg(alpha) > 1
-                 && toDeg(beta) > 1) {
+                && Math.abs(toDeg(gamma) - 180) > 1
+                && toDeg(alpha) > 1
+                && toDeg(beta) > 1) {
                 r.curr.deltaD = d / Math.sin(gamma) * (Math.sin(beta) + Math.sin(alpha));
             } else {
                 r.curr.deltaD = d;
@@ -1023,12 +1023,12 @@ var controller = function () {
         var maxSail = "";
         for (const sailDef of sailDefs) {
             if (sailDef.name === "JIB"
-                 || sailDef.name === "SPI"
-                 || (sailDef.name === "STAYSAIL" && options.includes("heavy"))
-                 || (sailDef.name === "LIGHT_JIB" && options.includes("light"))
-                 || (sailDef.name === "CODE_0" && options.includes("reach"))
-                 || (sailDef.name === "HEAVY_GNK" && options.includes("heavy"))
-                 || (sailDef.name === "LIGHT_GNK" && options.includes("light"))) {
+                || sailDef.name === "SPI"
+                || (sailDef.name === "STAYSAIL" && options.includes("heavy"))
+                || (sailDef.name === "LIGHT_JIB" && options.includes("light"))
+                || (sailDef.name === "CODE_0" && options.includes("reach"))
+                || (sailDef.name === "HEAVY_GNK" && options.includes("heavy"))
+                || (sailDef.name === "LIGHT_GNK" && options.includes("light"))) {
                 var speed = pSpeed(iA, iS, sailDef.speed);
                 if (speed > maxSpeed) {
                     maxSpeed = speed;
@@ -1080,10 +1080,10 @@ var controller = function () {
             var iS = fractionStep(tws, speedSteps);
             var iA = fractionStep(twa, twaSteps);
             return bilinear(iA.fraction, iS.fraction,
-                             foilMat[iA.index - 1][iS.index - 1],
-                             foilMat[iA.index][iS.index - 1],
-                             foilMat[iA.index - 1][iS.index],
-                             foilMat[iA.index][iS.index]);
+                            foilMat[iA.index - 1][iS.index - 1],
+                            foilMat[iA.index][iS.index - 1],
+                            foilMat[iA.index - 1][iS.index],
+                            foilMat[iA.index][iS.index]);
         } else {
             return 1.0;
         }
@@ -1312,7 +1312,7 @@ var controller = function () {
             var mapOptions = { mapTypeId: "terrain" };
             race.gmap = map = new google.maps.Map(divMap, mapOptions);
             map.setTilt(45);
-    
+            
             // start, finish
             var pos = new google.maps.LatLng(race.legdata.start.lat, race.legdata.start.lon);
             addmarker(map, bounds, pos, undefined, {color: "blue", text: "S"}, "Start: " + race.legdata.start.name, "S", 10, 1);
@@ -1451,7 +1451,7 @@ var controller = function () {
             // boat
             pos = new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon);
             map._db_me.push(addmarker(map, bounds, pos, pinSymbol("#4F4", "B",0.7,race.curr.heading), undefined,
-                "HDG:" + roundTo(race.curr.heading, 1) + ",SPD:" + roundTo(race.curr.speed, 2),'me', 20, 0.7));
+                                      "HDG:" + roundTo(race.curr.heading, 1) + ",SPD:" + roundTo(race.curr.speed, 2),'me', 20, 0.7));
         }
 
         // opponents/followed
@@ -1465,7 +1465,7 @@ var controller = function () {
                 var bi = boatinfo(elem);
                 var pos = new google.maps.LatLng(elem.pos.lat, elem.pos.lon);
                 map._db_op.push(addmarker(map, bounds, pos, pinSymbol(bi.bcolor, "B", 0.7, elem.heading), undefined,
-                    bi.name + "- HDG:" + bi.heading + ",SPD:" + bi.speed, "U:" + key, 18, 0.7));
+                                          bi.name + "- HDG:" + bi.heading + ",SPD:" + bi.speed, "U:" + key, 18, 0.7));
                 // track
                 var tpath = [];
                 if (elem.track) {
@@ -1677,8 +1677,8 @@ var controller = function () {
                         // -- save and process later?
                         console.warn(responseClass + " " + response.requestId + " not found");
                     } else if ((request.eventKey == "LDB_GetLegRank" ||
-                            request.eventKey == "LDB_GetGateRank") &&
-                        response.scriptData.me !== null) {
+                                request.eventKey == "LDB_GetGateRank") &&
+                               response.scriptData.me !== null) {
                         // Use this response to update User/Boat info if the plugin is switched on while already logged in
                         reInitUI(response.scriptData.me._id);
                         currentUserId = response.scriptData.me._id;
