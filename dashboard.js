@@ -1717,13 +1717,16 @@ var controller = function () {
                         divRaceStatus.innerHTML = makeRaceStatusHTML();
                     } else if (request.eventKey == "Game_GetBoatState") {
                         // First boat state message, only sent for the race the UI is displaying
-                        var raceId = getRaceLegId(response.scriptData.boatState._id);
-                        var race = races.get(raceId);
-                        race.legdata = response.scriptData.leg;
-                        // Don't try old race_id, messages will be misdirected
-                        updatePosition(response.scriptData.boatState, race);
-                        if (cbRouter.checked) {
-                            callRouter(raceId);
+                        // No boatstate if boat is not registered yet
+                        if (response.scriptData.boatState) {
+                            var raceId = getRaceLegId(response.scriptData.boatState._id);
+                            var race = races.get(raceId);
+                            race.legdata = response.scriptData.leg;
+                            // Don't try old race_id, messages will be misdirected
+                            updatePosition(response.scriptData.boatState, race);
+                            if (cbRouter.checked) {
+                                callRouter(raceId);
+                            }
                         }
                     } else if (request.eventKey == "Game_RefreshBoatState") {
                         // New message - does this replace the boatStatePush? 
