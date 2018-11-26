@@ -1805,6 +1805,15 @@ var controller = function () {
                         updatemap(race, "fleet");
                     }
                 } else if (responseClass == ".ScriptMessage") {
+                    // The ScriptMessage type can be : 
+                    //      extCode=boatStatePush
+                    //      extCode=messagePush
+                    //      extCode=teamMessage
+                    if (response.extCode == "boatStatePush") {
+                        var raceId = getRaceLegId(response.data._id);
+                        var race =  races.get(raceId);
+                        updatePosition(response.data, race);
+                    }
                     // There is no request for .ScriptMessages.
                     // The only ScriptMessage type is extCode=boatStatePush
                     var raceId = getRaceLegId(response.data._id);
