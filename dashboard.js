@@ -321,7 +321,7 @@ var controller = function () {
             r.dtf = r.distanceToEnd;
             r.dtfC = gcDistance(r.pos.lat, r.pos.lon, race.legdata.end.lat, race.legdata.end.lon);
             if (!r.dtf || r.dtf == "null") {
-                r.dtf = "(" + roundTo(r.dtfC, 1) + ")";
+                r.dtf = r.dtfC;
             }
 
             return '<tr class="hov" id="ui:' + uid + '">'
@@ -329,7 +329,7 @@ var controller = function () {
                 + '<td style="' + bi.nameStyle + '">' + bi.name + '</td>'
                 + '<td>' + formatDate(r.ts) + '</td>'
                 + '<td>' + (r.rank ? r.rank : "-") + '</td>'
-                + '<td>' + r.dtf + '</td>'
+                + "<td>" + ((r.dtf==r.dtfC)?"(" + roundTo(r.dtfC, 1) + ")":r.dtf) + "</td>"
                 + '<td>' + (r.distanceToUs ? r.distanceToUs : "-") + '</td>'
                 + '<td>' + (r.bearingFromUs ? r.bearingFromUs + "&#x00B0;" : "-") + '</td>'
                 + '<td>' + bi.sail + '</td>'
@@ -1805,6 +1805,7 @@ var controller = function () {
                         updatemap(race, "fleet");
                     }
                 } else if (responseClass == ".ScriptMessage") {
+                    // There is no request for .ScriptMessages.
                     // The ScriptMessage type can be : 
                     //      extCode=boatStatePush
                     //      extCode=messagePush
@@ -1814,11 +1815,6 @@ var controller = function () {
                         var race =  races.get(raceId);
                         updatePosition(response.data, race);
                     }
-                    // There is no request for .ScriptMessages.
-                    // The only ScriptMessage type is extCode=boatStatePush
-                    var raceId = getRaceLegId(response.data._id);
-                    var race = races.get(raceId);
-                    updatePosition(response.data, race);
                 }
             }
         }
