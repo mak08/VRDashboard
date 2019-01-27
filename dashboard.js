@@ -374,7 +374,7 @@ var controller = function () {
                 } catch (e) {
                     r.eRT = e.toString();
                 }
-                return '<td>' + formatDate(r.startDate, 'User info missing') + '</td>'
+                return '<td>' + formatDate(r.startDate, 'UserCard missing') + '</td>'
                     + '<td>' + formatDHMS(r.eRT) + '</td>';
             } else {
                 return '<td>' + 'User info missing' + '</td>'
@@ -466,7 +466,7 @@ var controller = function () {
 
             // 'Real' boats have no sail info,
             // 'Waiting' boats have no TWA
-            if (sailDef && data.twa && data.tws) {
+            if (data.state == "racing" && sailDef && data.twa && data.tws) {
                 var iA = fractionStep(data.twa, boatPolars.twa);
                 var iS = fractionStep(data.tws, boatPolars.tws);
 
