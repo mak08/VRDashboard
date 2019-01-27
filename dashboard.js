@@ -364,19 +364,22 @@ var controller = function () {
 
     function recordRaceFields (race, r) {
         if (race.type === "record") {
-            r.eRT = '-';
-            try {
-                var estimatedSpeed = race.legdata.estimatedLength / (race.legdata.estimatedTime * 24);
-                
-                var raceTime = (r.ts - r.startDate);
-                var eTtF = (r.distanceToEnd / estimatedSpeed) * 3600000;
-                var eRT = raceTime + eTtF;
-                r.eRT = eRT;
-            } catch (e) {
-                // ignore
-            }
-            return '<td>' + formatDate(r.startDate, 'Click on boat')
-                + '<td>' + formatDHMS(r.eRT);
+            if (r.state === "racing" && r.distanceToEnd) {
+                try {
+                    var estimatedSpeed = race.legdata.estimatedLength / (race.legdata.estimatedTime * 24);
+                    var raceTime = (r.ts - r.startDate);
+                    var eTtF = (r.distanceToEnd / estimatedSpeed) * 3600000;
+                    var eRT = raceTime + eTtF;
+                    r.eRT = eRT;
+                } catch (e) {
+                    r.eRT = e.toString();
+                }
+                return '<td>' + formatDate(r.startDate, 'Click on boat') + '</td>'
+                    + '<td>' + formatDHMS(r.eRT) + '</td>';
+            } else {
+                return '<td>' + 'Click on boat' + '</td>'
+                    + '<td> - </td>';
+            }               
         } else {
             return "";
         }
