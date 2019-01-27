@@ -104,6 +104,7 @@ var controller = function () {
         return '<tr>'
             + genth("th_rt","RT","Call Router",sortField == "none", undefined)
             + genth("th_name","Friend/Opponent",undefined, sortField == "displayName", currentSortOrder)
+            + recordRaceColumns()
             + genth("th_lu","Last Update",undefined)
             + genth("th_rank","Rank",undefined, sortField == "rank", currentSortOrder)
             + genth("th_dtf","DTF","Distance to Finish",sortField == "dtf", currentSortOrder)
@@ -120,6 +121,16 @@ var controller = function () {
             + genth("th_foils","Foils", "Boat assumed to have Foils. Unknown if no foiling conditions", undefined)
             + genth("th_hull","Hull", "Boat assumed to have Hull polish", undefined)
             + '</tr>';
+    }
+
+    function recordRaceColumns () {
+        var race = races.get(selRace.value);
+        if (race.type === "record") {
+            return genth("th_sd","Start Date",undefined, sortField == "startDate", currentSortOrder)
+                + genth("th_ert","ERT", "Estimated Total Race Time", sortField == "eRT", currentSortOrder);
+        } else {
+            return "";
+        }
     }
 
     function genth(id,content,title,sortfield,sortmark) {
@@ -251,9 +262,13 @@ var controller = function () {
             if (r.type === "leg") {
                 info = '<span>' + r.legName + '</span>';
             } else if (r.type === "record") {
-                info = ' <span>Record, Attempt ' + parseInt(r.record.attemptCounter) + '</span>';
+                if (r.record) {
+                    info = ' <span>Record, Attempt ' + parseInt(r.record.attemptCounter) + '</span>';
+                } else {
+                    info = '<span>-</span>'
+                }
             }
-            if (r.type === "record" && r.record.lastRankingGateName) {
+            if (r.record && r.record.lastRankingGateName) {
                 info += '<br/><span>@' + r.record.lastRankingGateName + '</span>';
             }
 
@@ -327,6 +342,7 @@ var controller = function () {
             return '<tr class="hov" id="ui:' + uid + '">'
                 + (race.url ? ('<td class="tdc"><span id="rt:' + uid + '">&#x2388;</span></td>') : '<td>&nbsp;</td>')
                 + '<td style="' + bi.nameStyle + '">' + bi.name + '</td>'
+                + recordRaceFields(race, r)
                 + '<td>' + formatDate(r.ts) + '</td>'
                 + '<td>' + (r.rank ? r.rank : "-") + '</td>'
                 + "<td>" + ((r.dtf==r.dtfC)?"(" + roundTo(r.dtfC, 1) + ")":r.dtf) + "</td>"
@@ -346,6 +362,26 @@ var controller = function () {
         }
     }
 
+    function recordRaceFields (race, r) {
+        if (race.type === "record") {
+            r.eRT = '-';
+            try {
+                var estimatedSpeed = race.legdata.estimatedLength / (race.legdata.estimatedTime * 24);
+                
+                var raceTime = (r.ts - r.startDate);
+                var eTtF = (r.distanceToEnd / estimatedSpeed) * 3600000;
+                var eRT = raceTime + eTtF;
+                r.eRT = eRT;
+            } catch (e) {
+                // ignore
+            }
+            return '<td>' + formatDate(r.startDate, 'Click on boat')
+                + '<td>' + formatDHMS(r.eRT);
+        } else {
+            return "";
+        }
+    }
+            
     function makeRaceStatusHTML() {
         return '<table>'
             + '<thead>'
@@ -403,7 +439,7 @@ var controller = function () {
         }
         if (ndata.mode == "followed") data.mode = "followed"; // keep followed state if present
 
-        var elemlist = ["baseInfos", "displayName", "ts", "type", "state", "pos", "heading", "twa", "tws", "speed", "mode", "distanceToEnd", "sail", "bname"];
+        var elemlist = ["baseInfos", "displayName", "ts", "startDate", "type", "state", "pos", "heading", "twa", "tws", "speed", "mode", "distanceToEnd", "sail", "bname"];
         // copy elems from data to uinfo
         elemlist.forEach(function (tag) {
             if (tag in data) {
@@ -648,6 +684,20 @@ var controller = function () {
         return pad0(hours) + "h" + pad0(minutes) + "m"; // + seconds + "s";
     }
 
+    function formatDHMS(seconds) {
+        if (seconds === undefined || isNaN(seconds) || seconds < 0) {
+            return "-";
+        }
+
+        seconds = Math.floor(seconds / 1000);
+
+        var days = Math.floor(seconds / 86400);
+        var hours = Math.floor(seconds / 3600) % 24;
+        var minutes = Math.floor(seconds / 60) % 60;
+
+        return pad0(days) + "d" + pad0(hours) + "h" + pad0(minutes) + "m"; // + seconds + "s";
+    }
+
     function formatMS(seconds) {
         if (seconds === undefined || isNaN(seconds) || seconds < 0) {
             return "-";
@@ -661,7 +711,8 @@ var controller = function () {
         return pad0(minutes) + "m" + pad0(seconds) + "s";
     }
 
-    function formatDate(ts) {
+    function formatDate(ts, dflt) {
+        if (!ts) return dflt;
         var tsOptions = { year: "numeric", month: "numeric", day: "numeric",
                           hour: "numeric", minute: "numeric", second: "numeric",
                           hour12: false, timeZoneName: "short"};
@@ -809,6 +860,12 @@ var controller = function () {
             break;
         case "th_rank":
             sortField = "rank";
+            break;
+        case "th_sd":
+            sortField = "startDate";
+            break;
+        case "th_ert":
+            sortField = "eRT";
             break;
         case "th_dtf":
             sortField = "dtf";
