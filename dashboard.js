@@ -377,7 +377,7 @@ var controller = function () {
                 return '<td>' + formatDate(r.startDate, 'UserCard missing') + '</td>'
                     + '<td>' + formatDHMS(r.eRT) + '</td>';
             } else {
-                return '<td>' + 'User info missing' + '</td>'
+                return '<td>' + 'UserCard missing' + '</td>'
                     + '<td> - </td>';
             }               
         } else {
