@@ -374,10 +374,10 @@ var controller = function () {
                 } catch (e) {
                     r.eRT = e.toString();
                 }
-                return '<td>' + formatDate(r.startDate, 'Click on boat') + '</td>'
+                return '<td>' + formatDate(r.startDate, 'User info missing') + '</td>'
                     + '<td>' + formatDHMS(r.eRT) + '</td>';
             } else {
-                return '<td>' + 'Click on boat' + '</td>'
+                return '<td>' + 'User info missing' + '</td>'
                     + '<td> - </td>';
             }               
         } else {
@@ -715,7 +715,7 @@ var controller = function () {
     }
 
     function formatDate(ts, dflt) {
-        if (!ts) return dflt;
+        if (!ts && dflt) return dflt;
         var tsOptions = { year: "numeric", month: "numeric", day: "numeric",
                           hour: "numeric", minute: "numeric", second: "numeric",
                           hour12: false, timeZoneName: "short"};
