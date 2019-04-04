@@ -366,8 +366,8 @@ var controller = function () {
         if (race.type === "record") {
             if (r.state === "racing" && r.distanceToEnd) {
                 try {
-                    var estimatedSpeed = race.legdata.estimatedLength / (race.legdata.estimatedTime * 24);
                     var raceTime = (r.ts - r.startDate);
+                    var estimatedSpeed = r.distanceFromStart / (raceTime / 3600000);
                     var eTtF = (r.distanceToEnd / estimatedSpeed) * 3600000;
                     var eRT = raceTime + eTtF;
                     r.eRT = eRT;
@@ -442,7 +442,7 @@ var controller = function () {
         }
         if (ndata.mode == "followed") data.mode = "followed"; // keep followed state if present
 
-        var elemlist = ["baseInfos", "displayName", "ts", "startDate", "type", "state", "pos", "heading", "twa", "tws", "speed", "mode", "distanceToEnd", "sail", "bname"];
+        var elemlist = ["baseInfos", "displayName", "ts", "startDate", "type", "state", "pos", "heading", "twa", "tws", "speed", "mode", "distanceToEnd", "distanceFromStart", "sail", "bname"];
         // copy elems from data to uinfo
         elemlist.forEach(function (tag) {
             if (tag in data) {
