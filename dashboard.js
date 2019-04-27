@@ -434,6 +434,7 @@ var controller = function () {
         if (!ndata) {
             ndata = new Object();
             rfd.uinfo[uid] = ndata;
+            rfd.table.push(uid);       // add correction guy
         }
         if (mode == "usercard") {
             data.mode = "opponents";
