@@ -259,7 +259,7 @@ var controller = function () {
                 info = '<span>' + r.legName + '</span>';
             } else if (r.type === "record") {
                 if (r.record) {
-                    info = ' <span>Record, Attempt ' + parseInt(r.record.attemptCounter) + '</span>';
+                    info = '<span>Record, Attempt ' + parseInt(r.record.attemptCounter) + '</span>';
                 } else {
                     info = '<span>-</span>'
                 }
@@ -1570,7 +1570,7 @@ var controller = function () {
                     }
                 } else {
                     if (cp.side == "port") map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_bb, "RL"), undefined, label_s, i, 8, op));
-                    if (cp.side == "stbd") map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_sb, "RR"), undefined, label_e, i, 8, op));
+                    if (cp.side == "stbd") map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol(c_sb, "RR"), undefined, label_e, i, 8, op));
                 }
                 var path = [];
                 path.push(position_s);
