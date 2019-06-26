@@ -1529,11 +1529,16 @@ var controller = function () {
             if (map._db_cp)
                 for (var i = 0; i < map._db_cp.length; i++) map._db_cp[i].setMap(null);
             map._db_cp = new Array();
+            var groupColors = [];
             for (var i = 0; i < race.legdata.checkpoints.length; i++) {
 
                 var cp = race.legdata.checkpoints[i];
                 var cp_name = "invsible";
                 if (cp.display != "none") cp_name = cp.display;
+
+                if (!groupColors[cp.group]) {
+                    groupColors[cp.group] = randomColor();
+                }
 
                 var position_s = new google.maps.LatLng(cp.start.lat, cp.start.lon);
                 var position_e = new google.maps.LatLng(cp.end.lat, cp.end.lon);
@@ -1577,18 +1582,14 @@ var controller = function () {
                 } else if (cp.display == "buoy") {
                     if (cp.side == "stbd") {
                         map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_sb, "RR"), undefined, label_s, i, 8, op));
-                        map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol(c_bb, "RL"), undefined, label_e, i, 8, op));
                     } else {
                         map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_bb, "RL"), undefined, label_s, i, 8, op));
-                        map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol(c_sb, "RR"), undefined, label_e, i, 8, op));
                     }
                 } else {
                     if (cp.side == "stbd") {
                         map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_sb, "RR"), undefined, label_s, i, zi, op));
-                        map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol(c_bb, "RL"), undefined, label_e, i, zi, op));
                     } else {
                         map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_bb, "RL"), undefined, label_s, i, zi, op));
-                        map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol(c_sb, "RR"), undefined, label_e, i, zi, op));
                     }
                 }
                 var path = [];
@@ -1598,7 +1599,7 @@ var controller = function () {
                     path: path,
                     strokeOpacity: 0.0,
                     icons: [{
-                        icon: pinSymbol(cp.display == "none" ? "#FF6600" : "#FFFF00", "DL", op),
+                        icon: pinSymbol(cp.display == "none" ? groupColors[cp.group] : "#FFFF00", "DL", op),
                         repeat: "16px"
                     }],
                     geodesic: true,
@@ -1742,6 +1743,13 @@ var controller = function () {
         };
     }
 
+    function randomColor() {
+        const r = Math.floor(Math.random() * 256);
+        const g = Math.floor(Math.random() * 256);
+        const b = Math.floor(Math.random() * 256);
+        return "rgb(" + r + "," + g + "," + b + ")";
+    }
+    
     function saveOption(e) {
         localStorage["cb_" + this.id] = this.checked;
     }
