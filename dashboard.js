@@ -1530,29 +1530,34 @@ var controller = function () {
                 for (var i = 0; i < map._db_cp.length; i++) map._db_cp[i].setMap(null);
             map._db_cp = new Array();
             for (var i = 0; i < race.legdata.checkpoints.length; i++) {
+
                 var cp = race.legdata.checkpoints[i];
                 var cp_name = "invsible";
                 if (cp.display != "none") cp_name = cp.display;
+
                 var position_s = new google.maps.LatLng(cp.start.lat, cp.start.lon);
                 var position_e = new google.maps.LatLng(cp.end.lat, cp.end.lon);
-                //var label_g = "index: " + i + ", id: " + cp.id + ", group: " + cp.group + ", type: " + cp_name + ", engine: " + cp.engine + ", side: " + cp.side + ", name: " + cp.name;
+
                 var c_sb = "#00FF00";
                 var c_bb = "#FF0000";
                 var zi = 8;
+                if (cp.display == "none") {
+                    c_sb = "#448800";
+                    c_bb = "#884400";
+                    zi = 6;
+                }
+
                 var op = 1.0;
                 var g_passed = false;
                 if (race.gatecnt[cp.group - 1]) {
                     g_passed = true;
                     op = 0.3;
                 } // mark/gate passed - semi transparent
+                
                 var label_g = cp.id + ", group: " + cp.group + ", type: " + cp_name + ", engine: " + cp.engine + ", side: " + cp.side + ", name: " + cp.name + (g_passed ? ", PASSED" : "");
                 var label_s = "checkpoint " + label_g + "\nPosition: " + formatPosition(cp.start.lat, cp.start.lon);
                 var label_e = "checkpoint " + label_g + "\nPosition: " + formatPosition(cp.end.lat, cp.end.lon);
-                if (cp.display == "none") {
-                    c_sb = "#448800";
-                    c_bb = "#884400";
-                    zi = 6;
-                }
+
                 if (cp.side == "stbd") {
                     map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_sb, "C"), undefined, label_s, i, zi, op));
                     map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol(c_bb, "C"), undefined, label_e, i, zi, op));
@@ -1560,6 +1565,7 @@ var controller = function () {
                     map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_bb, "C"), undefined, label_s, i, zi, op));
                     map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol(c_sb, "C"), undefined, label_e, i, zi, op));
                 }
+
                 if (cp.display == "gate") {
                     if (cp.side == "stbd") {
                         map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol("#FFFF00", "RR"), undefined, label_s, i, 8, op));
@@ -1568,9 +1574,22 @@ var controller = function () {
                         map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol("#FFFF00", "RL"), undefined, label_s, i, 8, op));
                         map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol("#FFFF00", "RR"), undefined, label_e, i, 8, op));
                     }
+                } else if (cp.display == "buoy") {
+                    if (cp.side == "stbd") {
+                        map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_sb, "RR"), undefined, label_s, i, 8, op));
+                        map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol(c_bb, "RL"), undefined, label_e, i, 8, op));
+                    } else {
+                        map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_bb, "RL"), undefined, label_s, i, 8, op));
+                        map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol(c_sb, "RR"), undefined, label_e, i, 8, op));
+                    }
                 } else {
-                    if (cp.side == "port") map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_bb, "RL"), undefined, label_s, i, 8, op));
-                    if (cp.side == "stbd") map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol(c_sb, "RR"), undefined, label_e, i, 8, op));
+                    if (cp.side == "stbd") {
+                        map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_sb, "RR"), undefined, label_s, i, zi, op));
+                        map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol(c_bb, "RL"), undefined, label_e, i, zi, op));
+                    } else {
+                        map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_bb, "RL"), undefined, label_s, i, zi, op));
+                        map._db_cp.push(addmarker(map, bounds, position_e, pinSymbol(c_sb, "RR"), undefined, label_e, i, zi, op));
+                    }
                 }
                 var path = [];
                 path.push(position_s);
