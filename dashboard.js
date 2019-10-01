@@ -127,7 +127,8 @@ var controller = function () {
         var race = races.get(selRace.value);
         if (race.type === "record") {
             return genth("th_sd","Start Date",undefined, sortField == "startDate", currentSortOrder)
-                + genth("th_ert","ERT", "Estimated Total Race Time", sortField == "eRT", currentSortOrder);
+                + genth("th_ert","ERT", "Estimated Total Race Time", sortField == "eRT", currentSortOrder)
+                + genth("th_avgspeed","avgS", "Average Speed", sortField == "avgSpeed", currentSortOrder);
         } else {
             return "";
         }
@@ -360,7 +361,7 @@ var controller = function () {
                         + (race.url ? ('<td class="tdc"><span id="rt:' + uid + '">&#x2388;</span></td>') : '<td>&nbsp;</td>')
                         + '<td style="' + bi.nameStyle + '">' + bi.name + '</td>'
                         + recordRaceFields(race, r)
-                        + '<td>' + formatDate(r.ts) + '</td>'
+                        + '<td>' + formatDateShort(r.ts) + '</td>'
                         + '<td>' + (r.rank ? r.rank : "-") + '</td>'
                         + "<td>" + ((r.dtf==r.dtfC)?"(" + roundTo(r.dtfC, 1) + ")":r.dtf) + "</td>"
                         + '<td>' + (r.distanceToUs ? r.distanceToUs : "-") + '</td>'
@@ -389,14 +390,17 @@ var controller = function () {
                     var estimatedSpeed = r.distanceFromStart / (raceTime / 3600000);
                     var eTtF = (r.distanceToEnd / estimatedSpeed) * 3600000;
                     var eRT = raceTime + eTtF;
+                    r.avgSpeed = estimatedSpeed;
                     r.eRT = eRT;
                 } catch (e) {
                     r.eRT = e.toString();
                 }
                 return '<td>' + formatDate(r.startDate, 'UserCard missing') + '</td>'
-                    + '<td>' + formatDHMS(r.eRT) + '</td>';
+                    + '<td>' + formatDHMS(r.eRT) + '</td>'
+                    + '<td>' + roundTo(r.avgSpeed, 2) + '</td>';
             } else {
                 return '<td>' + 'UserCard missing' + '</td>'
+                    + '<td> - </td>'
                     + '<td> - </td>';
             }
         } else {
@@ -760,6 +764,22 @@ var controller = function () {
         return new Intl.DateTimeFormat("lookup", tsOptions).format(d);
     }
 
+    function formatDateShort(ts, dflt) {
+        if (!ts && dflt) return dflt;
+        var tsOptions = {
+            hour: "numeric",
+            minute: "numeric",
+            second: "numeric",
+            hour12: false,
+            timeZoneName: "short"
+        };
+        var d = (ts) ? (new Date(ts)) : (new Date());
+        if (cbLocalTime.checked) {} else {
+            tsOptions.timeZone = "UTC";
+        }
+        return new Intl.DateTimeFormat("lookup", tsOptions).format(d);
+    }
+
     function formatTime(ts) {
         var tsOptions = {
             hour: "numeric",
@@ -912,6 +932,9 @@ var controller = function () {
                 break;
             case "th_ert":
                 sortField = "eRT";
+                break;
+            case "th_avgspeed":
+                sortField = "avgSpeed";
                 break;
             case "th_dtf":
                 sortField = "dtf";
