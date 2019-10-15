@@ -1464,10 +1464,6 @@ var controller = function () {
     
     function initializeMap(race) {
 
-        if (race.gmap) {
-            return race.gmap;
-        };
-        
         if (!race.legdata) return; // no legdata yet;
 
         // Create div
@@ -1537,18 +1533,23 @@ var controller = function () {
         map.fitBounds(bounds);
     }
 
+    function clearTrack(map, db) {
+        if (map[db])
+            for (var i = 0; i < map[db].length; i++) map[db][i].setMap(null);
+        map[db] = new Array();
+    }
+
     function updateMapCheckpoints(race) {
 
         if (!race) return;
         
-        var map = initializeMap(race);
+        var map = race.gmap;
         var bounds = race.gbounds;
 
         // checkpoints
         if (!race.legdata) return;
-        if (map._db_cp)
-            for (var i = 0; i < map._db_cp.length; i++) map._db_cp[i].setMap(null);
-        map._db_cp = new Array();
+        clearTrack(map,"_db_cp");
+        
         var groupColors = [];
         for (var i = 0; i < race.legdata.checkpoints.length; i++) {
 
@@ -1632,27 +1633,13 @@ var controller = function () {
         }
     }
 
-    function makeTTPath (tpath, color) {
-        return new google.maps.Polyline({
-            path: tpath,
-            geodesic: true,
-            strokeColor: color,
-            strokeOpacity: 0.7,
-            strokeWeight: 1,
-            zIndex: 4
-        });
-    }
-
     function updateMapWaypoints(race, mode) {
+
         var map = race.gmap;
         var bounds = race.gbounds;
 
         if (!map) return; // no map yet
-
-        // wp
-        if (map._db_wp)
-            for (var i = 0; i < map._db_wp.length; i++) map._db_wp[i].setMap(null);
-        map._db_wp = new Array();
+        clearTrack(map,"_db_wp");
 
         // track wp
         var tpath = [];
@@ -1674,11 +1661,7 @@ var controller = function () {
         var bounds = race.gbounds;
 
         if (!map) return; // no map yet
-
-        // me
-        if (map._db_me)
-            for (var i = 0; i < map._db_me.length; i++) map._db_me[i].setMap(null);
-        map._db_me = new Array();
+        clearTrack(map, "_db_me");
 
         // track
         var tpath = [];
@@ -1699,94 +1682,96 @@ var controller = function () {
 
     function updateMapLeader(race) {
         var map = race.gmap;
-        var bounds = race.gbounds;
 
         if (!map) return; // no map yet
         if (!race.curr) return;
-        if (race.curr.state != "racing") return;
+        // if (race.curr.state != "racing") return;
         if (!race.curr.startDate) return;
         
-        var offset;
-        if (race.track) {
-            var d = new Date();
-            offset = d - race.curr.startDate;
-        }
-
-        var lineSymbol = {
-            path: 'M 0,-1 0,1',
-            strokeColor: "#3d403a",
-            strokeOpacity: 1,
-            scale: 4
-        };
-
-        if (map._db_leader)
-            for (var i = 0; i < map._db_leader.length; i++) map._db_leader[i].setMap(null);
-        map._db_leader = new Array();
+        var d = new Date();
+        var offset = d - race.curr.startDate;
 
         // track
-        var tpath = [];
-        var leaderTrack = race.leaderTrack;
-        if (leaderTrack) {
-            var ghostPos;
-            var ghostStartTS = leaderTrack[0].ts;
-            var ghostPosTS = ghostStartTS + offset;
-            for (var i = 0; i < leaderTrack.length; i++) {
-                tpath.push(new google.maps.LatLng(leaderTrack[i].lat, leaderTrack[i].lon));
-                if (leaderTrack[i].ts >= ghostPosTS) {
-                    if (!ghostPos) {
-                        ghostPos = i;
-                    }
-                }
-            }
-            var ttpath = new google.maps.Polyline({
-                path: tpath,
-                geodesic: true,
-                strokeOpacity: 0.0,
-                strokeWeight: 1.5,
-                icons: [{
-                    icon: lineSymbol,
-                    offset: '0',
-                    repeat: '20px'
-                }],
-                zIndex: 4
-            });
-            ttpath.setMap(map);
-            map._db_leader.push(ttpath);
-        
-            if (ghostPos) {
-                var lat1 = leaderTrack[ghostPos].lat;
-                var lon1 = leaderTrack[ghostPos].lon
-                var lat0 = leaderTrack[Math.max(ghostPos - 1, 0)].lat;
-                var lon0 = leaderTrack[Math.max(ghostPos - 1, 0)].lon;
-                var heading = courseAngle(lat0, lon0, lat1, lon1) * 180 / Math.PI;
-                var d = (leaderTrack[ghostPos].ts - ghostPosTS) / (leaderTrack[ghostPos].ts - leaderTrack[ghostPos - 1].ts)
-                var lat = lat0 + (lat1-lat0) * d;
-                var lon = lon0 + (lon1-lon0) * d;
-                var pos = new google.maps.LatLng(lat, lon);
-                map._db_leader.push(addmarker(map, bounds, pos, pinSymbol("#3d403a", "B", 0.7, heading), undefined,
-                                          "Leader: " + race.leaderName, 'leader', 20, 0.7));
-            }
+        if (race.leaderTrack) {
+            addGhostTrack(map, race.gbounds, race.leaderTrack, "Leader", "Leader: " + race.leaderName + " | Elapsed: " + formatDHMS(offset), offset, "_db_leader", "#3d403a");
+        }
+        if (race.myTrack) {
+            addGhostTrack(map, race.gbounds, race.myTrack, "Best Attempt", "Best Attempt" + " | Elapsed: " + formatDHMS(offset), offset, "_db_self", "#3d403a");
         }
     }
 
+    function addGhostTrack (map, bounds, ghostTrack, label, title, offset, db, color) {
+        
+        clearTrack(map, db);
+        
+        var tpath = [];
+        var ghostStartTS = ghostTrack[0].ts;
+        var ghostPosTS = ghostStartTS + offset;
+        var ghostPos;
+        for (var i = 0; i < ghostTrack.length; i++) {
+            tpath.push(new google.maps.LatLng(ghostTrack[i].lat, ghostTrack[i].lon));
+            if (ghostTrack[i].ts >= ghostPosTS) {
+                if (!ghostPos) {
+                    ghostPos = i;
+                }
+            }
+        }
+        var lineSymbol = {
+            path: 'M 0,-1 0,1',
+            strokeColor: color,
+            strokeOpacity: 1,
+            scale: 4
+        };
+        var ttpath = new google.maps.Polyline({
+            path: tpath,
+            geodesic: true,
+            strokeOpacity: 0.0,
+            strokeWeight: 1.5,
+            icons: [{
+                icon: lineSymbol,
+                offset: '0',
+                repeat: '20px'
+            }],
+            zIndex: 4
+        });
+        ttpath.setMap(map);
+        map[db].push(ttpath);
+        
+        if (ghostPos) {
+            var lat1 = ghostTrack[ghostPos].lat;
+            var lon1 = ghostTrack[ghostPos].lon
+            var lat0 = ghostTrack[Math.max(ghostPos - 1, 0)].lat;
+            var lon0 = ghostTrack[Math.max(ghostPos - 1, 0)].lon;
+            var heading = courseAngle(lat0, lon0, lat1, lon1) * 180 / Math.PI;
+            var d = (ghostTrack[ghostPos].ts - ghostPosTS) / (ghostTrack[ghostPos].ts - ghostTrack[ghostPos - 1].ts)
+            var lat = lat0 + (lat1-lat0) * d;
+            var lon = lon0 + (lon1-lon0) * d;
+            var pos = new google.maps.LatLng(lat, lon);
+            map[db].push(addmarker(map, bounds, pos, pinSymbol(color, "B", 0.7, heading), label, title, 'leader', 20, 0.7));
+        }
+    }
+    
+    
     function updateMapFleet(race) {
         var map = race.gmap;
         var bounds = race.gbounds;
 
         if (!map) return; // no map yet
+        clearTrack(map, "_db_op");
 
         // opponents/followed
         var rfd = racefriends.get(race.id);
-        if (map._db_op)
-            for (var i = 0; i < map._db_op.length; i++) map._db_op[i].setMap(null);
-        map._db_op = new Array();
 
         Object.keys(rfd.uinfo).forEach(function (key) {
             var elem = rfd.uinfo[key];
             var bi = boatinfo(key, elem);
             var pos = new google.maps.LatLng(elem.pos.lat, elem.pos.lon);
-            map._db_op.push(addmarker(map, bounds, pos, pinSymbol(bi.bcolor, "B", 0.7, elem.heading), undefined,
-                                      bi.name + " | HDG: " + roundTo(bi.heading, 1) + " | TWA: " + roundTo(bi.twa, 1) + " | SPD: " + roundTo(bi.speed, 2), "U:" + key, 18, 0.7));
+            
+            var info = bi.name + " | HDG: " + roundTo(bi.heading, 1) + " | TWA: " + roundTo(bi.twa, 1) + " | SPD: " + roundTo(bi.speed, 2);
+            if (elem.startDate) {
+                info += " | Elapsed: " + formatDHMS(elem.ts - elem.startDate);
+            }
+            map._db_op.push(addmarker(map, bounds, pos, pinSymbol(bi.bcolor, "B", 0.7, elem.heading), undefined, info, "U:" + key, 18, 0.7));
             // track
             var tpath = [];
             if (elem.track) {
@@ -1804,6 +1789,17 @@ var controller = function () {
                 ttpath.setMap(map);
                 map._db_op.push(ttpath);
             }
+        });
+    }
+
+    function makeTTPath (tpath, color) {
+        return new google.maps.Polyline({
+            path: tpath,
+            geodesic: true,
+            strokeColor: color,
+            strokeOpacity: 0.7,
+            strokeWeight: 1,
+            zIndex: 4
         });
     }
 
