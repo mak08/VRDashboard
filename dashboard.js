@@ -1698,7 +1698,7 @@ var controller = function () {
             addGhostTrack(map, race.gbounds, race.leaderTrack, "Leader", "Leader: " + race.leaderName + " | Elapsed: " + formatDHMS(offset), offset, "_db_leader", "#3d403a");
         }
         if (race.myTrack) {
-            addGhostTrack(map, race.gbounds, race.myTrack, "Best Attempt", "Best Attempt" + " | Elapsed: " + formatDHMS(offset), offset, "_db_self", "#3d403a");
+            addGhostTrack(map, race.gbounds, race.myTrack, "Best Attempt", "Best Attempt" + " | Elapsed: " + formatDHMS(offset), offset, "_db_self", "#4d504a");
         }
     }
 
@@ -1712,8 +1712,8 @@ var controller = function () {
         var ghostPos;
         for (var i = 0; i < ghostTrack.length; i++) {
             tpath.push(new google.maps.LatLng(ghostTrack[i].lat, ghostTrack[i].lon));
-            if (ghostTrack[i].ts >= ghostPosTS) {
-                if (!ghostPos) {
+            if (!ghostPos) {
+                if (ghostTrack[i].ts >= ghostPosTS) {
                     ghostPos = i;
                 }
             }
@@ -1745,7 +1745,7 @@ var controller = function () {
             var lat0 = ghostTrack[Math.max(ghostPos - 1, 0)].lat;
             var lon0 = ghostTrack[Math.max(ghostPos - 1, 0)].lon;
             var heading = courseAngle(lat0, lon0, lat1, lon1) * 180 / Math.PI;
-            var d = (ghostTrack[ghostPos].ts - ghostPosTS) / (ghostTrack[ghostPos].ts - ghostTrack[ghostPos - 1].ts)
+            var d = (ghostPosTS - ghostTrack[ghostPos - 1].ts ) / (ghostTrack[ghostPos].ts - ghostTrack[ghostPos - 1].ts)
             var lat = lat0 + (lat1-lat0) * d;
             var lon = lon0 + (lon1-lon0) * d;
             var pos = new google.maps.LatLng(lat, lon);
@@ -2163,6 +2163,9 @@ var controller = function () {
                         if (race) {
                             race.leaderTrack = response.scriptData.leaderTrack;
                             race.leaderName =  response.scriptData.leaderName;
+                            if (response.scriptData.myTrack) {
+                                race.myTrack = response.scriptData.myTrack;
+                            }
                             updateMapLeader(race);
                         }
                     } else if (request.eventKey == "User_GetCard") {
