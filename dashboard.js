@@ -1099,12 +1099,15 @@ var controller = function () {
             r = addRace(message);
         }
 
-        if (r.curr !== undefined && r.curr.lastCalcDate == message.lastCalcDate) { // repeated message
-            return;
+        if (r.curr !== undefined && r.curr.lastCalcDate == message.lastCalcDate) {
+            // Repeated message
+            // return;
         }
+        
         if (!r.curr) {
             enableRace(r.id);
         }
+
         r.prev = r.curr;
         r.curr = message;
         r.curr.speedT = theoreticalSpeed(message);
