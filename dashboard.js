@@ -302,6 +302,9 @@ var controller = function () {
         if (uid == currentUserId) {
             res.nameStyle = "color: #F70000; font-weight: bold; ";
             res.bcolor = '#F70000';
+            if (!uinfo.displayName) {
+                res.name = 'Me';
+            }
         } else if (uinfo.mode == "followed") {
             res.nameStyle = "font-weight: bold; ";
             res.bcolor = '#AA66BB';
@@ -487,7 +490,7 @@ var controller = function () {
                 }
             }
         });
-
+        
         if (boatPolars) {
             var sailName = longSailNames[data.sail % 10];
             var sailDef = getSailDef(boatPolars.sail, sailName);
@@ -614,10 +617,7 @@ var controller = function () {
         var fln = new Array();
 
         Object.keys(rfd.uinfo).forEach(function (key) {
-            var elem = rfd.uinfo[key];
-            // expire old uinfos from prior GetFollowed / GetOpponents
-            if ((rfd.lastUpdate - elem.ts) > 30000) delete rfd.uinfo[key];
-            else fln.push(key);
+            fln.push(key);
         });
 
         fln.sort(function (a, b) {
@@ -653,7 +653,7 @@ var controller = function () {
                 if (bu.rank && !au.rank) return 1;
             }
             // followed or no rank, same type, sort on name
-            return au.displayName.localeCompare(bu.displayName);
+            return (au.displayName && au.displayName.localeCompare(bu.displayName)) || 0;
         });
         rfd.table = fln;
     }
@@ -2023,17 +2023,23 @@ var controller = function () {
                     } else if ((request.eventKey == "LDB_GetLegRank"
                                 || request.eventKey == "LDB_GetGateRank")
                                && response.scriptData.me !== null) {
-                        // Use this response to update User/Boat info if the plugin is switched on while already logged in
+                        var raceId = getRaceLegId(request);
+                        var race = races.get(raceId);
+                        // Re-init UI (only if user has changed)
                         reInitUI(response.scriptData.me._id);
+                        // Use this response to update User/Boat info if VRDashboard is enabled only after login.
                         currentUserId = response.scriptData.me._id;
                         lbBoatname.innerHTML = response.scriptData.me.displayName;
+                        // Own boatname is also unknown if login message was not seen
+                        var myUInfo = racefriends.get(raceId).uinfo[currentUserId];
+                        if (myUInfo && !myUInfo.displayName) {
+                            myUInfo.displayName = response.scriptData.me.displayName;
+                        }
                         if (response.scriptData.team) {
                             lbTeamname.innerHTML = "&nbsp; <b>Team :</b>" + response.scriptData.team.name;
                             currentTeam = response.scriptData.team.name;
                         }
                         // Retrieve rank in current race
-                        var raceId = getRaceLegId(request);
-                        var race = races.get(raceId);
                         if (race != undefined) {
                             race.rank = response.scriptData.me.rank;
                             race.dtl = response.scriptData.me.distance - response.scriptData.res[0].distance;
@@ -2072,6 +2078,10 @@ var controller = function () {
                         if (response.scriptData.boatState) {
                             var raceId = getRaceLegId(response.scriptData.boatState._id);
                             var race = races.get(raceId);
+                            var uid = response.scriptData.boatState._id.user_id;
+                            if (!currentUserId) {
+                                currentUserId = uid;
+                            }
                             race.legdata = response.scriptData.leg;
                             initializeMap(race);
                             if (response.scriptData.boatActions) {
@@ -2082,6 +2092,8 @@ var controller = function () {
                             if (cbRouter.checked) {
                                 callRouter(raceId);
                             }
+                            // Provide own info on Fleet tab
+                            updateFriendUinfo(raceId, "usercard", uid, response.scriptData.boatState);
                         }
                     } else if (request.eventKey == "Game_RefreshBoatState") {
                         // New message - does this replace the boatStatePush ?
@@ -2192,6 +2204,9 @@ var controller = function () {
                         var raceId = getRaceLegId(response.data._id);
                         var race = races.get(raceId);
                         updatePosition(response.data, race);
+                        if (currentUserId) {
+                            updateFriendUinfo(raceId, "usercard", currentUserId, response.data);
+                        }
                     }
                 }
             }
