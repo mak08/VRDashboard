@@ -1536,6 +1536,7 @@ var controller = function () {
             ccpath.setMap(map);
             map.fitBounds(bounds);
         }
+        updateMapWaypoints(race);
     }
 
     function clearTrack(map, db) {
@@ -1638,11 +1639,12 @@ var controller = function () {
         }
     }
 
-    function updateMapWaypoints(race, mode) {
+    function updateMapWaypoints(race) {
 
         var map = race.gmap;
         var bounds = race.gbounds;
 
+        if (!race.curr) return; // current position unknown
         if (!map) return; // no map yet
         clearTrack(map,"_db_wp");
 
@@ -2083,10 +2085,10 @@ var controller = function () {
                                 currentUserId = uid;
                             }
                             race.legdata = response.scriptData.leg;
-                            initializeMap(race);
                             if (response.scriptData.boatActions) {
                                 race.boatActions = response.scriptData.boatActions;
                             }
+                            initializeMap(race);
                             // Don't try old race_id, messages will be misdirected
                             updatePosition(response.scriptData.boatState, race);
                             if (cbRouter.checked) {
