@@ -1678,12 +1678,12 @@ var controller = function () {
             map._db_me.push(ttpath);
         }
         
-        map.fitBounds(race.gbounds);
-
+        var bounds = race.gbounds;
         // boat
         var pos = new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon);
         map._db_me.push(addmarker(map, bounds, pos, pinSymbol("#44FF44", "B", 0.7, race.curr.heading), undefined,
                                   "HDG: " + roundTo(race.curr.heading, 1) + " | TWA: " + roundTo(race.curr.twa, 1) + " | SPD: " + roundTo(race.curr.speed, 2), 'me', 20, 0.7));
+        map.fitBounds(bounds);
     }
 
     function updateMapLeader(race) {
