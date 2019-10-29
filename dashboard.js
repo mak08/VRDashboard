@@ -1479,17 +1479,14 @@ var controller = function () {
             
             // Create map
             var mapOptions = {
-                mapTypeId: "terrain"
+                mapTypeId: "terrain",
             };
             var map = new google.maps.Map(divMap, mapOptions);
+            map.setTilt(45);
             race.gmap = map;
-
-            // resize first
-            controller.resize(undefined);
 
             // Customize & init map
             var bounds = race.gbounds = new google.maps.LatLngBounds();
-            map.setTilt(45);
 
             // start, finish
             var pos = new google.maps.LatLng(race.legdata.start.lat, race.legdata.start.lon);
@@ -1535,6 +1532,7 @@ var controller = function () {
             });
             ccpath.setMap(map);
             map.fitBounds(bounds);
+
         }
         updateMapWaypoints(race);
     }
@@ -1665,7 +1663,6 @@ var controller = function () {
 
     function updateMapMe(race) {
         var map = race.gmap;
-        var bounds = race.gbounds;
 
         if (!map) return; // no map yet
         clearTrack(map, "_db_me");
@@ -1680,6 +1677,8 @@ var controller = function () {
             ttpath.setMap(map);
             map._db_me.push(ttpath);
         }
+        
+        map.fitBounds(race.gbounds);
 
         // boat
         var pos = new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon);
