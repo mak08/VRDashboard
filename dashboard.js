@@ -1013,6 +1013,10 @@ var controller = function () {
                 for (var t = 1; t <= 4; t++) {
                     document.getElementById("tab-content" + t).style.display = (rmatch == t ? "block" : "none");
                 }
+                if (rmatch == 4) {
+                    var race = races.get(selRace.value);
+                    initializeMap(race);
+                }
                 if (rmatch == 2) {
                     display_selbox("visible");
                 } else {
@@ -1139,7 +1143,6 @@ var controller = function () {
             updateMapCheckpoints(r);
         }
         divRaceStatus.innerHTML = makeRaceStatusHTML();
-        updateMapMe(r);
     }
 
     function angle(h0, h1) {
@@ -1454,6 +1457,7 @@ var controller = function () {
     }
 
     function switchMap(race) {
+        initializeMap(race);
         races.forEach(function (r) {
             if (r.gdiv) {
                 if (r == race) {
@@ -1552,6 +1556,7 @@ var controller = function () {
 
         // checkpoints
         if (!race.legdata) return;
+        if (!map) return;
         clearTrack(map,"_db_cp");
         
         var groupColors = [];
@@ -2090,6 +2095,8 @@ var controller = function () {
                             initializeMap(race);
                             // Don't try old race_id, messages will be misdirected
                             updatePosition(response.scriptData.boatState, race);
+                            updateMapMe(race);
+
                             if (cbRouter.checked) {
                                 callRouter(raceId);
                             }
@@ -2105,6 +2112,7 @@ var controller = function () {
                         }
                         // Don't try old race_id, messages will be misdirected
                         updatePosition(response.scriptData.boatState, race);
+                        updateMapMe(race);
                     } else if (request.eventKey == "Game_AddBoatAction") {
                         // First boat state message, only sent for the race the UI is displaying
                         var raceId = getRaceLegId(request);
@@ -2205,6 +2213,7 @@ var controller = function () {
                         var raceId = getRaceLegId(response.data._id);
                         var race = races.get(raceId);
                         updatePosition(response.data, race);
+                        updateMapMe(race);
                         if (currentUserId) {
                             updateFriendUinfo(raceId, "usercard", currentUserId, response.data);
                         }
