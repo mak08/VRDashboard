@@ -1287,6 +1287,7 @@ var controller = function () {
         var uinfo;
 
         if (userId) {
+            // Friend routing request
             uinfo = racefriends.get(raceId).uinfo[userId];
             if (uinfo === undefined) {
                 alert("Can't find record for user id " + userId);
@@ -1319,11 +1320,10 @@ var controller = function () {
             var uid = race.curr._id.user_id;
             var type = "me";
 
-            if (uinfo) {
+            if (userId) {
                 pos = uinfo.pos;
                 twa = uinfo.twa;
                 uid = userId;
-                options = 0;
                 type = "friend";
             }
 
