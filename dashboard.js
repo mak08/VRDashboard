@@ -1462,6 +1462,8 @@ var controller = function () {
             if (r.gdiv) {
                 if (r == race) {
                     r.gdiv.style.display = "block";
+                    r.gmap.fitBounds(r.gbounds);
+                    
                 } else {
                     r.gdiv.style.display = "none";
                 }
