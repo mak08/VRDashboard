@@ -344,7 +344,7 @@ var controller = function () {
             var bi = boatinfo(uid, r);
 
             r.dtf = r.distanceToEnd;
-            r.dtfC = gcDistance(r.pos.lat, r.pos.lon, race.legdata.end.lat, race.legdata.end.lon);
+            r.dtfC = gcDistance(r.pos, race.legdata.end);
             if (!r.dtf || r.dtf == "null") {
                 r.dtf = r.dtfC;
             }
@@ -386,16 +386,41 @@ var controller = function () {
         }
     }
 
+    // course: Array(5)
+    // 0: {lat: 33.6081, lon: -118.305}
+    // 1: {lat: 34.9176, lon: -142.759}
+    // 2: {lat: 21.302, lon: -157.423}
+    // 3: {lat: 21.0844, lon: -157.662}
+    // 4: {lat: 21.2318, lon: -157.837}
+
     function recordRaceFields (race, r) {
         if (race.type === "record") {
             if (r.state === "racing" && r.distanceToEnd) {
                 try {
                     var raceTime = (r.ts - r.startDate);
-                    var estimatedSpeed = r.distanceFromStart / (raceTime / 3600000);
+
+                    // Speed estimation 1: (covered distance)/(elapsed time)
+                    var raceSpeed = r.distanceFromStart / (raceTime / 3600000);
+
+                    // Speed estimation 2: (race length)/(race time) as provided by VR
+                    var estimatedSpeed = race.legdata.estimatedLength / (race.legdata.estimatedTime * 24);
+
+                    // Speed estimation 3: (course length)/(race time) as provided by VR
+                    // Course length seems reasonable, but race time is not :-(
+                    var distance = raceDistance(race.legdata.course);
+                    var calculatedSpeed = distance / (race.legdata.estimatedTime * 24);
+
                     var eTtF = (r.distanceToEnd / estimatedSpeed) * 3600000;
-                    var eRT = raceTime + eTtF;
-                    r.avgSpeed = estimatedSpeed;
+
+                    var fraction = r.distanceFromStart/(r.distanceFromStart + r.distanceToEnd);
+                    var totalTime = raceTime / fraction; 
+
+                    // var eRT = raceTime + eTtF;
+                    var eRT =  totalTime;
+                    
+                    r.avgSpeed = raceSpeed + "|" + estimatedSpeed + "|" + calculatedSpeed;
                     r.eRT = eRT;
+                    
                 } catch (e) {
                     r.eRT = e.toString();
                 }
@@ -410,6 +435,14 @@ var controller = function () {
         } else {
             return "";
         }
+    }
+
+    function raceDistance (course) {
+        var dist = 0;
+        for (i = 1; i < course.length; i++) {
+            dist += gcDistance(course[i-1], course[i]);
+        }
+        return dist;
     }
 
     function makeRaceStatusHTML() {
@@ -481,7 +514,7 @@ var controller = function () {
                 if (tag == "baseInfos") {
                     ndata.displayName = data["baseInfos"].displayName;
                 } else if (tag == "pos") { // calc gc distance to us
-                    ndata.distanceToUs = roundTo(gcDistance(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon), 1);
+                    ndata.distanceToUs = roundTo(gcDistance(race.curr.pos, data.pos), 1);
                     ndata.bearingFromUs = roundTo(courseAngle(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon) * 180 / Math.PI, 1);
                     var ad = ndata.bearingFromUs - race.curr.heading + 90;
                     if (ad < 0) ad += 360;
@@ -1116,7 +1149,7 @@ var controller = function () {
         r.curr = message;
         r.curr.speedT = theoreticalSpeed(message);
         if (r.prev != undefined) {
-            var d = gcDistance(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon);
+            var d = gcDistance(r.prev.pos, r.curr.pos);
             var delta = courseAngle(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon);
             var alpha = Math.PI - angle(toRad(r.prev.heading), delta);
             var beta = Math.PI - angle(toRad(r.curr.heading), delta);
@@ -1375,12 +1408,12 @@ var controller = function () {
     }
 
     // Greate circle distance
-    function gcDistance(lat0, lon0, lat1, lon1) {
+    function gcDistance(pos0, pos1) {
         // e = r · arccos(sin(φA) · sin(φB) + cos(φA) · cos(φB) · cos(λB – λA))
-        var rlat0 = toRad(lat0);
-        var rlat1 = toRad(lat1);
-        var rlon0 = toRad(lon0);
-        var rlon1 = toRad(lon1);
+        var rlat0 = toRad(pos0.lat);
+        var rlat1 = toRad(pos1.lat);
+        var rlon0 = toRad(pos0.lon);
+        var rlon1 = toRad(pos1.lon);
         return radius * gcAngle(rlat0, rlon0, rlat1, rlon1);
     }
 
