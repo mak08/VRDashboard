@@ -386,41 +386,16 @@ var controller = function () {
         }
     }
 
-    // course: Array(5)
-    // 0: {lat: 33.6081, lon: -118.305}
-    // 1: {lat: 34.9176, lon: -142.759}
-    // 2: {lat: 21.302, lon: -157.423}
-    // 3: {lat: 21.0844, lon: -157.662}
-    // 4: {lat: 21.2318, lon: -157.837}
-
     function recordRaceFields (race, r) {
         if (race.type === "record") {
             if (r.state === "racing" && r.distanceToEnd) {
                 try {
                     var raceTime = (r.ts - r.startDate);
-
-                    // Speed estimation 1: (covered distance)/(elapsed time)
-                    var raceSpeed = r.distanceFromStart / (raceTime / 3600000);
-
-                    // Speed estimation 2: (race length)/(race time) as provided by VR
-                    var estimatedSpeed = race.legdata.estimatedLength / (race.legdata.estimatedTime * 24);
-
-                    // Speed estimation 3: (course length)/(race time) as provided by VR
-                    // Course length seems reasonable, but race time is not :-(
-                    var distance = raceDistance(race.legdata.course);
-                    var calculatedSpeed = distance / (race.legdata.estimatedTime * 24);
-
+                    var estimatedSpeed = r.distanceFromStart / (raceTime / 3600000);
                     var eTtF = (r.distanceToEnd / estimatedSpeed) * 3600000;
-
-                    var fraction = r.distanceFromStart/(r.distanceFromStart + r.distanceToEnd);
-                    var totalTime = raceTime / fraction; 
-
-                    // var eRT = raceTime + eTtF;
-                    var eRT =  totalTime;
-                    
-                    r.avgSpeed = raceSpeed + "|" + estimatedSpeed + "|" + calculatedSpeed;
-                    r.eRT = eRT;
-                    
+                    var eRT = raceTime + eTtF;
+                    r.avgSpeed = estimatedSpeed;
+                    r.eRT = eRT;                    
                 } catch (e) {
                     r.eRT = e.toString();
                 }
