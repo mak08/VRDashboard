@@ -49,6 +49,7 @@ var controller = function () {
             var json = xhr.responseText;
             json = JSON.parse(json);
             for (var i = 0; i < json.races.length; i++) {
+                console.log("Race: " + JSON.stringify(json.races[i]));
                 json.races[i].source = "zezo";
                 initRace(json.races[i], true);
             }
@@ -461,6 +462,10 @@ var controller = function () {
 
     function updateFriendUinfo(rid, mode, uid, data) {
         var rfd = racefriends.get(rid);
+        if (!rfd) {
+            console.log("raceInfo not initialized");
+            return;
+        }
         var race = races.get(rid);
         var ndata = rfd.uinfo[uid];
         var boatPolars = (data.boat) ? polars[data.boat.polar_id] : undefined;
