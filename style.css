@@ -103,6 +103,10 @@ fieldset {
     visibility: hidden;
 }
 
+tablectrl {
+    display: inline-flex;
+}
+
 .tab2 {
     display: block;
     position: relative;

@@ -69,9 +69,9 @@
 			  </ul>
 			</li>
 			<li><a href="#tips">Tips and tricks</a></li>
+			<li><a href="#faq">Frequenty Asked Questions</a></li>
 			<li><a href="#issues">Bugs and known issues</a></li>
 			<li><a href="#about">About</a></li>
-			<li><a href="#footnotes">Footnotes</a></li>
 		  </ul>
 		</div>
 		<div id="installation">
@@ -189,7 +189,11 @@
 				As for TWS, the game UI sometimes displays differing (incorrect) values. 
 			  </li>
 			  <li><b>aSail</b><br/>Current sail and auto sail indication.<br>
-				Red background means the sail is not the best possible sail.
+				Red background means the sail is not the best possible sail.<br>
+				Sail names are abbreviated:
+				<b>LJ</b>: Light Jib, <b>LG</b>: Light Gennaker,
+				<b>STAY</b>: Staysail, <b>HG</b>: Heavy Gennaker,
+				<b>C0</b>: Code Zero.<br>
 			  </li>
 			  <li><b>Speed</b><br/>Current boat speed in knots
 			  </li>
@@ -286,24 +290,25 @@
 
 			  <ul>
 				<li><b>RT</b><br/>Call router for this player
-				  <p>Your own boat's options are used.</p>
+				  <p>Your own boat's options are used. Reuses the router tab if 'Reuse tabs' is checked.</p>
 				</li>
 				<li><b>Skipper</b><br/>Player name
 				</li>
 				<li><b>Start Date</b><br/>Only in record races.
 				</li>
-				<li><b>ERT</b><br/>Estimated race time.
+				<li><b>ERT</b><br/>Estimated race time. Only in record races.
 				  <p>VRDashboard estimates the overall race time based on the average speed achieved since the start.
 					It uses the elapsed time, distance from start and distance to finish provided in the VR server 'UserCard' message.</p>
 				</li>
-				<li><b>avgS</b><br/>Average speed since the start
+				<li><b>avgS</b><br/>Average speed since the start. Only in record races.
 				</li>
 				<li><b>Last Update</b><br/>Time of last (periodic) update.
 				  <p>Please note that <b>ERT</b> and <b>avgS</b> are not updated automatically, as they depend on the UserCard message.</p>
 				</li>
 				<li><b>Rank</b><br/>Player's current rank
 				</li>
-				<li><b>DTF</b><br/>Distance to finish 
+				<li><b>DTF</b><br/>Distance to finish
+				  <p>DTF is available from a player's User Card. If you did not request the User Card yet, VR Dashboard instead displays the great circle distance to the finish (in parenthesis).</p>
 				</li>
 				<li><b>DTU</b><br/>Distance to 'us'
 				</li>
@@ -356,12 +361,51 @@
 				  </li>
 				</ul>
 			  </p>
+			  <p>
+				<b>Gates</b></br>
+				Gates and buoys are called checkpoint in VR. A checkpoint may consist of one ore more gates.
+				All gates of a checkpoint are displayed in the same color (of the dashed line between the port and starboard mark).
+				You need to pass only one gate of a checkpoint.
+				<ul>
+				  <li>Gate is displayed in bright color if not passed yet<br><img src="img/map_gate_not_passed.png"></li>
+				  <li>Passed gate appears dimmed<br><img src="img/map_gate_passed.png"></li>
+				</ul>
+			  </p>
+			  
+			  <p>
+				<b>Gate/buoy tooltip</b><br>
+				The tooltip displays the checkpoint number followod by a '.' and a buoy counter, whether to leave to port or starboard, name (if any), position, and wether the mark was passed.
+				<ul>
+				  <li>Example 1<br>
+					<img src="img/map_tooltip_checkpoint_port.png">
+				  </li>
+				  <li>Example 2<br>
+					<img src="img/map_tooltip_checkpoint_passed_1.png">
+				  </li>
+				</ul>
+			  </p>
+			  <p>
+				<b>Boat tooltip</b><br>
+				Displays name, heading, TWA and speed. Displays elapsed race time of user if boat was clicked on the VR map (User Card is available).
+				<ul>
+				  <li>Example: Boat in normal race<br>
+					<img src="img/map_tooltip_boat_norecord.png">
+				  </li>
+				  <li>Example: Boat in record race, User Card not available<br>
+					<img src="img/map_tooltip_boat_record_1.png">
+				  </li>
+				  <li>Example Boat in record race, User Card available<br>
+					<img src="img/map_tooltip_boat_record_2.png">
+				  </li>
+				</ul>
+				
+			  </p>
 			  
 			</div>
 
 			<div id="raw_log">
 			  <h4>RAW LOG tab</h4>
-			  <div><img src="img/tab_rawlog_toggle.png"><img src="img/tab_rawlog_clear.png"></div>
+			  <img src="img/tab_rawlog.png">
 
 			  <p>If <code>Log messages</code> is checked, all Websocket messages sent and received by the game UI are logged.<br> Messages are in JSON format.
 				Incoming messages are prefixed <code>&lt;&lt;&lt;</code>, outgoing messages are prefixed <code>&gt;&gt;&gt;</code><br>
@@ -404,12 +448,63 @@
 		  <p>Please report bugs to michael.kappert.01@gmail.com or submit as a 'Problem' in
 			the <a href="https://chrome.google.com/webstore/detail/vr-dashboard/amknkhejaogpekncjekiaolgldbejjan?hl=en">chrome web store</a>.
 			You can also submit questions and suggestions in the web store.</p>
-		  <p style="font-weight:bold">Known issues</p>
 		  <ol>
 			<li>The first entry in the race overview table only appears when the <em>second</em> message is received. </li>
 			<li>Reloading the Dashboard tab closes it and disconnects the Dashboard.</li>
 			<li>The map should resize automatically to fit the race course, but there is still a bug in the resizing logic. Click on the selected race again to force resizing.</li>
+			<li>'Elapsed time' display in boat tooltip is meaningless in normal race</li>
 		  </ol>
+
+		</div>
+
+		<div id="faq">
+		  <h2>Frequently asked questions</h2>
+		  <ul>
+			<li>Race xxx is not available from the race selection drop-down?
+			  <p>Cvetan may not have added the race yet. Please ask (politely) on the zezo.org <a href="http://zezo.org/forum.pl">forum</a>.</p>
+			</li>
+			
+			<li>Race selection is empty?
+			  <p>
+				<ul>
+				  <li>Please check that you are not blocking <a href="http://zezo.org">zezo.org</a> (check your firewall/virus scanner/proxy, especially in a company network).</li>
+				</ul>
+			  </p>
+			</li>
+			
+			<li>VR Dashboard isn't working / has stopped working?<br>
+			  Some table cells are empty/only display a '-'?<br>
+			  My boat name is not displayed?<br>
+			  No race are listed?
+			  <p>
+				<ul>
+				  <li>
+					Please be sure to activate the Dashbaord <em>before</em> you log on to VR Offshore as described <a href="#running">above</a>.
+					It is necessary to follow this sequence because VR sends some information that VR Dashboard requires immediately after you log in and after your first join a race.
+				  </li>
+				  <li>
+					Do not cancel or close the Debugger warning banner. VR Dashboard requires the debugger for intercepting the game messages.
+				  </li>
+				</ul>
+			  </p>
+			</li>
+
+			<li>The <img src="img/zicon.png" height="16" width="16"> button remains greyed out, I can't start VR Dashboard?<br>
+			  <p>
+				VR Dashboard is only active on the game homepage <a href="https://virtualregatta.com">virtualregatta.com</a>. Some big regattas (like Vendee Globe, Ocean Race)
+				make the game available on their sites, but you can't activate the extension on these site. Head over to the VR Offshore homepage and join the race from there.
+			  </p>
+			</li>
+			
+			<li>Can you please add &lt;your favorite feature&gt; to VRDashboard?
+			  <p>
+				Probably yes, but I only have limited time and I might reject your request if it's too much work,
+				and especially if it involves adding columns to one of the tables. The Dashboard UI looks quite crowded already.<br>
+				Btw, the VR Dashbaord source code is <a href="https://github.com/mak08/VRDashboard.git">available on Github</a>. 
+			  </p>
+			</li>
+		  </ul>
+		  
 		</div>
 
 		<div id="about">
