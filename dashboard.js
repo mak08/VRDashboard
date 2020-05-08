@@ -2065,7 +2065,7 @@ var controller = function () {
                         console.warn(responseClass + " " + response.requestId + " not found");
                     } else if ((request.eventKey == "LDB_GetLegRank"
                                 || request.eventKey == "LDB_GetGateRank")
-                               && response.scriptData.me !== null) {
+                               && response.scriptData.me) {
                         var raceId = getRaceLegId(request);
                         var race = races.get(raceId);
                         // Re-init UI (only if user has changed)
