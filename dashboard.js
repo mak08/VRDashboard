@@ -1816,7 +1816,7 @@ var controller = function () {
             var pos = new google.maps.LatLng(elem.pos.lat, elem.pos.lon);
             
             var info = bi.name + " | HDG: " + roundTo(bi.heading, 1) + " | TWA: " + roundTo(bi.twa, 1) + " | SPD: " + roundTo(bi.speed, 2);
-            if (elem.startDate) {
+            if (elem.startDate && race.type == "record") {
                 info += " | Elapsed: " + formatDHMS(elem.ts - elem.startDate);
             }
             map._db_op.push(addmarker(map, bounds, pos, pinSymbol(bi.bcolor, "B", 0.7, elem.heading), undefined, info, "U:" + key, 18, 0.7));
