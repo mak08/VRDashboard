@@ -1485,8 +1485,7 @@ var controller = function () {
     }
     
     function initializeMap(race) {
-
-        if (!race.legdata) return; // no legdata yet;
+        if (!race || !race.legdata) return; // no legdata yet;
 
         if (!race.gdiv) {
             // Create div
@@ -2173,7 +2172,7 @@ var controller = function () {
                         chrome.storage.local.set({
                             "polars": polars
                         });
-                        console.info("Stored new polars " + response.scriptData.polar.label);
+                        console.info("Stored polars " + response.scriptData.polar.label);
                     } else if (request.eventKey == "Shop_GetCardsPack") {
                         var card = races.get(getRaceLegId(request)).curr.soloCard;
                         card.code = response.scriptData.packs[0].code;
