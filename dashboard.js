@@ -1557,6 +1557,33 @@ var controller = function () {
         map[db] = new Array();
     }
 
+    
+    var colors = [];
+    colors.push("#000000");
+    colors.push("#0080ff");
+    colors.push("#ff0000");
+    colors.push("#00cc00");
+    colors.push("#d020ff");
+    colors.push("#ffff00");
+    colors.push("#00ffff");
+    colors.push("#ffc000");
+    colors.push("#8020ff");
+    colors.push("#ff8000");
+    colors.push("#a0ff00");
+    colors.push("#0000ff");
+    colors.push("#f00080");
+    colors.push("#00ffa0");
+    colors.push("#ffffff");
+
+    function getColor(i) {
+        if (i >= colors.length) {
+            colors.push(randomColor());
+            getColor(i);
+        } else {
+            return colors[i];
+        }
+    }
+    
     function updateMapCheckpoints(race) {
 
         if (!race) return;
@@ -1577,7 +1604,7 @@ var controller = function () {
             if (cp.display != "none") cp_name = cp.display;
 
             if (!groupColors[cp.group]) {
-                groupColors[cp.group] = randomColor();
+                groupColors[cp.group] = getColor(cp.group);
             }
 
             var position_s = new google.maps.LatLng(cp.start.lat, cp.start.lon);
@@ -1596,12 +1623,14 @@ var controller = function () {
             var g_passed = false;
             if (race.gatecnt[cp.group - 1]) {
                 g_passed = true;
-                op = 0.3;
+                op = 0.5;
             } // mark/gate passed - semi transparent
             
-            var label_g = cp.id + ", group: " + cp.group + ", type: " + cp_name + ", engine: " + cp.engine + ", side: " + cp.side + ", name: " + cp.name + (g_passed ? ", PASSED" : "");
-            var label_s = "checkpoint " + label_g + "\nPosition: " + formatPosition(cp.start.lat, cp.start.lon);
-            var label_e = "checkpoint " + label_g + "\nPosition: " + formatPosition(cp.end.lat, cp.end.lon);
+            var label_g = "checkpoint " + cp.group + "." + cp.id +  ", type: " + cp_name + ", engine: " + cp.engine + ", name: " + cp.name + (g_passed ? ", PASSED" : "");
+            var side_s =  cp.side ;
+            var side_e = (cp.side == "stbd")?"port":"stbd";
+            var label_s = label_g + ", side: " + side_s + "\nPosition: " + formatPosition(cp.start.lat, cp.start.lon);
+            var label_e = label_g + ", side: " + side_e + "\nPosition: " + formatPosition(cp.end.lat, cp.end.lon);
 
             if (cp.side == "stbd") {
                 map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_sb, "C"), undefined, label_s, i, zi, op));
@@ -1639,12 +1668,10 @@ var controller = function () {
                 path: path,
                 strokeOpacity: 0.0,
                 icons: [{
-                    icon: pinSymbol(cp.display == "none" ? groupColors[cp.group] : "#FFFF00", "DL", op),
+                    icon: pinSymbol(groupColors[cp.group], "DL", op),
                     repeat: "16px"
                 }],
                 geodesic: true,
-                //strokeColor: cp.display == "none" ? "#FF6600" : "#FFFF00",
-                //strokeWeight: 0,
                 zIndex: cp.display == "none" ? 5 : 6
             });
             ppath.setMap(map);
