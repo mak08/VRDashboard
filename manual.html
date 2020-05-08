@@ -245,9 +245,11 @@
 				<li><b>Δd (nm)</b><br/>Distance sailed since last status message
 				</li>
 				<li><b>Δt (s)</b><br/>Elapsed time since last status message
-				  <p>The VR server usually sends status updates approximately every 5min.<br>
-					A zero or even negative values sometimes occur. This <em>seems</em> to be an indication
-					of duplicate or out-of-band message (possibly from another server, assuming VR uses load balancing).
+				  <p>The VR server usually sends status updates approximately every 5min.
+				  </p>
+				  <p  style="font-size:85%">
+					The delta is sometimes zero or even negative. A zero delta often occurs if you switch back to the race in the game UI.<br>
+					Negative values <em>could</em> to be indication	of messages from another server (assuming VR uses load balancing). 
 					The effect may be related to lost commands, but there is no conclusive proof yet.
 					In any case, <b>be sure to check your course</b> if duplicate status messages occur!
 				  </p>
