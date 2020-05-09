@@ -2327,8 +2327,3 @@ window.addEventListener("load", function () {
     chrome.debugger.onEvent.addListener(controller.onEvent);
 });
 
-window.addEventListener("unload", function () {
-    chrome.debugger.detach({
-        tabId: tabId
-    });
-});
