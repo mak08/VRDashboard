@@ -598,29 +598,17 @@ var controller = function () {
             // Fetch value of sort field and convert to number.
             var entryA = rf.uinfo[uidA][field];
             var entryB = rf.uinfo[uidB][field];
+
+            // Prefer defined values over undefined values
             if (entryA == undefined && entryB == undefined) return 0;
             if (entryB == undefined) return -1;
             if (entryA == undefined) return 1;
 
-            if (isNaN(entryA)) {
-                if (entryA.substr(0, 1) == "(") {
-                    entryA = entryA.slice(1, -1);
-                } else {
-                    entryA = entryA.toUpperCase();
-                }
-            }
-            if (isNaN(entryB)) {
-                if (entryB.substr(0, 1) == "(") {
-                    entryB = entryB.slice(1, -1);
-                } else {
-                    entryB = entryB.toUpperCase();
-                }
-            }
-            
-            entryA = Number(entryA);
-            entryB = Number(entryB);
+            // Cast to number if possible
+            entryA = numeric(entryA);
+            entryB = numeric(entryB);
 
-            // Compare numeric values.
+            // Compare values.
             if (currentSortOrder == 0) {
                 if (entryA < entryB) return -1;
                 if (entryA > entryB) return 1;
@@ -632,6 +620,19 @@ var controller = function () {
         });
     }
 
+    function numeric (s) {
+        var r = String(s);
+        if ( r.substr(0, 1) == "(" ) {
+            r = r.slice(1, -1);
+        }
+        if ( isNaN(r) ) {
+            r = r.toUpperCase();
+        } else {
+            r = Number(r);
+        }
+        return r;
+    }
+        
     // generate sorted list, expire old entries
     function sortFriendsByCategory(rfd) {
         var fln = new Array();
