@@ -590,16 +590,18 @@ var controller = function () {
 
     function sortFriendsByField(rf, field) {
         rf.table.sort(function (uidA, uidB) {
+            // Check if we have values at all
             if (rf.uinfo[uidA] == undefined && rf.uinfo[uidB] == undefined) return 0;
             if (rf.uinfo[uidB] == undefined) return -1;
             if (rf.uinfo[uidA] == undefined) return 1;
+
+            // Fetch value of sort field and convert to number.
             var entryA = rf.uinfo[uidA][field];
             var entryB = rf.uinfo[uidB][field];
             if (entryA == undefined && entryB == undefined) return 0;
             if (entryB == undefined) return -1;
             if (entryA == undefined) return 1;
-            if (entryA.toString() == "NaN") entryA = 0;
-            if (entryB.toString() == "NaN") entryB = 0;
+
             if (isNaN(entryA)) {
                 if (entryA.substr(0, 1) == "(") {
                     entryA = entryA.slice(1, -1);
@@ -614,6 +616,11 @@ var controller = function () {
                     entryB = entryB.toUpperCase();
                 }
             }
+            
+            entryA = Number(entryA);
+            entryB = Number(entryB);
+
+            // Compare numeric values.
             if (currentSortOrder == 0) {
                 if (entryA < entryB) return -1;
                 if (entryA > entryB) return 1;
