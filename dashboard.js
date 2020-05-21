@@ -19,7 +19,6 @@ var controller = function () {
     var sailNames = [0, "Jib", "Spi", "Stay", "LJ", "C0", "HG", "LG", 8, 9,
                      // VR sends sailNo + 10 to indicate autoSail. We use sailNo mod 10 to find the sail name sans Auto indication.
                      "Auto", "Jib (Auto)", "Spi (Auto)", "Stay (Auto)", "LJ (Auto)", "C0 (Auto)", "HG (Auto)", "LG (Auto)"];
-    var longSailNames = ["", "JIB", "SPI", "STAYSAIL", "LIGHT_JIB", "CODE_0", "HEAVY_GNK", "LIGHT_GNK"];
 
     function addSelOption(race, beta, disabled) {
         var option = document.createElement("option");
@@ -505,8 +504,8 @@ var controller = function () {
         });
         
         if (boatPolars) {
-            var sailName = longSailNames[data.sail % 10];
-            var sailDef = getSailDef(boatPolars.sail, sailName);
+//              var sailDef = getSailDef(boatPolars.sail, data.sail % 10);
+            var sailDef = boatPolars.sail[data.sail % 10 - 1];
 
             // "Real" boats have no sail info
             // "Waiting" boats have no TWA
@@ -1171,16 +1170,6 @@ var controller = function () {
     }
 
     function theoreticalSpeed(message) {
-        var shortNames = {
-            "JIB": "Jib",
-            "SPI": "Spi",
-            "STAYSAIL": "Stay",
-            "LIGHT_JIB": "LJ",
-            "CODE_0": "C0",
-            "HEAVY_GNK": "HG",
-            "LIGHT_GNK": "LG"
-        }
-
         var boatPolars = polars[message.boat.polar_id];
         if (boatPolars == undefined || message.options == undefined || message.tws == undefined) {
             return undefined;
@@ -1198,7 +1187,7 @@ var controller = function () {
             var speed = maxSpeed(options, twsLookup, twaLookup, boatPolars.sail);
             return {
                 "speed": roundTo(speed.speed * foil * hull * ratio, 2),
-                "sail": shortNames[speed.sail],
+                "sail": sailNames[speed.sail],
                 "foiling": foiling
             };
         }
@@ -1208,17 +1197,17 @@ var controller = function () {
         var maxSpeed = 0;
         var maxSail = "";
         for (const sailDef of sailDefs) {
-            if (sailDef.name === "JIB"
-                || sailDef.name === "SPI"
-                || (sailDef.name === "STAYSAIL" && options.includes("heavy"))
-                || (sailDef.name === "LIGHT_JIB" && options.includes("light"))
-                || (sailDef.name === "CODE_0" && options.includes("reach"))
-                || (sailDef.name === "HEAVY_GNK" && options.includes("heavy"))
-                || (sailDef.name === "LIGHT_GNK" && options.includes("light"))) {
+            if (sailDef.id === 1
+                || sailDef.id === 2
+                || (sailDef.id === 3 && options.includes("heavy"))
+                || (sailDef.id === 4 && options.includes("light"))
+                || (sailDef.id === 5 && options.includes("reach"))
+                || (sailDef.id === 6 && options.includes("heavy"))
+                || (sailDef.id === 7 && options.includes("light"))) {
                 var speed = pSpeed(iA, iS, sailDef.speed);
                 if (speed > maxSpeed) {
                     maxSpeed = speed;
-                    maxSail = sailDef.name;
+                    maxSail = sailDef.id;
                 }
             }
         }
@@ -1228,9 +1217,9 @@ var controller = function () {
         }
     }
 
-    function getSailDef(sailDefs, name) {
+    function getSailDef(sailDefs, id) {
         for (const sailDef of sailDefs) {
-            if (sailDef.name === name) {
+            if (sailDef.id === id) {
                 return sailDef;
             }
         }
