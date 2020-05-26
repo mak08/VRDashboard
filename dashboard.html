@@ -2,7 +2,7 @@
     Copyright (c) 2012 The Chromium Authors. All rights reserved.
     Use of this source code is governed by a BSD-style license that can be
     found in the LICENSE file.
- -->
+  -->
 
 <html>
   <head>
@@ -43,6 +43,14 @@
           <div>
 			<label type="button"><a href="manual.html" target="_blank">User manual</a></label>
           </div>
+		  <div>
+			<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">
+			  <input type="hidden" name="cmd" value="_s-xclick" />
+			  <input type="hidden" name="hosted_button_id" value="ZUPP95R3A3686" />
+			  <input type="image" width="70" height="18" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
+			  <img alt="" border="0" src="https://www.paypal.com/en_DE/i/scr/pixel.gif" width="1" height="1" />
+			</form>
+		  </div>
           <div>
             <label>Version</label>
             <label id="lb_version"></label>
@@ -69,39 +77,39 @@
           </li>
         </ul>
         <div align="center">
-        <fieldset class="fieldset" id="sel_skippers" align="left">
+          <fieldset class="fieldset" id="sel_skippers" align="left">
             <legend>Filters</legend>
             <ul class="tab2">
-                <li class="tab">
+              <li class="tab">
                 <input type="checkbox" id="sel_friends" name="checkbox1" class="content hidden" checked>
-                    <label for:"sel_friends" id="lbl_friends">Friends</label>
-                </li>
-                <li class="tab">
-                    <input type="checkbox" id="sel_team" name="checkbox3" class="content hidden" checked>
-                    <label for:"sel_team" id="lbl_team">Team</label>
-                </li>
-                <li class="tab">
-                    <input type="checkbox" id="sel_top" name="checkbox4" class="content hidden" checked>
-                    <label for:"sel_top" id="lbl_top">Top VSR</label>
-                </li>
-                <li class="tab">
-                    <input type="checkbox" id="sel_opponents" name="checkbox2" class="content hidden" checked>
-                    <label for:"sel_opponents" id="lbl_opponents">Opponents</label>
-                </li>
-                <li class="tab">
-                    <input type="checkbox" id="sel_sponsors" name="checkbox6" class="content hidden" checked>
-                    <label for:"sel_sponsors" id="lbl_sponsors">Sponsors</label>
-                </li>
-                <li class="tab">
-                    <input type="checkbox" id="sel_reals" name="checkbox5" class="content hidden" checked>
-                    <label for:"sel_reals" id="lbl_reals">Reals</label>
-                </li>
-                <li class="tab">
-                    <input type="checkbox" id="sel_inrace" name="checkbox7" class="content hidden">
-                    <label for:"sel_inrace" id="lbl_inrace">Racing</label>
-                </li>
+                <label for:"sel_friends" id="lbl_friends">Friends</label>
+              </li>
+              <li class="tab">
+                <input type="checkbox" id="sel_team" name="checkbox3" class="content hidden" checked>
+                <label for:"sel_team" id="lbl_team">Team</label>
+              </li>
+              <li class="tab">
+                <input type="checkbox" id="sel_top" name="checkbox4" class="content hidden" checked>
+                <label for:"sel_top" id="lbl_top">Top VSR</label>
+              </li>
+              <li class="tab">
+                <input type="checkbox" id="sel_opponents" name="checkbox2" class="content hidden" checked>
+                <label for:"sel_opponents" id="lbl_opponents">Opponents</label>
+              </li>
+              <li class="tab">
+                <input type="checkbox" id="sel_sponsors" name="checkbox6" class="content hidden" checked>
+                <label for:"sel_sponsors" id="lbl_sponsors">Sponsors</label>
+              </li>
+              <li class="tab">
+                <input type="checkbox" id="sel_reals" name="checkbox5" class="content hidden" checked>
+                <label for:"sel_reals" id="lbl_reals">Reals</label>
+              </li>
+              <li class="tab">
+                <input type="checkbox" id="sel_inrace" name="checkbox7" class="content hidden">
+                <label for:"sel_inrace" id="lbl_inrace">Racing</label>
+              </li>
             </ul>
-        </fieldset>
+          </fieldset>
         </div>
       </div>
       <div id="tab-content1" class="content">

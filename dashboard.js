@@ -105,7 +105,7 @@ var controller = function () {
             + genth("th_rt", "RT", "Call Router", sortField == "none", undefined)
             + genth("th_name", "Skipper", undefined, sortField == "displayName", currentSortOrder)
             + recordRaceColumns()
-            + genth("th_lu", "Last Update", undefined)
+            + genth("th_lu", "Last Update", undefined, sortField == "ts", currentSortOrder)
             + genth("th_rank", "Rank", undefined, sortField == "rank", currentSortOrder)
             + genth("th_dtf", "DTF", "Distance to Finish", sortField == "dtf", currentSortOrder)
             + genth("th_dtu", "DTU", "Distance to Us", sortField == "distanceToUs", currentSortOrder)
@@ -365,7 +365,7 @@ var controller = function () {
                         + (race.url ? ('<td class="tdc"><span id="rt:' + uid + '">&#x2388;</span></td>') : '<td>&nbsp;</td>')
                         + '<td style="' + bi.nameStyle + '">' + bi.name + '</td>'
                         + recordRaceFields(race, r)
-                        + '<td>' + formatDateShort(r.ts) + '</td>'
+                        + '<td>' + formatDateShort(r.lastCalcDate) + '</td>'
                         + '<td>' + (r.rank ? r.rank : "-") + '</td>'
                         + "<td>" + ((r.dtf==r.dtfC)?"(" + roundTo(r.dtfC, 1) + ")":r.dtf) + "</td>"
                         + '<td>' + (r.distanceToUs ? r.distanceToUs : "-") + '</td>'
@@ -485,7 +485,7 @@ var controller = function () {
             ndata.teamname = data.teamname;
             ndata.team = data.team;
         }
-        var elemlist = ["baseInfos", "displayName", "ts", "startDate", "type", "state", "pos", "heading", "twa", "tws", "speed", "mode", "distanceToEnd", "distanceFromStart", "sail", "bname"];
+        var elemlist = ["baseInfos", "displayName", "ts", "lastCalcDate", "startDate", "type", "state", "pos", "heading", "twa", "tws", "speed", "mode", "distanceToEnd", "distanceFromStart", "sail", "bname"];
         // copy elems from data to uinfo
         elemlist.forEach(function (tag) {
             if (tag in data) {
@@ -766,39 +766,41 @@ var controller = function () {
         return pad0(minutes) + "m" + pad0(seconds) + "s";
     }
 
-    function formatDate(ts, dflt) {
+    function formatDate(ts,
+                        dflt,
+                        tsOptions = {
+                            year: "numeric",
+                            month: "numeric",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "numeric",
+                            second: "numeric",
+                            hour12: false,
+                            timeZoneName: "short"
+                        })
+    {
         if (!ts && dflt) return dflt;
-        var tsOptions = {
-            year: "numeric",
-            month: "numeric",
-            day: "numeric",
-            hour: "numeric",
-            minute: "numeric",
-            second: "numeric",
-            hour12: false,
-            timeZoneName: "short"
-        };
-        var d = (ts) ? (new Date(ts)) : (new Date());
-        if (cbLocalTime.checked) {} else {
+        // Do not invent a timestamp here.
+        if (!ts) {
+            return "undefined";
+        }
+        // Use UTC if local time is not requested
+        if (!cbLocalTime.checked) {
             tsOptions.timeZone = "UTC";
         }
+        var d = new Date(ts);
         return new Intl.DateTimeFormat("lookup", tsOptions).format(d);
     }
 
     function formatDateShort(ts, dflt) {
-        if (!ts && dflt) return dflt;
-        var tsOptions = {
+         var tsOptions = {
             hour: "numeric",
             minute: "numeric",
             second: "numeric",
             hour12: false,
             timeZoneName: "short"
-        };
-        var d = (ts) ? (new Date(ts)) : (new Date());
-        if (cbLocalTime.checked) {} else {
-            tsOptions.timeZone = "UTC";
         }
-        return new Intl.DateTimeFormat("lookup", tsOptions).format(d);
+        return formatDate(ts, dflt, tsOptions);
     }
 
     function formatTime(ts) {
@@ -949,6 +951,9 @@ var controller = function () {
         case "th_rank":
             sortField = "rank";
             break;
+        case "th_lu":
+            sortField = "ts";
+            break;
         case "th_sd":
             sortField = "startDate";
             break;
@@ -983,7 +988,6 @@ var controller = function () {
             sortField = "sail";
             break;
         case "th_rt":
-        case "th_lu":
         case "th_brg":
         case "th_psn":
         case "th_foils":
@@ -1164,6 +1168,56 @@ var controller = function () {
         }
         divRaceStatus.innerHTML = makeRaceStatusHTML();
     }
+
+
+    function intersectionPoint (p, q, m, r) {
+        // Compute the intersection points of a line (p, q) and a circle (m, r)
+
+        // Center on circle
+        var s = {}; s.x = p.lat - m.lat; s.y = p.lon - m.lon;
+        var t = {}; t.x = q.lat - m.lat; t.y = q.lon - m.lon;
+
+        // Aux variables
+        var d = {}; d.x = t.x - s.x; d.y = t.y - s.y;
+        
+        var dr2 = d.x * d.x + d.y * d.y; 
+        var D =  s.x * t.y - t.x * s.y;
+        var D2 = D * D;
+
+        // Check if line intersects at all
+        var discr = r * r * dr2 - D2;
+        if (discr < 0) {
+            return null;
+        }
+
+        // Compute intersection point of (infinite) line and circle
+        var R = Math.sqrt( r * r * dr2 - D2);
+
+        var x1 = (D*d.y + sign(d.y) * d.x * R)/dr2;
+        var x2 = (D*d.y - sign(d.y) * d.x * R)/dr2;
+
+        var y1 = (-D*d.x + Math.abs(d.y) * R)/dr2;
+        var y2 = (-D*d.x - Math.abs(d.y) * R)/dr2;
+
+        var l1 = (x1 - s.x) / d.x;
+        var l2 = (x2 - s.x) / d.x;
+
+        // Check if intersection point is on line segment;
+        // choose intersection point closer to p
+        if (l1 >= 0 && l1 <= 1 && l1 <= l2) {
+            return {"lat": x1 + m.lat, "lng": y1 + m.lon, "lambda": l1};
+        } else if (l2 >= 0 && l2 <= 1) {
+            return {"lat": x2 + m.lat, "lng": y2 + m.lon, "lambda": l2};
+        } else {
+            return null;
+        }
+    }
+
+    function sign (x) {
+        return ( x < 0 )? -1: 1;
+    }
+    
+
 
     function angle(h0, h1) {
         return Math.abs(Math.PI - Math.abs(h1 - h0));
@@ -1408,6 +1462,18 @@ var controller = function () {
         return (Math.sin(rlon1 - rlon0) > 0) ? a : (2 * Math.PI - a);
     }
 
+    function addDistance (pos, distnm, angle, radiusnm) {
+        var posR = {};
+        posR.lat = toRad(pos.lat);
+        posR.lon = toRad(pos.lon);
+        var d = distnm / radiusnm;
+        var angleR = toRad(angle);
+        var dLatR = d * Math.cos(angleR);
+        var dLonR = d * (Math.sin(angleR) / Math.cos(posR.lat + dLatR));
+        return { "lat": toDeg(posR.lat + dLatR),
+                 "lon": toDeg(posR.lon + dLonR) };
+    }
+    
     function toRad(angle) {
         return angle / 180 * Math.PI;
     }
