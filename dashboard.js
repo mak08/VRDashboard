@@ -4,6 +4,9 @@ var controller = function () {
 
     const LightRed = '#FFA0A0';
 
+    var nmeaInterval = 10000;
+    var nmeaPort = 8081;
+    
     // ToDo: clear stats if user/boat changes
     var currentUserId, currentTeam;
     var requests = new Map();
@@ -1986,6 +1989,24 @@ var controller = function () {
         cbLocalTime.addEventListener("change", saveOption);
     }
 
+    function sendNMEA () {
+        races.forEach(function (r) {
+            if (r.curr) {
+                var request = new XMLHttpRequest();
+                request.open("POST", "http://localhost:" + nmeaPort + "/nmea/" + r.id, true);
+                request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                request.onload =  function (data) {
+                    console.log(data);
+                };
+                request.onerror = function (data) {
+                    console.log(data);
+                };
+                request.send(JSON.stringify(r.curr));
+            }
+        });
+    }
+        
+    
     var initialize = function () {
         var manifest = chrome.runtime.getManifest();
         document.getElementById("lb_version").innerHTML = manifest.version;
@@ -2032,6 +2053,9 @@ var controller = function () {
             }
         });
 
+        // Send NMEA data every 10 seconds
+        window.setInterval(sendNMEA, nmeaInterval);
+        
         initialized = true;
     }
 
