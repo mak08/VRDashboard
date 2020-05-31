@@ -2061,8 +2061,8 @@ var controller = function () {
     function formatINMWV (m) {
         // $INMWV Wind Speed and Angle
         var s = "INMWV";
-        s += "," + roundTo(m.twd, 1) + ",T";
-        s += "," + roundTo(m.tws, 1) + ",N";
+        s += "," + pad0(roundTo(m.twd, 2), 6) + ",T";
+        s += "," + pad0(roundTo(m.tws, 2), 5) + ",N";
         s += ",A"
         return s;
     }
