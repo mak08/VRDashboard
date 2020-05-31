@@ -1,4 +1,4 @@
-FILES = manifest.json background.js dashboard.html manual.html style.css dashboard.js zicon.png wind.svg img
+FILES = manifest.json background.js dashboard.html manual.html style.css dashboard.js zicon.png wind.svg img nmea_proxy.py
 
 release: VRDashboard.zip
 
