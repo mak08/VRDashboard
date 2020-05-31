@@ -2005,14 +2005,16 @@ var controller = function () {
     }
 
     function sendNMEA () {
-        races.forEach(function (r) {
-            if (r.curr) {
-                var rmc = formatGNRMC(r.curr);
-                var mwv = formatINMWV(r.curr);
-                sendSentence(r.id, "$" + rmc + "*" + nmeaChecksum(rmc)); 
-                sendSentence(r.id, "$" + mwv + "*" + nmeaChecksum(mwv)); 
-            }
-        });
+        if (cbNMEAOutput.checked) {
+            races.forEach(function (r) {
+                if (r.curr) {
+                    var rmc = formatGNRMC(r.curr);
+                    var mwv = formatINMWV(r.curr);
+                    sendSentence(r.id, "$" + rmc + "*" + nmeaChecksum(rmc)); 
+                    sendSentence(r.id, "$" + mwv + "*" + nmeaChecksum(mwv)); 
+                }
+            });
+        }
     }
         
 
@@ -2096,6 +2098,7 @@ var controller = function () {
         cbRouter = document.getElementById("auto_router");
         cbReuseTab = document.getElementById("reuse_tab");
         cbLocalTime = document.getElementById("local_time");
+        cbNMEAOutput = document.getElementById("nmea_output");
         lbRace = document.getElementById("lb_race");
         lbCurTime = document.getElementById("lb_curtime");
         lbCurPos = document.getElementById("lb_curpos");
