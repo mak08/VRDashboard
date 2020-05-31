@@ -66,6 +66,7 @@
 				<li><a href="#fleet_tab">Fleet</a></li>
 				<li><a href="#map_tab">Map</a></li>
 				<li><a href="#raw_log">Raw log</a></li>
+				<li><a href="#nmea">NMEA output</a></li>
 			  </ul>
 			</li>
 			<li><a href="#tips">Tips and tricks</a></li>
@@ -155,6 +156,10 @@
 
 			  <li><b>Local times</b>[off]<br>
 				If switched on, timestamps are displayed in the browser's local timezone. If switched off, timestamps are displayed in the UTC timezone.
+			  </li>
+
+			  <li><b>NMEA output</b>[off]<br>
+				If switched on, NMEA messages are send to a local HTTP address. See <a href="#nmea">NMEA output</a> on how to make the messages available to your NMEA softare.
 			  </li>
 
 			  <li><b>Version</b><br>
@@ -431,10 +436,51 @@
 				  <li>Enter the desired race</li>
 				  <li>Locate the outgoing message starting with <code>{"@class":".LogEventRequest","eventKey":"Meta_GetPolar"</code> and note its <code>requestId</code>.</li>
 				  <li>Locate the corresponding LogEventResponse (usually it is on the next line but sometimes may be found further down).</li>
-				  <li>Mark whole line by triple-clickin it and press Ctrl-c to copy the line.</li>
+				  <li>Mark whole line by triple-clicking it and press Ctrl-c to copy the line.</li>
 				</ul>
 				
 			</div>
+
+			<div id="nmea">
+			  <h4>NMEA output</h4>
+			  <p>VRDashboard can generate NMEA output. A HTTP to telnet proxy is required because the Chrome extension itself can only use HTTP, while NMEA devices use Telnet.
+				The NMEA proxy is included in the VRDashboard source. It requires Python3 and can also be obtained <a href="http://bitweide.de/vrdashboard/nmea_proxy.py">here</a>
+			  </p>
+			  <p><b>Installation</b><br>
+				<ul>
+				  <li>Install Python3
+					<ul>
+					  <li>Windows<br> Please check the Microsoft App store or download the installer <a href="https://www.python.org/downloads/windows/">here</a>
+						</li>
+					  <li>Linux<br>
+						Please follow the instructions for your distribution or download the tarball <a href="https://www.python.org/downloads/">here</a>
+					  </li>
+					</ul>
+				  </li>
+				  <li>Either
+					<ul>
+					  <li>Download <a href="http://bitweide.de/vrdashboard/nmea_proxy.py">nmea_proxy.py</a> and copy it to a directory of your choice (referred to as NMEA_PROXY below)
+					  </li>
+					  <li>Or use the VRDashboard source directory</li>
+					</ul>
+				  </li>
+				</ul>
+			  <p><b>Usage</b><br>
+				<ul>
+				  <li>Start the NMEA proxy<br>
+					Open a command shell, change to the directory where the NMEA proxy is located and run it:<br>
+					<code>
+					  $ cd NMEA_PROXY<br>
+					  $ python3 nmea_proxy.py
+					</code>
+				  </li>
+				  <li>Start VRDashboard</li>
+				  <li>Switch on NMEA output in VRDashboard</li>
+				  <li>Connect your NMEA software to localhost, TCP port 10nnn where nnn is there race ID.</li>
+				</ul>
+				
+			</div>
+
 		  </div>
 		</div>
 
