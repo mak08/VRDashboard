@@ -2024,22 +2024,12 @@ var controller = function () {
         var request = new XMLHttpRequest();
         request.open("POST", "http://localhost:" + nmeaPort + "/nmea/" + raceId, true);
         request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        request.onload =  function (data) {
-            console.log(data);
-        };
         request.onerror = function (data) {
             console.log(data);
         };
         request.send(sentence);
     }
 
-    // heading: 190.13431
-    // pos: {lat: 33.4932900603, lon: -132.8371130608}
-    // speed: 8.07488
-    // twa: -120.4056
-    // twd: 69.72871
-    // tws: 9.14734
-    
     function formatGNRMC (m) {
         // http://www.nmea.de/nmea0183datensaetze.html#rmc
         // https://gpsd.gitlab.io/gpsd/NMEA.html#_rmc_recommended_minimum_navigation_information

@@ -23,7 +23,9 @@ class NMEAHandler(http.server.BaseHTTPRequestHandler):
         post_body = s.rfile.read(content_len)
         race_id = s.path[6:9]
         forward_message(int(race_id), post_body)
-        s.send_response(200)
+        s.send_response(204)
+        s.send_header('Access-Control-Allow-Origin', '*')
+        s.end_headers()
 
 
 def forward_message(conn_id, message):
