@@ -59,7 +59,7 @@ var controller = function () {
             divRaceStatus.innerHTML = makeRaceStatusHTML();
             divFriendList = document.getElementById("friendList");
             divFriendList.innerHTML = "No boats positions received yet";
-        }
+       }
         xhr.open("GET", "http://zezo.org/races2.json");
         //xhr.open("GET", "races2.json");
         xhr.send();
@@ -726,7 +726,23 @@ var controller = function () {
         }
     }
 
-    function formatHMS(seconds) {
+    function formatDDMMYYYY (d) {
+        var s = ""
+            + pad0(d.getUTCDate())
+            + pad0(d.getUTCMonth() + 1)
+            + d.getUTCFullYear();
+        return s;
+        
+    }
+    function formatHHMMSSSS (d) {
+        var s = ""
+            + pad0(d.getUTCHours())
+            + pad0(d.getUTCMinutes())
+            + pad0(d.getUTCSeconds());
+        return s;
+    }
+    
+    function formatHMS (seconds) {
         if (seconds === undefined || isNaN(seconds) || seconds < 0) {
             return "-";
         }
@@ -742,7 +758,7 @@ var controller = function () {
         return pad0(hours) + "h" + pad0(minutes) + "m"; // + seconds + "s";
     }
 
-    function formatDHMS(seconds) {
+    function formatDHMS (seconds) {
         if (seconds === undefined || isNaN(seconds) || seconds < 0) {
             return "-";
         }
@@ -1520,11 +1536,10 @@ var controller = function () {
         return (x < 0) ? -1 : 1;
     }
 
-    function pad0(val) {
-        if (val < 10) {
-            val = "0" + val;
-        }
-        return val;
+    function pad0 (val, length=2, base=10) {
+        var result = val.toString(base)
+        while (result.length < length) result = '0' + result;
+        return result;
     }
 
     function formatPosition(lat, lon) {
@@ -1992,20 +2007,76 @@ var controller = function () {
     function sendNMEA () {
         races.forEach(function (r) {
             if (r.curr) {
-                var request = new XMLHttpRequest();
-                request.open("POST", "http://localhost:" + nmeaPort + "/nmea/" + r.id, true);
-                request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-                request.onload =  function (data) {
-                    console.log(data);
-                };
-                request.onerror = function (data) {
-                    console.log(data);
-                };
-                request.send(JSON.stringify(r.curr));
+                var rmc = formatGNRMC(r.curr);
+                var mwv = formatINMWV(r.curr);
+                sendSentence(r.id, "$" + rmc + "*" + nmeaChecksum(rmc)); 
+                sendSentence(r.id, "$" + mwv + "*" + nmeaChecksum(mwv)); 
             }
         });
     }
         
+
+    function sendSentence (raceId, sentence) {
+        var request = new XMLHttpRequest();
+        request.open("POST", "http://localhost:" + nmeaPort + "/nmea/" + raceId, true);
+        request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        request.onload =  function (data) {
+            console.log(data);
+        };
+        request.onerror = function (data) {
+            console.log(data);
+        };
+        request.send(sentence);
+    }
+
+    // heading: 190.13431
+    // pos: {lat: 33.4932900603, lon: -132.8371130608}
+    // speed: 8.07488
+    // twa: -120.4056
+    // twd: 69.72871
+    // tws: 9.14734
+    
+    function formatGNRMC (m) {
+        // $GNRMC Time, date, position, course and speed data.
+        // http://www.nmea.de/nmea0183datensaetze.html#rmc
+        var d = new Date(m.lastCalcDate);
+        var s = "GNRMC";
+        s += "," + formatHHMMSSSS(d) + ",A";                 // UTC time & status
+        s += "," + formatNMEALatLon(Math.abs(m.pos.lat), 7); // Latitude & N/S
+        s += "," + ((m.pos.lat < 0) ? "S":"N");
+        s += "," + formatNMEALatLon(Math.abs(m.pos.lon), 8); // Longitude & E/W
+        s += "," + ((m.pos.lon < 0) ? "W":"E");
+        s += "," + roundTo(m.speed, 1);                      // SOG  
+        s += ",";                                            // Track made good 
+        s += "," + formatDDMMYYYY(d);                        // Date
+        s += ",,";                                           // Magnetic variation & E/W
+        return s;
+    }
+
+    function formatINMWV (m) {
+        // $INMWV Wind Speed and Angle
+        var s = "INMWV";
+        s += "," + roundTo(m.twd, 1) + ",T";
+        s += "," + roundTo(m.tws, 1) + ",N";
+        s += ",A"
+        return s;
+    }
+
+    function formatNMEALatLon (l, len) {
+        var deg = Math.trunc(l);
+        var min = roundTo((l - deg) * 60, 2);
+        var result = deg + min;
+        return pad0(result, len);
+    }
+    
+    function nmeaChecksum (s) {
+        var sum = 0;
+        for (var i = 0; i < s.length; i++) {
+            sum ^= s.charCodeAt(i);
+        }
+        return pad0(sum, 2, 16).toUpperCase();
+    }
+    
     
     var initialize = function () {
         var manifest = chrome.runtime.getManifest();
