@@ -726,11 +726,11 @@ var controller = function () {
         }
     }
 
-    function formatDDMMYYYY (d) {
+    function formatDDMMYY (d) {
         var s = ""
             + pad0(d.getUTCDate())
             + pad0(d.getUTCMonth() + 1)
-            + d.getUTCFullYear();
+            + d.getUTCFullYear().toString().substring(2,4);
         return s;
         
     }
@@ -1996,12 +1996,14 @@ var controller = function () {
         getOption("auto_router");
         getOption("reuse_tab");
         getOption("local_time");
+        getOption("nmea_output");
     }
 
     function addConfigListeners() {
         cbRouter.addEventListener("change", saveOption);
         cbReuseTab.addEventListener("change", saveOption);
         cbLocalTime.addEventListener("change", saveOption);
+        cbNMEAOutput.addEventListener("change", saveOption);
     }
 
     function sendNMEA () {
@@ -2039,19 +2041,20 @@ var controller = function () {
     // tws: 9.14734
     
     function formatGNRMC (m) {
-        // $GNRMC Time, date, position, course and speed data.
         // http://www.nmea.de/nmea0183datensaetze.html#rmc
+        // https://gpsd.gitlab.io/gpsd/NMEA.html#_rmc_recommended_minimum_navigation_information
         var d = new Date(m.lastCalcDate);
         var s = "GNRMC";
         s += "," + formatHHMMSSSS(d) + ",A";                 // UTC time & status
-        s += "," + formatNMEALatLon(Math.abs(m.pos.lat), 7); // Latitude & N/S
+        s += "," + formatNMEALatLon(Math.abs(m.pos.lat), 9); // Latitude & N/S
         s += "," + ((m.pos.lat < 0) ? "S":"N");
-        s += "," + formatNMEALatLon(Math.abs(m.pos.lon), 8); // Longitude & E/W
+        s += "," + formatNMEALatLon(Math.abs(m.pos.lon), 10); // Longitude & E/W
         s += "," + ((m.pos.lon < 0) ? "W":"E");
         s += "," + roundTo(m.speed, 1);                      // SOG  
-        s += ",";                                            // Track made good 
-        s += "," + formatDDMMYYYY(d);                        // Date
-        s += ",,";                                           // Magnetic variation & E/W
+        s += "," + roundTo(m.heading, 1);                    // Track made good 
+        s += "," + formatDDMMYY(d);                          // Date
+        s += ",,";                                           // 
+        s += ",A";                                           // Valid  
         return s;
     }
 
@@ -2066,8 +2069,8 @@ var controller = function () {
 
     function formatNMEALatLon (l, len) {
         var deg = Math.trunc(l);
-        var min = roundTo((l - deg) * 60, 2);
-        var result = deg + min;
+        var min = roundTo((l - deg) * 60, 4);
+        var result = "" + deg + min;
         return pad0(result, len);
     }
     
