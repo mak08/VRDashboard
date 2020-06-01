@@ -4,7 +4,8 @@ var controller = function () {
 
     const LightRed = '#FFA0A0';
 
-    var nmeaInterval = 10000;
+    var nmeaGNInterval = 10000;
+    var nmeaINInterval = 1000;
     var nmeaPort = 8081;
     
     // ToDo: clear stats if user/boat changes
@@ -25,7 +26,7 @@ var controller = function () {
 
     function addSelOption(race, beta, disabled) {
         var option = document.createElement("option");
-        option.text = race.name + (beta ? " beta" : "");
+        option.text = race.name + (beta ? " beta" : "") + " (" + race.id.substr(0, 3) + ")";
         option.value = race.id;
         option.betaflag = beta;
         option.disabled = disabled;
@@ -2051,12 +2052,13 @@ var controller = function () {
     function formatINMWV (m) {
         // $INMWV Wind Speed and Angle
         var s = "INMWV";
-        s += "," + pad0(roundTo(m.twd, 2), 6) + ",T";
+        var pTWA = (m.twa > 0)? m.twa: m.twa + 360; 
+        s += "," + pad0(roundTo(pTWA, 2), 6) + ",T";
         s += "," + pad0(roundTo(m.tws, 2), 5) + ",N";
         s += ",A"
         return s;
     }
-
+    
     function formatNMEALatLon (l, len) {
         var deg = Math.trunc(l);
         var min = roundTo((l - deg) * 60, 4);
@@ -2121,7 +2123,7 @@ var controller = function () {
         });
 
         // Send NMEA data every 10 seconds
-        window.setInterval(sendNMEA, nmeaInterval);
+        window.setInterval(sendNMEA, nmeaINInterval);
         
         initialized = true;
     }

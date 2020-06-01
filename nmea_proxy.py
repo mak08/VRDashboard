@@ -1,6 +1,8 @@
 import http.server
 import socketserver
 import socket
+import logging
+
 
 HOST = 'localhost'
 
@@ -27,25 +29,25 @@ class NMEAHandler(http.server.BaseHTTPRequestHandler):
         s.send_header('Access-Control-Allow-Origin', '*')
         s.end_headers()
 
+    def log_message(self, format, *args):
+        pass
+
 
 def forward_message(conn_id, message):
-    conn = create_connection(conn_id)
+    conn = find_or_create_connection(conn_id)
     if conn:
         try:
             conn.send(message + '\n'.encode('ascii'))
         except Exception:
-            print('Client ' + str(conn_id) + ' went away, closing connection')
+            print('Connection lost on port ' + str(conn_id) + ', closing.')
             conn.close()
             connections.pop(conn_id, None)
-    else:
-        print('No one listening for ' + str(conn_id))
 
 
-def create_connection(conn_id):
+def find_or_create_connection(conn_id):
     if conn_id in connections:
         return connections[conn_id]
     else:
-        print('Creating connection for ' + str(conn_id))
         conn = None
         if conn_id not in sockets:
             sockets[conn_id] = create_socket(conn_id)
@@ -66,15 +68,20 @@ def create_socket(conn_id):
 
 
 def accept_connection(sock):
-    print('Accepting on ' + str(sock))
     try:
         (conn, address) = sock.accept()
+        print('Accepted connection on port ' + str(sock.getsockname()[1]))
         return conn
-    except IOError as io_error:
-        print('Accept on ' + str(sock) + 'failed: ' + str(io_error))
+    except IOError:
         return None
 
 
 server = socketserver.TCPServer(("", PORT), NMEAHandler)
 print("Listening on port", PORT)
-server.serve_forever()
+try:
+    server.serve_forever()
+finally:
+    print('Cleaning up')
+    # This still doesn't free the socket
+    server.server_close()
+    print('Done')

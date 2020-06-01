@@ -468,16 +468,35 @@
 			  <p><b>Usage</b><br>
 				<ul>
 				  <li>Start the NMEA proxy<br>
-					Open a command shell, change to the directory where the NMEA proxy is located and run it:<br>
+					Open a command shell, change to the directory where the NMEA proxy is located and run it:<br><br>
 					<code>
 					  $ cd NMEA_PROXY<br>
 					  $ python3 nmea_proxy.py
-					</code>
+					</code><br><br>
+					You should see message similar to<br><br>
+					<code>
+						Listening on port 8081<br>
+					</code><br>
 				  </li>
-				  <li>Start VRDashboard</li>
-				  <li>Switch on NMEA output in VRDashboard</li>
-				  <li>Connect your NMEA software to localhost, TCP port 10nnn where nnn is there race ID.
-					<p>Note: The proxy NMEA port is opened only when the first message is received. This may take up to 5min.</p> 
+				  <li>Start VRDashboard</li><br>
+				  <li>Switch on NMEA output in VRDashboard<br>
+					After a while, you should see message like below:<br><br>
+					<code>
+					  Creating socket for 461<br>					  
+					  Creating socket for 434<br>
+					</code><br>
+					where the numbers correspond to the active races listed in the race selector.
+					<p>Note: The sockets are created only when the first message is received. This may take up to 5min.</p>					
+				  </li>
+				  <li>Connect your NMEA software to localhost, TCP port 10nnn where nnn is there race ID.<br>
+					You should see connection messages like below:<br><br>
+					<code>
+						Accepted connection on port 10434<br>
+						Connection lost on port 434, closing.<br>
+						Accepted connection on port 10461<br>
+						Accepted connection on port 10434<br>
+					</code><br>
+					
 				  </li>
 				</ul>
 				
