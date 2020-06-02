@@ -2061,7 +2061,7 @@ var controller = function () {
     
     function formatNMEALatLon (l, len) {
         var deg = Math.trunc(l);
-        var min = roundTo((l - deg) * 60, 4);
+        var min = pad0(roundTo((l - deg) * 60, 4), 7);
         var result = "" + deg + min;
         return pad0(result, len);
     }
