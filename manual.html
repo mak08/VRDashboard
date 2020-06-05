@@ -21,6 +21,13 @@
 		  max-width: 800px;
 		  height: auto;
 	  }
+
+	  .code {
+		  background-color: lightgrey;
+		  border: 2px solid black;
+		  border-radius: 6px;
+		  padding: 6px 6px; 
+	  }
 	  
 	  .container {
 		  display: grid;
@@ -451,7 +458,7 @@
 				  <li>Install Python3
 					<ul>
 					  <li>Windows<br> Please check the Microsoft App store or download the installer <a href="https://www.python.org/downloads/windows/">here</a>
-						</li>
+					  </li>
 					  <li>Linux<br>
 						Please follow the instructions for your distribution or download the tarball <a href="https://www.python.org/downloads/">here</a>
 					  </li>
@@ -468,38 +475,53 @@
 			  <p><b>Usage</b><br>
 				<ul>
 				  <li>Start the NMEA proxy<br>
-					Open a command shell, change to the directory where the NMEA proxy is located and run it:<br><br>
-					<code>
-					  $ cd NMEA_PROXY<br>
-					  $ python3 nmea_proxy.py
-					</code><br><br>
-					You should see message similar to<br><br>
-					<code>
+					Open a command shell, change to the directory where the NMEA proxy is located and run it. The script should print the port it is listening on:<br>
+					<div class="code">
+					  <code>
+						$ cd NMEA_PROXY<br>
+						$ python3 nmea_proxy.py<br>
 						Listening on port 8081<br>
-					</code><br>
+					  </code>
+					</div>
 				  </li>
-				  <li>Start VRDashboard</li><br>
-				  <li>Switch on NMEA output in VRDashboard<br>
-					After a while, you should see message like below:<br><br>
-					<code>
-					  Creating socket for 461<br>					  
-					  Creating socket for 434<br>
-					</code><br>
+				  <li>Start VRDashboard and switch on NMEA output.<br>
+					After a while, you should see messages like below:<br>
+					<div class="code">
+					  <code>
+						Creating socket for 461<br>					  
+						Creating socket for 434<br>
+					  </code>
+					</div>
 					where the numbers correspond to the active races listed in the race selector.
 					<p>Note: The sockets are created only when the first message is received. This may take up to 5min.</p>					
 				  </li>
-				  <li>Connect your NMEA software to localhost, TCP port 10nnn where nnn is there race ID.<br>
-					You should see connection messages like below:<br><br>
-					<code>
+				  <li>Connect your NMEA software to localhost, TCP port <code>10nnn</code> where <code>nnn</code> is there race ID.<br>
+					You should see connection messages like below:<br>
+					<div class="code">
+					  <code>
 						Accepted connection on port 10434<br>
 						Connection lost on port 434, closing.<br>
 						Accepted connection on port 10461<br>
 						Accepted connection on port 10434<br>
-					</code><br>
+					  </code>
+					</div>
 					
 				  </li>
+				  <li>
+					VRDashboard sends a GNRMC and INMWV message once per second:
+					<div class="code">
+					  <code>
+						$ telnet localhost 10434<br>
+						Trying 127.0.0.1...<br>
+						Connected to localhost.<br>
+						Escape character is '^]'.<br>
+						$GNRMC,192516,A,3343.3213,N,17709.3002,W,14.3,287.2,050620,,,A*41<br>
+						$INMWV,099.86,T,07.61,N,A*02<br>
+						...
+					  </code>
+					</div>
+				  </li>
 				</ul>
-				
 			</div>
 
 		  </div>

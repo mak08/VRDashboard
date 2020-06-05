@@ -4,8 +4,7 @@ var controller = function () {
 
     const LightRed = '#FFA0A0';
 
-    var nmeaGNInterval = 10000;
-    var nmeaINInterval = 1000;
+    var nmeaInterval = 1000;
     var nmeaPort = 8081;
     
     // ToDo: clear stats if user/boat changes
@@ -2123,7 +2122,7 @@ var controller = function () {
         });
 
         // Send NMEA data every 10 seconds
-        window.setInterval(sendNMEA, nmeaINInterval);
+        window.setInterval(sendNMEA, nmeaInterval);
         
         initialized = true;
     }

@@ -58,7 +58,7 @@ def find_or_create_connection(conn_id):
 
 
 def create_socket(conn_id):
-    print('Creating socket for ' + str(conn_id))
+    print('Creating socket for race ID ' + str(conn_id))
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.setblocking(False)
