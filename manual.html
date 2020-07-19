@@ -117,7 +117,7 @@
 				</li>
 				<li>
 				  Enter a race.
-				  <p>The <a href="http://zezo.org">zezo.org</a> router page will open in the background, with your boat position and options set.</p>
+				  <p>The <a href="http://zezo.org" target="_blank">zezo.org</a> router page will open in the background, with your boat position and options set.</p>
 				</li>
 				
 			  </ul>
@@ -158,7 +158,7 @@
 			  </li>
 
 			  <li><b>Reuse tabs</b>[on]<br>
-				If switched on, routing requests for a race will reuse the previously opened tab. Different race always open in different tabs.
+				If switched on, routing requests for a race will reuse the previously opened tab. Different races always open in different tabs.
 			  </li>
 
 			  <li><b>Local times</b>[off]<br>
@@ -185,9 +185,9 @@
 			<ul>
 			  <li><b>RT</b><br/>Router. Request a routing for the corresponding race.
 			  </li>
-			  <li><b>PL</b><br/>Polars. Open toxcct's Polars page for the corresponding race.
+			  <li><b>PL</b><br/>Polars. Open toxcct's <a href="http://toxcct.free.fr/polars/" target="_blank">Polars page</a> for the corresponding race.
 			  </li>
-			  <li><b>WI</b><br/>Windy. Open windy.com with the corresponding boat position.
+			  <li><b>WI</b><br/>Windy. Open <a href="http://windy.com" target="_blank">windy.com</a> with the corresponding boat position.
 			  </li>
 			  <li><b>Race</b><br/>Race name
 			  </li>
@@ -204,7 +204,7 @@
 			  <li><b>TWA</b><br/>True wind angle. Set in bold if boat is in TWA<sup>[<a href="#twa">2</a>]</sup> mode. Green color if the boat is on starboard tack, red on port tack.
 			  </li>
 			  <li><b>TWS</b><br/>True wind speed at the boat position as reported by the server.<br>
-				The game UI uses its own source of wind information, which is sometimes incorrect. 
+				The game UI uses its own source of wind information, which is sometimes out of sync with the game server. 
 			  </li>
 			  <li><b>TWD</b><br/>True wind direction at the boat position as reported by the server.<br>
 				As for TWS, the game UI sometimes displays differing (incorrect) values. 
@@ -245,7 +245,7 @@
 			  <img src="img/tab_racelog.png">
 			  
 			  The first column <b>Time</b> contains the timestamp of the server message.
-			  Columns <b>Rank</b>, <b>DTL</b>, <b>DTF</b>, <b>Position</b>, <b>HDG</b>, <b>TWA</b>, <b>TWS</b>, <b>TWD</b> and <b>aSail</b> correspeond to the Race Overview columns.
+			  Columns <b>Rank</b>, <b>DTL</b>, <b>DTF</b>, <b>Position</b>, <b>HDG</b>, <b>TWA</b>, <b>TWS</b>, <b>TWD</b> and <b>aSail</b> correspond to the Race Overview columns.
 			  Column <b>vR (kn)</b> is <b>Speed</b> in the Race Overview (boat speed reported by the server).<br>
 			  The remaining columns are:
 			  <ul>
@@ -264,6 +264,10 @@
 				<li><b>Foils</b><br/>Percentage of foils efficiency 
 				</li>
 				<li><b>Δd (nm)</b><br/>Distance sailed since last status message
+				  <p>When not sailing with the best available sail this column displays the theoretical distance using the optimal sail:<br>
+					<img src="img/racelog_badsail.png"><br>
+					In the above case, Jib was better than the selected Light Jib. Code0 would probably be even faster, but the boat did not have the 'reach' option.
+				  </p>
 				</li>
 				<li><b>Δt (s)</b><br/>Elapsed time since last status message
 				  <p>The VR server usually sends status updates approximately every 5min.
