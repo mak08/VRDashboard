@@ -1545,8 +1545,8 @@ var controller = function () {
     function formatPosition(lat, lon) {
         var latDMS = toDMS(lat);
         var lonDMS = toDMS(lon);
-        var latString = latDMS.g + "°" + pad0(latDMS.m) + "'" + pad0(latDMS.s) + '"';
-        var lonString = lonDMS.g + "°" + pad0(lonDMS.m) + "'" + pad0(lonDMS.s) + '"';
+        var latString = latDMS.g + "°" + pad0(latDMS.m) + "'" + pad0(latDMS.s) + "." + pad0(latDMS.cs, 2) + '"';
+        var lonString = lonDMS.g + "°" + pad0(lonDMS.m) + "'" + pad0(lonDMS.s) + "." + pad0(lonDMS.cs, 2) + '"';
         return latString + ((latDMS.u == 1) ? "N" : "S") + " " + lonString + ((lonDMS.u == 1) ? "E" : "W");
     }
 
@@ -1578,7 +1578,7 @@ var controller = function () {
             
             // Create map
             var mapOptions = {
-                mapTypeId: "terrain",
+                mapTypeId: "terrain"
             };
             var map = new google.maps.Map(divMap, mapOptions);
             map.setTilt(45);
