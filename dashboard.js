@@ -59,7 +59,7 @@ var controller = function () {
             divRaceStatus.innerHTML = makeRaceStatusHTML();
             divFriendList = document.getElementById("friendList");
             divFriendList.innerHTML = "No boats positions received yet";
-       }
+        }
         xhr.open("GET", "http://zezo.org/races2.json");
         //xhr.open("GET", "races2.json");
         xhr.send();
@@ -336,6 +336,17 @@ var controller = function () {
         return (res);
     }
 
+    function isDisplayEnabled (record, uid) {
+        var boatInfo = boatinfo(uid, record);
+        return  (uid == currentUserId)
+            || (record.mode == "followed" && cbFriends.checked)
+            || (record.mode == "opponents" && cbOpponents.checked)
+            || (boatInfo.team != "none" && cbTeam.checked)
+            || (record.type == "top" && cbTop.checked)
+            || (record.type == "real" && cbReals.checked)
+            || (record.type == "sponsor" && cbOpponents.checked);
+    }
+
     function makeFriendListLine(uid) {
         if (uid == undefined) {
             return "";
@@ -352,18 +363,11 @@ var controller = function () {
                 r.dtf = r.dtfC;
             }
 
-            var sortDisplay = 0;
-            sortDisplay = (uid == currentUserId) // always display own boat
-                || (r.mode == "followed" && cbFriends.checked)
-                || (r.mode == "opponents" && cbOpponents.checked)
-                || (bi.team != "none" && cbTeam.checked)
-                || (r.type == "top" && cbTop.checked)
-                || (r.type == "real" && cbReals.checked)
-                || (r.type == "sponsor" && cbOpponents.checked);
-            var inrace = ((r.state != "racing" && cbInRace.checked) ? 0 : 1);
-
-            if (sortDisplay == 1) {
-                if (inrace == 1) {
+            var sortDisplay = isDisplayEnabled(r, uid);
+            
+            if (sortDisplay) {
+                var inrace = (r.state != "racing" && cbInRace.checked);
+                if (inrace) {
                     return '<tr class="hov" id="ui:' + uid + '">'
                         + (race.url ? ('<td class="tdc"><span id="rt:' + uid + '">&#x2388;</span></td>') : '<td>&nbsp;</td>')
                         + '<td style="' + bi.nameStyle + '">' + bi.name + '</td>'
@@ -507,7 +511,7 @@ var controller = function () {
         });
         
         if (boatPolars) {
-//              var sailDef = getSailDef(boatPolars.sail, data.sail % 10);
+            //              var sailDef = getSailDef(boatPolars.sail, data.sail % 10);
             var sailDef = boatPolars.sail[data.sail % 10 - 1];
 
             // "Real" boats have no sail info
@@ -634,7 +638,7 @@ var controller = function () {
         }
         return r;
     }
-        
+    
     // generate sorted list, expire old entries
     function sortFriendsByCategory(rfd) {
         var fln = new Array();
@@ -812,7 +816,7 @@ var controller = function () {
     }
 
     function formatDateShort(ts, dflt) {
-         var tsOptions = {
+        var tsOptions = {
             hour: "numeric",
             minute: "numeric",
             second: "numeric",
@@ -1060,7 +1064,7 @@ var controller = function () {
                     var race = races.get(selRace.value);
                     initializeMap(race);
                 }
-                if (rmatch == 2) {
+                if (rmatch == 2 || rmatch == 4) {
                     display_selbox("visible");
                 } else {
                     display_selbox("hidden");
@@ -1072,6 +1076,7 @@ var controller = function () {
                 // Skippers-Choice
                 changeState(ev_lbl);
                 divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+                updateMapFleet(races.get(selRace.value));
             } else {
                 // Race-Switching
                 if (call_wi) callWindy(rmatch, 0); // weather
@@ -1142,7 +1147,7 @@ var controller = function () {
     }
 
     function updatePosition(message, r) {
-        if (r === undefined) { // race not lsited
+        if (r === undefined) { // race not listed
             r = addRace(message);
         }
 
@@ -1578,7 +1583,8 @@ var controller = function () {
             
             // Create map
             var mapOptions = {
-                mapTypeId: "terrain"
+                mapTypeId: "terrain",
+                scaleControl: true
             };
             var map = new google.maps.Map(divMap, mapOptions);
             map.setTilt(45);
@@ -1898,32 +1904,35 @@ var controller = function () {
         Object.keys(rfd.uinfo).forEach(function (key) {
             var elem = rfd.uinfo[key];
             var bi = boatinfo(key, elem);
-            var pos = new google.maps.LatLng(elem.pos.lat, elem.pos.lon);
-            
-            var info = bi.name + " | HDG: " + roundTo(bi.heading, 1) + " | TWA: " + roundTo(bi.twa, 1) + " | SPD: " + roundTo(bi.speed, 2);
-            if (elem.startDate && race.type == "record") {
-                info += " | Elapsed: " + formatDHMS(elem.ts - elem.startDate);
-            }
-            map._db_op.push(addmarker(map, bounds, pos, pinSymbol(bi.bcolor, "B", 0.7, elem.heading), undefined, info, "U:" + key, 18, 0.7));
-            // track
-            var tpath = [];
-            if (elem.track) {
-                for (var i = 0; i < elem.track.length; i++) {
-                    tpath.push(new google.maps.LatLng(elem.track[i].lat, elem.track[i].lon));
+
+            if (isDisplayEnabled(elem, key)) {
+                var pos = new google.maps.LatLng(elem.pos.lat, elem.pos.lon);
+                
+                var info = bi.name + " | HDG: " + roundTo(bi.heading, 1) + " | TWA: " + roundTo(bi.twa, 1) + " | SPD: " + roundTo(bi.speed, 2);
+                if (elem.startDate && race.type == "record") {
+                    info += " | Elapsed: " + formatDHMS(elem.ts - elem.startDate);
                 }
-                var ttpath = new google.maps.Polyline({
-                    path: tpath,
-                    geodesic: true,
-                    strokeColor: bi.bcolor,
-                    strokeOpacity: 0.6,
-                    strokeWeight: 1,
-                    zIndex: 4
-                });
-                ttpath.setMap(map);
-                map._db_op.push(ttpath);
-            }
-        });
+                map._db_op.push(addmarker(map, bounds, pos, pinSymbol(bi.bcolor, "B", 0.7, elem.heading), undefined, info, "U:" + key, 18, 0.7));
+                // track
+                var tpath = [];
+                if (elem.track) {
+                    for (var i = 0; i < elem.track.length; i++) {
+                        tpath.push(new google.maps.LatLng(elem.track[i].lat, elem.track[i].lon));
+                    }
+                    var ttpath = new google.maps.Polyline({
+                        path: tpath,
+                        geodesic: true,
+                        strokeColor: bi.bcolor,
+                        strokeOpacity: 0.6,
+                        strokeWeight: 1,
+                        zIndex: 4
+                    });
+                    ttpath.setMap(map);
+                    map._db_op.push(ttpath);
+                }
+            }});
     }
+
 
     function makeTTPath (tpath, color) {
         return new google.maps.Polyline({
@@ -2018,7 +2027,7 @@ var controller = function () {
             });
         }
     }
-        
+    
 
     function sendSentence (raceId, sentence) {
         var request = new XMLHttpRequest();
@@ -2072,7 +2081,10 @@ var controller = function () {
         }
         return pad0(sum, 2, 16).toUpperCase();
     }
-    
+
+    function filterChanged (e) {
+        updateMapFleet();
+    }
     
     var initialize = function () {
         var manifest = chrome.runtime.getManifest();
@@ -2320,6 +2332,11 @@ var controller = function () {
                             };
                             addTableCommandLine(race);
                             divRaceStatus.innerHTML = makeRaceStatusHTML();
+                            if (response.scriptData.boatActions) {
+                                race.boatActions = response.scriptData.boatActions;
+                            }
+                            updateMapWaypoints(race);
+                            updateMapMe(race);
                         }
                     } else if (request.eventKey == "Meta_GetPolar") {
                         // Always overwrite cached data...
