@@ -14,12 +14,6 @@ sockets = dict()
 
 
 class NMEAHandler(http.server.BaseHTTPRequestHandler):
-    def do_GET(s):
-        s.send_response(200)
-        s.send_header("Content-type", "text/html")
-        s.end_headers()
-        s.wfile.write("Hello".encode())
-
     def do_POST(s):
         content_len = int(s.headers.get('Content-Length'))
         post_body = s.rfile.read(content_len)
