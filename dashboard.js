@@ -363,32 +363,29 @@ var controller = function () {
                 r.dtf = r.dtfC;
             }
 
-            var sortDisplay = isDisplayEnabled(r, uid);
+            var isDisplay = isDisplayEnabled(r, uid) &&  ( cbInRace.checked || r.state == "racing" );
             
-            if (sortDisplay) {
-                var inrace = (r.state != "racing" && cbInRace.checked);
-                if (inrace) {
-                    return '<tr class="hov" id="ui:' + uid + '">'
-                        + (race.url ? ('<td class="tdc"><span id="rt:' + uid + '">&#x2388;</span></td>') : '<td>&nbsp;</td>')
-                        + '<td style="' + bi.nameStyle + '">' + bi.name + '</td>'
-                        + recordRaceFields(race, r)
-                        + '<td>' + formatDateShort(r.lastCalcDate) + '</td>'
-                        + '<td>' + (r.rank ? r.rank : "-") + '</td>'
-                        + "<td>" + ((r.dtf==r.dtfC)?"(" + roundTo(r.dtfC, 1) + ")":r.dtf) + "</td>"
-                        + '<td>' + (r.distanceToUs ? r.distanceToUs : "-") + '</td>'
-                        + '<td>' + (r.bearingFromUs ? r.bearingFromUs + "&#x00B0;" : "-") + '</td>'
-                        + '<td>' + bi.sail + '</td>'
-                        + '<td>' + (r.state || "-") + '</td>'
-                        + '<td>' + (r.pos ? formatPosition(r.pos.lat, r.pos.lon) : "-") + '</td>'
-                        + '<td>' + roundTo(bi.heading, 1) + '</td>'
-                        + '<td ' + bi.twaStyle + '>' + roundTo(bi.twa, 1) + '</td>'
-                        + '<td>' + roundTo(bi.tws, 1) + '</td>'
-                        + '<td>' + roundTo(bi.speed, 2) + '</td>'
-                        + '<td ' + bi.xfactorStyle + '>' + roundTo(r.xfactor, 4) + '</td>'
-                        + '<td>' + (r.xoption_foils || "?") + '</td>'
-                        + '<td>' + (r.xoption_hull || "?") + '</td>'
-                        + '</tr>';
-                }
+            if (isDisplay) {
+                return '<tr class="hov" id="ui:' + uid + '">'
+                    + (race.url ? ('<td class="tdc"><span id="rt:' + uid + '">&#x2388;</span></td>') : '<td>&nbsp;</td>')
+                    + '<td style="' + bi.nameStyle + '">' + bi.name + '</td>'
+                    + recordRaceFields(race, r)
+                    + '<td>' + formatDateShort(r.lastCalcDate) + '</td>'
+                    + '<td>' + (r.rank ? r.rank : "-") + '</td>'
+                    + "<td>" + ((r.dtf==r.dtfC)?"(" + roundTo(r.dtfC, 1) + ")":r.dtf) + "</td>"
+                    + '<td>' + (r.distanceToUs ? r.distanceToUs : "-") + '</td>'
+                    + '<td>' + (r.bearingFromUs ? r.bearingFromUs + "&#x00B0;" : "-") + '</td>'
+                    + '<td>' + bi.sail + '</td>'
+                    + '<td>' + (r.state || "-") + '</td>'
+                    + '<td>' + (r.pos ? formatPosition(r.pos.lat, r.pos.lon) : "-") + '</td>'
+                    + '<td>' + roundTo(bi.heading, 1) + '</td>'
+                    + '<td ' + bi.twaStyle + '>' + roundTo(bi.twa, 1) + '</td>'
+                    + '<td>' + roundTo(bi.tws, 1) + '</td>'
+                    + '<td>' + roundTo(bi.speed, 2) + '</td>'
+                    + '<td ' + bi.xfactorStyle + '>' + roundTo(r.xfactor, 4) + '</td>'
+                    + '<td>' + (r.xoption_foils || "?") + '</td>'
+                    + '<td>' + (r.xoption_hull || "?") + '</td>'
+                    + '</tr>';
             }
         }
     }
