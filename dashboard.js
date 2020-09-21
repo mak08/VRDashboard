@@ -1558,7 +1558,7 @@ var controller = function () {
             if (r.gdiv) {
                 if (r == race) {
                     r.gdiv.style.display = "block";
-                    r.gmap.fitBounds(r.gbounds);
+                    // r.gmap.fitBounds(r.gbounds);
                     
                 } else {
                     r.gdiv.style.display = "none";
@@ -1813,7 +1813,7 @@ var controller = function () {
         var pos = new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon);
         map._db_me.push(addmarker(map, bounds, pos, pinSymbol("#44FF44", "B", 0.7, race.curr.heading), undefined,
                                   "HDG: " + roundTo(race.curr.heading, 1) + " | TWA: " + roundTo(race.curr.twa, 1) + " | SPD: " + roundTo(race.curr.speed, 2), 'me', 20, 0.7));
-        map.fitBounds(bounds);
+        // map.fitBounds(bounds);
     }
 
     function updateMapLeader(race) {
