@@ -1778,7 +1778,7 @@ var controller = function () {
 
         // track wp
         var tpath = [];
-        if (race.boatActions.length > 0) {
+        if (race.boatActions && race.boatActions.length > 0) {
             if (race.boatActions[0].pos) {
                 tpath.push(new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon)); // boat
                 for (var i = 0; i < race.boatActions[0].pos.length; i++) {
@@ -2182,6 +2182,57 @@ var controller = function () {
     var onEvent = function (debuggeeId, message, params) {
         if (tabId != debuggeeId.tabId)
             return;
+        if (message == "Network.responseReceived") {
+          if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos" ) {
+            chrome.debugger.sendCommand(
+                {
+                    tabId: debuggeeId.tabId,
+                },
+                "Network.getResponseBody",
+                {
+                    requestId: params.requestId,
+                },
+                function (response) {
+                    if (response) {
+                        try {
+                            var message = JSON.parse(response.body).res;
+                            
+                            var boatState = message.bs;
+                            var raceId = getRaceLegId(boatState._id);
+                            var race = races.get(raceId);
+
+                            var uid = boatState._id.user_id;
+                            if (!currentUserId) {
+                                currentUserId = uid;
+                            }
+                            
+                            if (message.leg) {
+                                race.legdata = message.leg;
+                            }
+                            
+                            if (message.boatActions) {
+                                race.boatActions = message.boatActions;
+                            }
+                            initializeMap(race);
+                            
+                            updatePosition(boatState, race);
+                            updateMapMe(race);
+
+                            if (cbRouter.checked) {
+                                callRouter(raceId);
+                            }
+
+                            // Provide own info on Fleet tab
+                            updateFriendUinfo(raceId, "usercard", uid, boatState);
+
+                        } catch (e) {
+                            console.log(e + ": " + JSON.stringify(response));
+                        }
+                    }
+                }
+            );
+          }
+        }
 
         if (message == "Network.webSocketFrameSent") {
             // Append message to raw log
@@ -2486,5 +2537,6 @@ window.addEventListener("load", function () {
         }
     });
     chrome.debugger.onEvent.addListener(controller.onEvent);
+    
 });
 
