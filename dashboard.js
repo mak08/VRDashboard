@@ -2179,11 +2179,8 @@ var controller = function () {
         };
     }
 
-    var onEvent = function (debuggeeId, message, params) {
-        if (tabId != debuggeeId.tabId)
-            return;
-        if (message == "Network.responseReceived") {
-          if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos" ) {
+    function handleBoatInfo (debuggeeId, message, params) {
+        try {
             chrome.debugger.sendCommand(
                 {
                     tabId: debuggeeId.tabId,
@@ -2196,34 +2193,40 @@ var controller = function () {
                     if (response) {
                         try {
                             var message = JSON.parse(response.body).res;
-                            
-                            var boatState = message.bs;
-                            var raceId = getRaceLegId(boatState._id);
-                            var race = races.get(raceId);
 
-                            var uid = boatState._id.user_id;
-                            if (!currentUserId) {
-                                currentUserId = uid;
-                            }
-                            
-                            if (message.leg) {
-                                race.legdata = message.leg;
-                            }
-                            
-                            if (message.boatActions) {
-                                race.boatActions = message.boatActions;
-                            }
-                            initializeMap(race);
-                            
-                            updatePosition(boatState, race);
-                            updateMapMe(race);
+                            if (message.bs) {
+                                var boatState = message.bs;
+                                var raceId = getRaceLegId(boatState._id);
+                                var race = races.get(raceId);
+                                var uid = boatState._id.user_id;
+                                if (!currentUserId) {
+                                    currentUserId = uid;
+                                } else {
+                                    if (currentUserId != uid) {
+                                        console.log("Unexpected UID, discarding " + response);
+                                        return;
+                                    }
+                                }
+                                if (message.leg) {
+                                    race.legdata = message.leg;
+                                }
+                                
+                                if (message.boatActions) {
+                                    race.boatActions = message.boatActions;
+                                }
 
-                            if (cbRouter.checked) {
-                                callRouter(raceId);
+                                initializeMap(race);
+                                
+                                updatePosition(boatState, race);
+                                updateMapMe(race);
+                                
+                                if (cbRouter.checked) {
+                                    callRouter(raceId);
+                                }
+                                
+                                // Add own info on Fleet tab
+                                updateFriendUinfo(raceId, "usercard", uid, boatState);
                             }
-
-                            // Provide own info on Fleet tab
-                            updateFriendUinfo(raceId, "usercard", uid, boatState);
 
                         } catch (e) {
                             console.log(e + ": " + JSON.stringify(response));
@@ -2231,7 +2234,48 @@ var controller = function () {
                     }
                 }
             );
-          }
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
+
+    function handleFleet (debuggeeId, message, params) {
+        try {
+            chrome.debugger.sendCommand(
+                {
+                    tabId: debuggeeId.tabId,
+                },
+                "Network.getResponseBody",
+                {
+                    requestId: params.requestId,
+                },
+                function (response) {
+                    if (response) {
+                        try {
+                            var message = JSON.parse(response.body).res;
+                        } catch (e) {
+                            console.log(e + ": " + JSON.stringify(response));
+                        }
+                    }
+                }
+            );
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
+
+    var onEvent = function (debuggeeId, message, params) {
+        if (tabId != debuggeeId.tabId)
+            return;
+        if (message == "Network.responseReceived") {
+            if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos" ) {
+                handleBoatInfo(debuggeeId, message, params);
+            }
+            if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getfleet" ) {
+                handleFleet(debuggeeId, message, params);
+            }
         }
 
         if (message == "Network.webSocketFrameSent") {
