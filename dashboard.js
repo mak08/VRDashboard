@@ -2179,7 +2179,7 @@ var controller = function () {
         };
     }
 
-    function handleBoatInfo (debuggeeId, message, params) {
+    function handleBoatInfo (debuggeeId, message, params, request) {
         try {
             chrome.debugger.sendCommand(
                 {
@@ -2200,10 +2200,12 @@ var controller = function () {
                                 var race = races.get(raceId);
                                 var uid = boatState._id.user_id;
                                 if (!currentUserId) {
-                                    currentUserId = uid;
+                                    alert("Logged-on user is unknown, please exit and re-enter VR Offshore!");
+                                    return;
                                 } else {
                                     if (currentUserId != uid) {
-                                        console.log("Unexpected UID, discarding " + response);
+                                        console.log("Unexpected UID " + uid + " != current user " + currentUserId +", discarding");
+                                        console.log(response);
                                         return;
                                     }
                                 }
@@ -2240,7 +2242,7 @@ var controller = function () {
     }
 
 
-    function handleFleet (debuggeeId, message, params) {
+    function handleFleet (debuggeeId, message, params, request) {
         try {
             chrome.debugger.sendCommand(
                 {
@@ -2254,6 +2256,8 @@ var controller = function () {
                     if (response) {
                         try {
                             var message = JSON.parse(response.body).res;
+                            console.log(request);
+                            console.log(message);
                         } catch (e) {
                             console.log(e + ": " + JSON.stringify(response));
                         }
@@ -2265,20 +2269,31 @@ var controller = function () {
         }
     }
 
+    var xhrMap = new Map();
 
     var onEvent = function (debuggeeId, message, params) {
         if (tabId != debuggeeId.tabId)
             return;
-        if (message == "Network.responseReceived") {
+
+
+        if (message == "Network.requestWillBeSent"
+            && params
+            && params.request 
+            && (params.request.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos"
+                || params.request.url == "https://vro-api-client.prod.virtualregatta.com/getfleet")) {
+            if (params.request.method = "POST") {
+                xhrMap.set(params.requestId, params.request);
+            }
+            
+        } else if (message == "Network.responseReceived") {
             if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos" ) {
-                handleBoatInfo(debuggeeId, message, params);
+                handleBoatInfo(debuggeeId, message, params, xhrMap.get(params.requestId));
             }
             if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getfleet" ) {
-                handleFleet(debuggeeId, message, params);
+                handleFleet(debuggeeId, message, params, xhrMap.get(params.requestId));
             }
-        }
-
-        if (message == "Network.webSocketFrameSent") {
+            
+        } else if (message == "Network.webSocketFrameSent") {
             // Append message to raw log
             if (cbRawLog.checked) {
                 divRawLog.innerHTML = divRawLog.innerHTML + "\n" + ">>> " + params.response.payloadData;
