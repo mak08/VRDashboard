@@ -15,7 +15,7 @@ var controller = function () {
     var polars = [];
 
     var races = new Map();
-    var racefriends = new Map();
+    var fleet = new Map();
     var sortField = "none";
     var currentSortField = "none";
     var currentSortOrder = 0;
@@ -38,7 +38,7 @@ var controller = function () {
         var rfdef = new Map();
         rfdef.table = new Array();
         rfdef.uinfo = new Object();
-        racefriends.set(race.id, rfdef);
+        fleet.set(race.id, rfdef);
         addSelOption(race, false, disabled);
         if (race.has_beta) {
             addSelOption(race, true, disabled);
@@ -58,7 +58,7 @@ var controller = function () {
             divRaceStatus = document.getElementById("raceStatus");
             divRaceStatus.innerHTML = makeRaceStatusHTML();
             divFriendList = document.getElementById("friendList");
-            divFriendList.innerHTML = "No boats positions received yet";
+            "No boats positions received yet";
         }
         xhr.open("GET", "http://zezo.org/races2.json");
         //xhr.open("GET", "races2.json");
@@ -319,7 +319,7 @@ var controller = function () {
             res.bcolor = 'DarkGreen';
         } else if (uinfo.type == "sponsor") {
             res.nameStyle += "color: BlueViolet;";
-            res.name += "(" + uinfo.bname + ")";
+            res.name += "(" + uinfo.branding.name + ")";
             res.bcolor = 'BlueViolet';
         }
 
@@ -341,6 +341,7 @@ var controller = function () {
         return  (uid == currentUserId)
             || (record.mode == "followed" && cbFriends.checked)
             || (record.mode == "opponents" && cbOpponents.checked)
+            || (record.mode == "other" && cbOpponents.checked)
             || (boatInfo.team != "none" && cbTeam.checked)
             || (record.type == "top" && cbTop.checked)
             || (record.type == "real" && cbReals.checked)
@@ -435,13 +436,13 @@ var controller = function () {
             + '</table>';
     }
 
-    function makeFriendsHTML(rf) {
-        var field = "speed";
+    function updateFleetHTML(rf) {
         if (rf === undefined) {
-            return "No friend positions received yet";
+             "No friend positions received yet";
         } else {
             sortFriends(rf);
-            return '<table>'
+            var fleetHTML =
+                '<table>'
                 + '<thead class="sticky">'
                 + friendListHeader()
                 + '</thead>'
@@ -449,6 +450,7 @@ var controller = function () {
                 + Array.from(rf.table || []).map(makeFriendListLine, rf).join(" ");
                 + '</tbody>'
                 + '</table>';
+            divFriendList.innerHTML = fleetHTML;
         }
     }
 
@@ -464,7 +466,7 @@ var controller = function () {
     }
 
     function updateFriendUinfo(rid, mode, uid, data) {
-        var rfd = racefriends.get(rid);
+        var rfd = fleet.get(rid);
         if (!rfd) {
             console.log("raceInfo not initialized");
             return;
@@ -489,7 +491,7 @@ var controller = function () {
             ndata.teamname = data.teamname;
             ndata.team = data.team;
         }
-        var elemlist = ["baseInfos", "displayName", "ts", "lastCalcDate", "startDate", "type", "state", "pos", "heading", "twa", "tws", "speed", "mode", "distanceToEnd", "distanceFromStart", "sail", "bname"];
+        var elemlist = ["baseInfos", "displayName", "ts", "lastCalcDate", "startDate", "type", "state", "pos", "heading", "twa", "tws", "speed", "mode", "distanceToEnd", "distanceFromStart", "sail", "bname", "track"];
         // copy elems from data to uinfo
         elemlist.forEach(function (tag) {
             if (tag in data) {
@@ -532,7 +534,7 @@ var controller = function () {
             ndata.xoption_foils = "---";
             ndata.xoption_hull = "---";
         }
-
+        
         if (data["rank"] > 0) ndata["rank"] = data["rank"];
     }
 
@@ -682,39 +684,42 @@ var controller = function () {
         rfd.table = fln;
     }
 
-    function updateFriends(rid, mode, data) {
-        var rfd = racefriends.get(rid);
-        rfd.lastUpdate = Date.now();
 
-        data.forEach(function (delem) {
-            delem.mode = mode;
-            if (mode === "fleet") {
-                if (delem.followed) {
-                    delem.mode = "followed";
-                } else if (delem.opponent) {
-                    delem.mode = "opponents";
-                } else {
-                    delem.mode = "other";
-                }
-                if (delem.team) {
-                    delem.teamname = currentTeam;
-                }
+    function fixMessageData (message, mode) {
+        message.mode = mode;
+
+        if (mode === "fleet") {
+            if (message.followed) {
+                message.mode = "followed";
+            } else if (message.opponent) {
+                message.mode = "opponents";
             } else {
-                delem.mode = mode;
+                message.mode = "other";
             }
-            if (!delem.ts) delem.ts = Date.now();
-            if (delem.type == "sponsor") {
-                delem.bname = delem.branding.name;
+            if (message.team) {
+                message.teamname = currentTeam;
             }
-            if (delem.mode == "opponents") {
-                if (delem.type == "pilotBoat") {
-                    delem.displayName = "Frigate";
-                } else if (delem.type == "real") {
-                    delem.displayName = delem.extendedInfos.boatName;
-                    delem.rank = delem.extendedInfos.rank;
-                }
+        }
+
+        if (message.mode == "opponents") {
+            if (message.type == "pilotBoat") {
+                message.displayName = "Frigate";
+            } else if (message.type == "real") {
+                message.displayName = message.extendedInfos.boatName;
+                message.rank = message.extendedInfos.rank;
             }
-            updateFriendUinfo(rid, mode, delem.userId, delem);
+        }
+        if (!message.ts) {
+            message.ts = Date.now();
+        }
+
+    }
+    
+    function updateFriends(rid, mode, data) {
+        var rfd = fleet.get(rid);
+        data.forEach(function (message) {
+            fixMessageData(message, mode);
+            updateFriendUinfo(rid, mode, message.userId, message);
         });
         sortFriends(rfd);
     }
@@ -914,7 +919,7 @@ var controller = function () {
     }
 
     function changeFriends(race) {
-        divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+        updateFleetHTML(fleet.get(selRace.value));
     }
 
     function changeRace(raceId) {
@@ -924,7 +929,7 @@ var controller = function () {
         var race = races.get(raceId);
         divRaceStatus.innerHTML = makeRaceStatusHTML();
         divRecordLog.innerHTML = makeTableHTML(race);
-        divFriendList.innerHTML = makeFriendsHTML(racefriends.get(raceId));
+        updateFleetHTML(fleet.get(raceId));
         switchMap(race);
     }
 
@@ -933,7 +938,14 @@ var controller = function () {
         if (id.raceId) {
             return id.raceId + "." + id.legNum;
         } else {
-            return id.race_id + "." + id.leg_num;
+            if (id.leg_num) {
+                return id.race_id + "." + id.leg_num;
+            } else if (id.num) {
+                return id.race_id + "." + id.num;
+            } else {
+                alert("Unknown race id format");
+                return undefined;
+            }
         }
     }
 
@@ -1026,7 +1038,7 @@ var controller = function () {
                 currentSortField = sortField;
                 currentSortOrder = 0;
             }
-            divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+            updateFleetHTML(fleet.get(selRace.value));
         }
 
         for (var node = ev.target; node; node = node.parentNode) {
@@ -1072,7 +1084,7 @@ var controller = function () {
             } else if (cbox) {
                 // Skippers-Choice
                 changeState(ev_lbl);
-                divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+                updateFleetHTML(fleet.get(selRace.value));
                 updateMapFleet(races.get(selRace.value));
             } else {
                 // Race-Switching
@@ -1373,7 +1385,7 @@ var controller = function () {
 
         if (userId) {
             // Friend routing request
-            uinfo = racefriends.get(raceId).uinfo[userId];
+            uinfo = fleet.get(raceId).uinfo[userId];
             if (uinfo === undefined) {
                 alert("Can't find record for user id " + userId);
                 return;
@@ -1424,7 +1436,7 @@ var controller = function () {
         var uinfo;
 
         if (userId) {
-            uinfo = racefriends.get(raceId).uinfo[userId];
+            uinfo = fleet.get(raceId).uinfo[userId];
             if (uinfo === undefined) {
                 alert("Can't find record for user id " + userId);
                 return;
@@ -1791,7 +1803,7 @@ var controller = function () {
         }
     }
 
-    function updateMapMe(race) {
+    function updateMapMe(race, track) {
         var map = race.gmap;
 
         if (!map) return; // no map yet
@@ -1799,9 +1811,9 @@ var controller = function () {
 
         // track
         var tpath = [];
-        if (race.track) {
-            for (var i = 0; i < race.track.length; i++) {
-                tpath.push(new google.maps.LatLng(race.track[i].lat, race.track[i].lon));
+        if (track) {
+            for (var i = 0; i < track.length; i++) {
+                tpath.push(new google.maps.LatLng(track[i].lat, track[i].lon));
             }
             var ttpath = makeTTPath(tpath, "#44FF44");
             ttpath.setMap(map);
@@ -1896,7 +1908,7 @@ var controller = function () {
         clearTrack(map, "_db_op");
 
         // opponents/followed
-        var rfd = racefriends.get(race.id);
+        var rfd = fleet.get(race.id);
 
         Object.keys(rfd.uinfo).forEach(function (key) {
             var elem = rfd.uinfo[key];
@@ -1914,7 +1926,21 @@ var controller = function () {
                 var tpath = [];
                 if (elem.track) {
                     for (var i = 0; i < elem.track.length; i++) {
-                        tpath.push(new google.maps.LatLng(elem.track[i].lat, elem.track[i].lon));
+                        var segment = elem.track[i];
+                        var pos = new google.maps.LatLng(segment.lat, segment.lon);
+                        tpath.push(pos);
+                        if (i > 0) {
+                            var deltaT = (segment.ts -  elem.track[i-1].ts) / 1000;
+                            var deltaD =  gcDistance(elem.track[i-1], segment);
+                            var speed = roundTo(Math.abs(deltaD / deltaT * 3600), 2);
+                            var timeStamp = new Date(segment.ts);
+                            var label =  elem.displayName + "|" + timeStamp.toISOString() + "|" + speed + "kn" + "|" + (segment.tag || "-");
+                            var marker = new google.maps.Marker({
+                                position: pos,
+                                map: map,
+                                title: label
+                            });
+                        }
                     }
                     var ttpath = new google.maps.Polyline({
                         path: tpath,
@@ -2175,98 +2201,110 @@ var controller = function () {
             });
             divRaceStatus.innerHTML = makeRaceStatusHTML();
             divRecordLog.innerHTML = makeTableHTML();
-            divFriendList.innerHTML = makeFriendsHTML();
+            updateFleetHTML();
         };
     }
 
-    function handleBoatInfo (debuggeeId, message, params, request) {
+    // Helper function: Invoke debugger command
+    function sendDebuggerCommand  (debuggeeId, params, command, callback) {
         try {
-            chrome.debugger.sendCommand(
-                {
-                    tabId: debuggeeId.tabId,
-                },
-                "Network.getResponseBody",
-                {
-                    requestId: params.requestId,
-                },
-                function (response) {
-                    if (response) {
-                        try {
-                            var message = JSON.parse(response.body).res;
-
-                            if (message.bs) {
-                                var boatState = message.bs;
-                                var raceId = getRaceLegId(boatState._id);
-                                var race = races.get(raceId);
-                                var uid = boatState._id.user_id;
-                                if (!currentUserId) {
-                                    alert("Logged-on user is unknown, please exit and re-enter VR Offshore!");
-                                    return;
-                                } else {
-                                    if (currentUserId != uid) {
-                                        console.log("Unexpected UID " + uid + " != current user " + currentUserId +", discarding");
-                                        console.log(response);
-                                        return;
-                                    }
-                                }
-                                if (message.leg) {
-                                    race.legdata = message.leg;
-                                }
-                                
-                                if (message.boatActions) {
-                                    race.boatActions = message.boatActions;
-                                }
-
-                                initializeMap(race);
-                                
-                                updatePosition(boatState, race);
-                                updateMapMe(race);
-                                
-                                if (cbRouter.checked) {
-                                    callRouter(raceId);
-                                }
-                                
-                                // Add own info on Fleet tab
-                                updateFriendUinfo(raceId, "usercard", uid, boatState);
-                            }
-
-                        } catch (e) {
-                            console.log(e + ": " + JSON.stringify(response));
-                        }
-                    }
-                }
-            );
+            chrome.debugger.sendCommand({ tabId: debuggeeId.tabId }, command, { requestId: params.requestId }, callback);
         } catch (e) {
             console.log(e);
         }
     }
 
+    function handleBoatInfo (debuggeeId, params) {
+        sendDebuggerCommand(debuggeeId, params, "Network.getResponseBody", _handleBoatInfo);
+    }
 
-    function handleFleet (debuggeeId, message, params, request) {
-        try {
-            chrome.debugger.sendCommand(
-                {
-                    tabId: debuggeeId.tabId,
-                },
-                "Network.getResponseBody",
-                {
-                    requestId: params.requestId,
-                },
-                function (response) {
-                    if (response) {
-                        try {
-                            var message = JSON.parse(response.body).res;
-                            console.log(request);
-                            console.log(message);
-                        } catch (e) {
-                            console.log(e + ": " + JSON.stringify(response));
-                        }
+    function handleFleet (debuggeeId, params) {
+        sendDebuggerCommand(debuggeeId, params, "Network.getResponseBody", (response) => {_handleFleet(xhrMap.get(params.requestId), response)});
+    }
+
+    function _handleBoatInfo (response)  {
+        if (response) {
+            try {
+                var message = JSON.parse(response.body).res;
+                if (message.leg) {
+                    handleLegInfo(message.leg);
+                }
+                if (message.bs) {
+                    if (!currentUserId) {
+                        alert("Logged-on user is unknown, please exit and re-enter VR Offshore!");
+                        return;
+                    }
+                    if (currentUserId ==  message.bs._id.user_id) {
+                        handleOwnBoatInfo(message.bs);
+                    } else {
+                        handleFleetBoatInfo(message.bs);
                     }
                 }
-            );
-        } catch (e) {
-            console.log(e);
+                if (message.track) {
+                    handleOwnTrackInfo(message.track);
+                }
+                
+            } catch (e) {
+                console.log(e + ": " + JSON.stringify(response));
+            }
         }
+    }
+
+    function _handleFleet (request, response) {
+        if (response) {
+            try {
+                var requestData = JSON.parse(request.postData);
+                var raceId = getRaceLegId(requestData);
+                var race = races.get(raceId);
+                var message = JSON.parse(response.body).res;
+                updateFriends(raceId, "fleet", message);
+                updateFleetHTML(fleet.get(selRace.value));
+                // updateMapFleet(race);
+            } catch (e) {
+                console.log(e + ": " + JSON.stringify(response));
+            }
+        }
+    }
+    
+    function handleOwnBoatInfo (message) {
+        var raceId = getRaceLegId(message._id);
+        var race = races.get(raceId);
+        updatePosition(message, race);
+        if (cbRouter.checked) {
+            callRouter(raceId);
+        }
+        // Add own info on Fleet tab
+        updateFriendUinfo(raceId, "usercard", message._id.user_id, message);
+    }
+
+    function handleOwnTrackInfo (message) {
+        var raceId = getRaceLegId(message._id);
+        var race = races.get(raceId);
+        updateMapMe(race, message);
+    }
+
+    function handleOwnBoatActions (message) {
+        // ToDo - refactor updateFriendsUinfo message
+        if (message.boatActions) {
+            race.boatActions = message.boatActions;
+        }
+    }
+    
+    function handleFleetBoatInfo(message) {
+        var raceId = getRaceLegId(message._id);
+        var race = races.get(raceId);
+        fixMessageData(message, "usercard");
+        updateFriendUinfo(raceId, "usercard", message.userId, message);
+        updateMapFleet(race);
+    }
+    
+    function handleLegInfo (message) {
+        // ToDo - refactor updateFriendsUinfo message
+        var raceId = getRaceLegId(message._id);
+        var race = races.get(raceId);
+        race.legdata = message;
+        initializeMap(race);
+        
     }
 
     var xhrMap = new Map();
@@ -2287,10 +2325,10 @@ var controller = function () {
             
         } else if (message == "Network.responseReceived") {
             if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos" ) {
-                handleBoatInfo(debuggeeId, message, params, xhrMap.get(params.requestId));
+                handleBoatInfo(debuggeeId, params);
             }
             if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getfleet" ) {
-                handleFleet(debuggeeId, message, params, xhrMap.get(params.requestId));
+                handleFleet(debuggeeId, params);
             }
             
         } else if (message == "Network.webSocketFrameSent") {
@@ -2352,7 +2390,7 @@ var controller = function () {
                         currentUserId = response.scriptData.me._id;
                         lbBoatname.innerHTML = response.scriptData.me.displayName;
                         // Own boatname is also unknown if login message was not seen
-                        var myUInfo = racefriends.get(raceId).uinfo[currentUserId];
+                        var myUInfo = fleet.get(raceId).uinfo[currentUserId];
                         if (myUInfo && !myUInfo.displayName) {
                             myUInfo.displayName = response.scriptData.me.displayName;
                         }
@@ -2463,7 +2501,7 @@ var controller = function () {
                         updateFriends(raceId, "followed", response.scriptData.res);
                         updateMapFleet(race);
                         if (raceId == selRace.value) {
-                            divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+                            updateFleetHTML(fleet.get(selRace.value));
                         }
                     } else if (request.eventKey == "Game_GetOpponents") {
                         var raceId = getRaceLegId(request);
@@ -2471,7 +2509,7 @@ var controller = function () {
                         updateFriends(raceId, "opponents", response.scriptData.res);
                         updateMapFleet(race);
                         if (raceId == selRace.value) {
-                            divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+                            updateFleetHTML(fleet.get(selRace.value));
                         }
                     } else if (request.eventKey == "Game_GetFleet") {
                         var raceId = getRaceLegId(request);
@@ -2479,19 +2517,18 @@ var controller = function () {
                         updateFriends(raceId, "fleet", response.scriptData.res);
                         updateMapFleet(race);
                         if (raceId == selRace.value) {
-                            divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+                            updateFleetHTML(fleet.get(selRace.value));
                         }
                     } else if (request.eventKey == "Game_GetBoatTrack") {
                         var raceId = getRaceLegId(request);
-                        var rfd = racefriends.get(raceId);
+                        var rfd = fleet.get(raceId);
                         var race = races.get(raceId);
                         var uid = request.user_id;
                         var ndata = rfd.uinfo[uid];
 
                         if (race) {
                             if (uid == race.curr._id.user_id) {
-                                race.track = response.scriptData.track;
-                                updateMapMe(race);
+                                updateMapMe(race, response.scriptData.track);
                             } else if (ndata) {
                                 ndata.track = response.scriptData.track;
                                 updateMapFleet(race);
@@ -2499,7 +2536,7 @@ var controller = function () {
                         }
                     } else if (request.eventKey == "Game_GetGhostTrack") {
                         var raceId = getRaceLegId(request);
-                        var rfd = racefriends.get(raceId);
+                        var rfd = fleet.get(raceId);
                         var race = races.get(raceId);
                         var uid = request.user_id;
                         var ndata = rfd.uinfo[uid];
@@ -2518,7 +2555,7 @@ var controller = function () {
                         response.scriptData.legInfos.baseInfos = response.scriptData.baseInfos; // tweak record
                         updateFriendUinfo(raceId, "usercard", uid, response.scriptData.legInfos);
                         if (raceId == selRace.value) {
-                            divFriendList.innerHTML = makeFriendsHTML(racefriends.get(selRace.value));
+                            updateFleetHTML(fleet.get(selRace.value));
                         }
                         var race = races.get(raceId);
                         updateMapFleet(race);
@@ -2598,4 +2635,3 @@ window.addEventListener("load", function () {
     chrome.debugger.onEvent.addListener(controller.onEvent);
     
 });
-
