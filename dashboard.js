@@ -16,6 +16,9 @@ var controller = function () {
 
     var races = new Map();
     var fleet = new Map();
+
+    var showMarkers = new Map();
+    
     var sortField = "none";
     var currentSortField = "none";
     var currentSortOrder = 0;
@@ -23,6 +26,13 @@ var controller = function () {
                      // VR sends sailNo + 10 to indicate autoSail. We use sailNo mod 10 to find the sail name sans Auto indication.
                      "Auto", "Jib (Auto)", "Spi (Auto)", "Stay (Auto)", "LJ (Auto)", "C0 (Auto)", "HG (Auto)", "LG (Auto)"];
 
+    function isShowMarkers(userId) {
+        if (showMarkers.get(userId) == undefined) {
+            showMarkers.set(userId, true);
+        }
+        return showMarkers.get(userId);
+    }
+    
     function addSelOption(race, beta, disabled) {
         var option = document.createElement("option");
         option.text = race.name + (beta ? " beta" : "") + " (" + race.id.substr(0, 3) + ")";
@@ -68,7 +78,7 @@ var controller = function () {
     // Earth radius in nm, 360*60/(2*Pi);
     var radius = 3437.74683;
 
-    var selRace, cbRouter, cbReuseTab, cbLocalTime;
+    var selRace, cbRouter, cbReuseTab, cbMarkers, cbLocalTime;
     var lbBoatname, lbTeamname;
     var divPositionInfo, divRecordLog, divRawLog;
     var callRouterFunction;
@@ -475,7 +485,14 @@ var controller = function () {
         var ndata = rfd.uinfo[uid];
         var boatPolars = (data.boat) ? polars[data.boat.polar_id] : undefined;
 
-        if (data.pos == undefined) return; // looked up user not in this race
+        // looked up user not in this race
+        // Verify this - how can a looked up user (by click on VR UI) not be in the race?!
+        // Also, NGE Usercard messages are missing position info!
+        // Entry should be created here and missing data merged from fleet info.
+        // But if user was in fleet info, it should already be here?!
+
+        // if (data.pos == undefined) return;
+        
         if (!ndata) {
             ndata = new Object();
             rfd.uinfo[uid] = ndata;
@@ -1653,7 +1670,9 @@ var controller = function () {
 
     function clearTrack(map, db) {
         if (map[db])
-            for (var i = 0; i < map[db].length; i++) map[db][i].setMap(null);
+            for (var i = 0; i < map[db].length; i++) {
+                map[db][i].setMap(null);
+            }
         map[db] = new Array();
     }
 
@@ -1813,7 +1832,30 @@ var controller = function () {
         var tpath = [];
         if (track) {
             for (var i = 0; i < track.length; i++) {
-                tpath.push(new google.maps.LatLng(track[i].lat, track[i].lon));
+                var segment = track[i];
+                var pos = new google.maps.LatLng(segment.lat, segment.lon);
+                tpath.push(pos);
+                if (cbMarkers.checked) {
+                    if (i > 0) {
+                        var deltaT = (segment.ts -  track[i-1].ts) / 1000;
+                        var deltaD =  gcDistance(track[i-1], segment);
+                        var speed = roundTo(Math.abs(deltaD / deltaT * 3600), 2);
+                        var timeStamp = new Date(segment.ts);
+                        var label =  "Me" + "|" + timeStamp.toISOString() + "|" + speed + "kn" + "|" + (segment.tag || "-");
+                        var marker = new google.maps.Marker({
+                            icon: {
+                                url: 'img/dot.png',
+                                size: new google.maps.Size(12, 12),
+                                origin: new google.maps.Point(6, 6),
+                                anchor: new google.maps.Point(6, 6)
+                            },
+                            position: pos,
+                            map: map,
+                            title: label
+                        });
+                        map._db_op.push(marker);
+                    }
+                }
             }
             var ttpath = makeTTPath(tpath, "#44FF44");
             ttpath.setMap(map);
@@ -1929,17 +1971,26 @@ var controller = function () {
                         var segment = elem.track[i];
                         var pos = new google.maps.LatLng(segment.lat, segment.lon);
                         tpath.push(pos);
-                        if (i > 0) {
-                            var deltaT = (segment.ts -  elem.track[i-1].ts) / 1000;
-                            var deltaD =  gcDistance(elem.track[i-1], segment);
-                            var speed = roundTo(Math.abs(deltaD / deltaT * 3600), 2);
-                            var timeStamp = new Date(segment.ts);
-                            var label =  elem.displayName + "|" + timeStamp.toISOString() + "|" + speed + "kn" + "|" + (segment.tag || "-");
-                            var marker = new google.maps.Marker({
-                                position: pos,
-                                map: map,
-                                title: label
-                            });
+                        if (cbMarkers.checked) {
+                            if (i > 0) {
+                                var deltaT = (segment.ts -  elem.track[i-1].ts) / 1000;
+                                var deltaD =  gcDistance(elem.track[i-1], segment);
+                                var speed = roundTo(Math.abs(deltaD / deltaT * 3600), 2);
+                                var timeStamp = new Date(segment.ts);
+                                var label =  elem.displayName + "|" + timeStamp.toISOString() + "|" + speed + "kn" + "|" + (segment.tag || "-");
+                                var marker = new google.maps.Marker({
+                                    icon: {
+                                        url: 'img/dot.png',
+                                        size: new google.maps.Size(12, 12),
+                                        origin: new google.maps.Point(6, 6),
+                                        anchor: new google.maps.Point(6, 6)
+                                    },
+                                    position: pos,
+                                    map: map,
+                                    title: label
+                                });
+                                map._db_op.push(marker);
+                            }
                         }
                     }
                     var ttpath = new google.maps.Polyline({
@@ -2026,6 +2077,7 @@ var controller = function () {
 
     function readOptions() {
         getOption("auto_router");
+        getOption("markers");
         getOption("reuse_tab");
         getOption("local_time");
         getOption("nmea_output");
@@ -2033,6 +2085,10 @@ var controller = function () {
 
     function addConfigListeners() {
         cbRouter.addEventListener("change", saveOption);
+        cbMarkers.addEventListener("change", saveOption);
+        cbMarkers.addEventListener("change", () => {
+            updateMapFleet(races.get(selRace.value));
+        });
         cbReuseTab.addEventListener("change", saveOption);
         cbLocalTime.addEventListener("change", saveOption);
         cbNMEAOutput.addEventListener("change", saveOption);
@@ -2125,6 +2181,7 @@ var controller = function () {
         cbSponsors = document.getElementById("sel_sponsors");
         cbInRace = document.getElementById("sel_inrace");
         cbRouter = document.getElementById("auto_router");
+        cbMarkers = document.getElementById("markers");
         cbReuseTab = document.getElementById("reuse_tab");
         cbLocalTime = document.getElementById("local_time");
         cbNMEAOutput = document.getElementById("nmea_output");
@@ -2205,6 +2262,7 @@ var controller = function () {
         };
     }
 
+    
     // Helper function: Invoke debugger command
     function sendDebuggerCommand  (debuggeeId, params, command, callback) {
         try {
@@ -2214,11 +2272,16 @@ var controller = function () {
         }
     }
 
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
     function handleBoatInfo (debuggeeId, params) {
         sendDebuggerCommand(debuggeeId, params, "Network.getResponseBody", _handleBoatInfo);
     }
 
-    function handleFleet (debuggeeId, params) {
+    async function handleFleet (debuggeeId, params) {
+        await sleep(1000);
         sendDebuggerCommand(debuggeeId, params, "Network.getResponseBody", (response) => {_handleFleet(xhrMap.get(params.requestId), response)});
     }
 
@@ -2259,7 +2322,7 @@ var controller = function () {
                 var message = JSON.parse(response.body).res;
                 updateFriends(raceId, "fleet", message);
                 updateFleetHTML(fleet.get(selRace.value));
-                // updateMapFleet(race);
+                updateMapFleet(race);
             } catch (e) {
                 console.log(e + ": " + JSON.stringify(response));
             }
