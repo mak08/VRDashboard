@@ -1675,7 +1675,7 @@ var controller = function () {
                     geodesic: true,
                     strokeColor: "#FF0000",
                     strokeOpacity: 0.5,
-                    strokeWeight: 2,
+                    strokeWeight: 4,
                     zIndex: 4
                 });
                 icePath.setMap(map);
