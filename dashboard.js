@@ -1662,9 +1662,28 @@ var controller = function () {
                 zIndex: 4
             });
             ccpath.setMap(map);
-            map.fitBounds(bounds);
 
+            //  Ice limits
+            if (race.legdata.ice_limits) {
+                var iceLimit = [];
+                var iceData = race.legdata.ice_limits.south;
+                for (var i = 0; i < iceData.length; i++) {
+                    iceLimit.push(new google.maps.LatLng(iceData[i].lat, iceData[i].lon));
+                }
+                var icePath = new google.maps.Polyline({
+                    path: iceLimit,
+                    geodesic: true,
+                    strokeColor: "#FF0000",
+                    strokeOpacity: 0.5,
+                    strokeWeight: 2,
+                    zIndex: 4
+                });
+                icePath.setMap(map);
+            }
+
+            map.fitBounds(bounds);
         }
+        
         updateMapWaypoints(race);
     }
 
