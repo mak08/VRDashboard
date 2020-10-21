@@ -1672,7 +1672,7 @@ var controller = function () {
                 }
                 var icePath = new google.maps.Polyline({
                     path: iceLimit,
-                    geodesic: true,
+                    geodesic: false,
                     strokeColor: "#FF0000",
                     strokeOpacity: 0.5,
                     strokeWeight: 4,
