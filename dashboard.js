@@ -491,7 +491,7 @@ var controller = function () {
         // Entry should be created here and missing data merged from fleet info.
         // But if user was in fleet info, it should already be here?!
 
-        // if (data.pos == undefined) return;
+        if (data.pos == undefined) return;
         
         if (!ndata) {
             ndata = new Object();
