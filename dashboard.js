@@ -2140,7 +2140,7 @@ var controller = function () {
     function formatGNRMC (m) {
         // http://www.nmea.de/nmea0183datensaetze.html#rmc
         // https://gpsd.gitlab.io/gpsd/NMEA.html#_rmc_recommended_minimum_navigation_information
-        var d = new Date(m.lastCalcDate);
+        var d = new Date(m.lastCalcDate || new Date());
         var s = "GNRMC";
         s += "," + formatHHMMSSSS(d) + ",A";                 // UTC time & status
         s += "," + formatNMEALatLon(Math.abs(m.pos.lat), 9); // Latitude & N/S
@@ -2158,9 +2158,11 @@ var controller = function () {
     function formatINMWV (m) {
         // $INMWV Wind Speed and Angle
         var s = "INMWV";
-        var pTWA = (m.twa > 0)? m.twa: m.twa + 360; 
+        var twa = m.twa || 0;
+        var tws = m-tws || 0;
+        var pTWA = (twa > 0)? twa: twa + 360; 
         s += "," + pad0(roundTo(pTWA, 2), 6) + ",T";
-        s += "," + pad0(roundTo(m.tws, 2), 5) + ",N";
+        s += "," + pad0(roundTo(tws, 2), 5) + ",N";
         s += ",A"
         return s;
     }
@@ -2376,7 +2378,9 @@ var controller = function () {
         var raceId = getRaceLegId(message._id);
         var race = races.get(raceId);
         fixMessageData(message, "usercard");
-        updateFriendUinfo(raceId, "usercard", message.userId, message);
+        var userId = (message._id)?message._id.user_id:message.userId;
+        updateFriendUinfo(raceId, "usercard", userId, message);
+        updateFleetHTML(fleet.get(selRace.value));
         updateMapFleet(race);
     }
     
