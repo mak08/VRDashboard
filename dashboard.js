@@ -2308,6 +2308,9 @@ var controller = function () {
 
     function _handleBoatInfo (response)  {
         if (response) {
+            if (cbRawLog.checked) {
+                divRawLog.innerHTML = divRawLog.innerHTML + "\n" + "<<< " + JSON.stringify(response);
+            }
             try {
                 var message = JSON.parse(response.body).res;
                 if (message.leg) {
@@ -2336,6 +2339,9 @@ var controller = function () {
 
     function _handleFleet (request, response) {
         if (response) {
+            if (cbRawLog.checked) {
+                divRawLog.innerHTML = divRawLog.innerHTML + "\n" + "<<< " + JSON.stringify(response);
+            }
             try {
                 var requestData = JSON.parse(request.postData);
                 var raceId = getRaceLegId(requestData);
@@ -2406,10 +2412,14 @@ var controller = function () {
             && (params.request.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos"
                 || params.request.url == "https://vro-api-client.prod.virtualregatta.com/getfleet")) {
             if (params.request.method = "POST") {
+                if (cbRawLog.checked && params) {
+                    divRawLog.innerHTML = divRawLog.innerHTML + "\n" + ">>> " + JSON.stringify(params.request);
+                }
                 xhrMap.set(params.requestId, params.request);
             }
             
         } else if (message == "Network.responseReceived") {
+            // Append message to raw log
             if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos" ) {
                 handleBoatInfo(debuggeeId, params);
             }
