@@ -2158,8 +2158,8 @@ var controller = function () {
     function formatINMWV (m) {
         // $INMWV Wind Speed and Angle
         var s = "INMWV";
+        var tws = m.tws || 0;
         var twa = m.twa || 0;
-        var tws = m-tws || 0;
         var pTWA = (twa > 0)? twa: twa + 360; 
         s += "," + pad0(roundTo(pTWA, 2), 6) + ",T";
         s += "," + pad0(roundTo(tws, 2), 5) + ",N";
