@@ -1883,10 +1883,11 @@ var controller = function () {
         
         var bounds = race.gbounds;
         // boat
-        var pos = new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon);
-        map._db_me.push(addmarker(map, bounds, pos, pinSymbol("#44FF44", "B", 0.7, race.curr.heading), undefined,
-                                  "HDG: " + roundTo(race.curr.heading, 1) + " | TWA: " + roundTo(race.curr.twa, 1) + " | SPD: " + roundTo(race.curr.speed, 2), 'me', 20, 0.7));
-        // map.fitBounds(bounds);
+        if (race.curr && race.curr.pos) {
+            var pos = new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon);
+            var title =  "HDG: " + roundTo(race.curr.heading, 1) + " | TWA: " + roundTo(race.curr.twa, 1) + " | SPD: " + roundTo(race.curr.speed, 2)
+            map._db_me.push(addmarker(map, bounds, pos, pinSymbol("#44FF44", "B", 0.7, race.curr.heading), undefined, title, 'me', 20, 0.7));
+        }
     }
 
     function updateMapLeader(race) {

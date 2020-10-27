@@ -43,13 +43,12 @@ function onTabRemoved (tabId, removeInfo) {
 function onAttach (tabId) {
     if (chrome.runtime.lastError) {
         alert(chrome.runtime.lastError.message);
-        return;
+    } else {
+        chrome.tabs.create({url: "dashboard.html?" + tabId, active: false},
+                           function (tab) {
+                               dashboardTab = tab;
+                           });
     }
-
-    chrome.tabs.create({url: "dashboard.html?" + tabId, active: false},
-                       function (tab) {
-                           dashboardTab = tab;
-                       });
 }
 
 chrome.pageAction.onClicked.addListener( onPageClicked );
