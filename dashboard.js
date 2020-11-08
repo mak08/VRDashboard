@@ -329,7 +329,9 @@ var controller = function () {
             res.bcolor = 'DarkGreen';
         } else if (uinfo.type == "sponsor") {
             res.nameStyle += "color: BlueViolet;";
-            res.name += "(" + uinfo.branding.name + ")";
+            if (uinfo.branding && uinfo.branding.name) {
+                res.name += "(" + uinfo.branding.name + ")";
+            }
             res.bcolor = 'BlueViolet';
         }
 
@@ -2323,7 +2325,7 @@ var controller = function () {
                         return;
                     }
                     if (currentUserId ==  message.bs._id.user_id) {
-                        handleOwnBoatInfo(message.bs);
+                        handleOwnBoatInfo(message.bs, (message.leg != undefined));
                     } else {
                         handleFleetBoatInfo(message.bs);
                     }
@@ -2357,11 +2359,11 @@ var controller = function () {
         }
     }
     
-    function handleOwnBoatInfo (message) {
+    function handleOwnBoatInfo (message, doAutoRoute) {
         var raceId = getRaceLegId(message._id);
         var race = races.get(raceId);
         updatePosition(message, race);
-        if (cbRouter.checked) {
+        if (doAutoRoute && cbRouter.checked) {
             callRouter(raceId);
         }
         // Add own info on Fleet tab

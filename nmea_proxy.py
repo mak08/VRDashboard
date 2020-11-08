@@ -70,6 +70,7 @@ def accept_connection(sock):
         return None
 
 
+print("Creating Server")
 server = socketserver.TCPServer(("", PORT), NMEAHandler)
 print("Listening on port", PORT)
 try:
