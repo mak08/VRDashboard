@@ -2330,7 +2330,9 @@ var controller = function () {
             try {
                 var message = JSON.parse(response.body).res;
                 if (message.leg) {
-                    if (message.bs) {
+                    if (message.bs && (! currentUserId)) {
+                        // Don't overwrite currentUserId if it's defined.
+                        // When the user changes boats, we either receive an account message, or Dashboard was restartet.
                         currentUserId = message.bs._id.user_id;
                     }
                     handleLegInfo(message.leg);
