@@ -202,10 +202,14 @@ var controller = function () {
 
         var sailNameBG = r.curr.badSail ? LightRed : "lightgreen";
 
+        // This can occasionally fail when twa equals twaAuto by accident.
+        // We really should use the Game_AddBoatAction response but it's somewhat unintelligable
+        var isTWAMode = (r.curr.twa == r.curr.twaAuto);
+        
         var twaFG = (r.curr.twa < 0) ? "red" : "green";
-        var twaBold = r.curr.twaAuto ? "font-weight: bold;" : "";
-        var hdgFG = r.curr.twaAuto ? "black" : "blue";
-        var hdgBold = r.curr.twaAuto ? "font-weight: normal;" : "font-weight: bold;";
+        var twaBold = isTWAMode ? "font-weight: bold;" : "";
+        var hdgFG = isTWAMode ? "black" : "blue";
+        var hdgBold = isTWAMode ? "font-weight: normal;" : "font-weight: bold;";
 
         return '<td>' + (r.rank ? r.rank : "-") + '</td>'
             + '<td>' + (r.dtl ? roundTo(r.dtl, 2) : "-") + '</td>'
@@ -1099,7 +1103,7 @@ var controller = function () {
                 }
             } else if (friend) {
                 // Friend-Routing
-                if (call_rt) callRouter(selRace.value, rmatch);
+                if (call_rt) callRouter(selRace.value, rmatch, false);
             } else if (cbox) {
                 // Skippers-Choice
                 changeState(ev_lbl);
@@ -1108,7 +1112,7 @@ var controller = function () {
             } else {
                 // Race-Switching
                 if (call_wi) callWindy(rmatch, 0); // weather
-                if (call_rt) callRouter(rmatch);
+                if (call_rt) callRouter(rmatch, currentUserId, false);
                 if (call_pl) callPolars(rmatch);
                 enableRace(rmatch, true);
                 changeRace(rmatch);
@@ -1389,7 +1393,7 @@ var controller = function () {
         }
     }
 
-    function callRouterZezo(raceId, userId, beta) {
+    function callRouterZezo(raceId, userId, beta, auto = false) {
         var optionBits = {
             "winch": 4,
             "foil": 16,
@@ -1401,15 +1405,6 @@ var controller = function () {
         var baseURL = "http://zezo.org";
         var race = races.get(raceId);
         var uinfo;
-
-        if (userId) {
-            // Friend routing request
-            uinfo = fleet.get(raceId).uinfo[userId];
-            if (uinfo === undefined) {
-                alert("Can't find record for user id " + userId);
-                return;
-            }
-        }
 
         var options = 0;
         for (var key in race.curr.options) {
@@ -1436,15 +1431,29 @@ var controller = function () {
             var uid = race.curr._id.user_id;
             var type = "me";
 
-            if (userId) {
+            if (userId != currentUserId) {
+                uinfo = fleet.get(raceId).uinfo[userId];
+                if (!uinfo) {
+                    alert("Can't find record for user id " + userId);
+                    return;
+                }
                 pos = uinfo.pos;
                 twa = uinfo.twa;
                 uid = userId;
                 type = "friend";
             }
 
-            var url = baseURL + "/" + urlBeta + "/chart.pl?lat=" + pos.lat + "&lon=" + pos.lon +
-                "&o=" + options + "&twa=" + twa + "&userid=" + uid + "&type=" + type;
+            var flagIsAuto = (auto ? "&auto=yes" : "&auto=no");
+
+            var url = baseURL + "/" + urlBeta + "/chart.pl"
+                + "?lat=" + pos.lat
+                + "&lon=" + pos.lon
+                + "&ts=" + (race.curr.lastCalcDate / 1000)
+                + "&o=" + options
+                + "&twa=" + twa
+                + "&userid=" + uid
+                + "&type=" + type
+                + flagIsAuto;
             window.open(url, cbReuseTab.checked ? urlBeta : "_blank");
         }
     }
@@ -2118,14 +2127,18 @@ var controller = function () {
 
     function sendNMEA () {
         if (cbNMEAOutput.checked) {
-            races.forEach(function (r) {
-                if (r.curr) {
-                    var rmc = formatGNRMC(r.curr);
-                    var mwv = formatINMWV(r.curr);
-                    sendSentence(r.id, "$" + rmc + "*" + nmeaChecksum(rmc)); 
-                    sendSentence(r.id, "$" + mwv + "*" + nmeaChecksum(mwv)); 
-                }
-            });
+            try {
+                races.forEach(function (r) {
+                    if (r.curr) {
+                        var rmc = formatGNRMC(r.curr);
+                        var mwv = formatINMWV(r.curr);
+                        sendSentence(r.id, "$" + rmc + "*" + nmeaChecksum(rmc)); 
+                        sendSentence(r.id, "$" + mwv + "*" + nmeaChecksum(mwv)); 
+                    }
+                });
+            } catch (e) {
+                alert (e);
+            }
         }
     }
     
@@ -2243,7 +2256,7 @@ var controller = function () {
         initialized = true;
     }
 
-    var callRouter = function (raceId, userId) {
+    var callRouter = function (raceId, userId = currentUserId, auto = false) {
         var beta = false;
 
         if (typeof raceId === "object") { // button event
@@ -2263,7 +2276,7 @@ var controller = function () {
         } else if (races.get(raceId).url === undefined) {
             alert("Unsupported race, no router support yet.");
         } else {
-            callRouterZezo(raceId, userId, beta);
+            callRouterZezo(raceId, userId, beta, auto);
         }
     }
 
@@ -2317,6 +2330,9 @@ var controller = function () {
             try {
                 var message = JSON.parse(response.body).res;
                 if (message.leg) {
+                    if (message.bs) {
+                        currentUserId = message.bs._id.user_id;
+                    }
                     handleLegInfo(message.leg);
                 }
                 if (message.bs) {
@@ -2325,7 +2341,8 @@ var controller = function () {
                         return;
                     }
                     if (currentUserId ==  message.bs._id.user_id) {
-                        handleOwnBoatInfo(message.bs, (message.leg != undefined));
+                        var isFirstBoatInfo =  (message.leg != undefined);
+                        handleOwnBoatInfo(message.bs, isFirstBoatInfo);
                     } else {
                         handleFleetBoatInfo(message.bs);
                     }
@@ -2359,12 +2376,12 @@ var controller = function () {
         }
     }
     
-    function handleOwnBoatInfo (message, doAutoRoute) {
+    function handleOwnBoatInfo (message, isFirstBoatInfo) {
         var raceId = getRaceLegId(message._id);
         var race = races.get(raceId);
         updatePosition(message, race);
-        if (doAutoRoute && cbRouter.checked) {
-            callRouter(raceId);
+        if (isFirstBoatInfo && cbRouter.checked) {
+            callRouter(raceId, currentUserId, true);
         }
         // Add own info on Fleet tab
         updateFriendUinfo(raceId, "usercard", message._id.user_id, message);
@@ -2550,7 +2567,7 @@ var controller = function () {
                             updateMapMe(race);
 
                             if (cbRouter.checked) {
-                                callRouter(raceId);
+                                callRouter(raceId, currentUserId, true);
                             }
                             // Provide own info on Fleet tab
                             updateFriendUinfo(raceId, "usercard", uid, response.scriptData.boatState);

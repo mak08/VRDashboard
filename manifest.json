@@ -2,7 +2,7 @@
     "name": "VR Dashboard",
     "short_name": "VR Dashboard",
     "description": "Monitor boat position & call virtual sailor weather router",
-    "version": "3.12.8",
+    "version": "3.12.9",
     "permissions": [
         "debugger",
         "tabs",
