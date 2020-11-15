@@ -2312,6 +2312,19 @@ var controller = function () {
         return bitArray;
     };
 
+    function stringToBitArray(s, array_size) {
+        var bitArray = [];
+        var bytes = s.getBytes();
+
+        for (var i = 0; i < min(bytes.length, array_size); i++)
+        {
+            var b = bytes[i];
+            bitArray = [b & 64 | 63] + bitArray;
+        }
+
+        return bitArray;
+    };
+
     function formatUtilAIVDM_AIS_msg1(mmsi, uinfo)
     {
         var bitArray = [];
@@ -2351,7 +2364,7 @@ var controller = function () {
         bitArray += longToBitArray(0, 2);                                       // AIS Version
         bitArray += longToBitArray(uinfo.mmsi, 30);                             // IMO Number
         bitArray += longToBitArray(0, 42);                                      // Call Sign - 7 six-bit characters
-        bitArray += longToBitArray(0, 120);                                     // Vessel Name - 20 six-bit characters => uinfo.displayName
+        bitArray += stringToBitArray(uinfo.displayName, 120);                   // Vessel Name - 20 six-bit characters
         bitArray += longToBitArray(0, 8);                                       // Ship Type => not available
         bitArray += longToBitArray(0, 9);                                       // Dimension to Bow
         bitArray += longToBitArray(0, 9);                                       // Dimension to Stern
