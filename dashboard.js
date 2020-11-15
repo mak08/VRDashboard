@@ -2314,11 +2314,11 @@ var controller = function () {
 
     function stringToBitArray(s, array_size) {
         var bitArray = [];
-        var bytes = s.getBytes();
+        //var bytes = s.getBytes();
 
-        for (var i = 0; i < min(bytes.length, array_size); i++)
+        for (var i = 0; i < min(s.length, array_size); i++)
         {
-            var b = bytes[i];
+            var b = s[i].charCodeAt();
             bitArray = [b & 64 | 63] + bitArray;
         }
 
