@@ -11,7 +11,7 @@
 		  font-family: Arial, Helvetica, sans-serif;
 		  font-size: 15px;
 	  }
-	  
+
 	  img {
 		  max-width: 100%;
 		  height: auto;
@@ -26,15 +26,15 @@
 		  background-color: lightgrey;
 		  border: 2px solid black;
 		  border-radius: 6px;
-		  padding: 6px 6px; 
+		  padding: 6px 6px;
 	  }
-	  
+
 	  .container {
 		  display: grid;
 		  grid-template-columns: 2fr 8fr 2fr;
 		  grid-gap: 0px;
 	  }
-	  
+
 	  .navigation {
 		  background-color: black;
 	  }
@@ -50,7 +50,7 @@
 	  }
 
 	</style>
-	
+
   </head>
 
   <body>
@@ -58,9 +58,9 @@
 	<div class="container">
 
 	  <div class="navigation"></div>
-	  
+
 	  <div class="main">
-		
+
 		<div id="contents">
 		  <h2>Contents</h2>
 		  <ul>
@@ -68,7 +68,7 @@
 			<li><a href="#running">Running</a></li>
 			<li><a href="#reference">Reference</a>
 			  <ul>
-				<li><a href="#top_bar">Top bar</a></li>				
+				<li><a href="#top_bar">Top bar</a></li>
 				<li><a href="#race_log">Race log</a></li>
 				<li><a href="#fleet_tab">Fleet</a></li>
 				<li><a href="#map_tab">Map</a></li>
@@ -87,11 +87,11 @@
 		  <h2>Installation</h2>
 		  <p>
 			Find the extension in <a href="https://chrome.google.com/webstore/detail/vr-dashboard/amknkhejaogpekncjekiaolgldbejjan?hl=en">chrome web store</a> and press 'Add to Chrome'.
-			Confirm the popup by pressing 'Add extension'. Another popup will inform you that the extension was installed and a <img src="img/z_grey.png"> or <img src="img/z_active.png"> is added in the top right corner. 
+			Confirm the popup by pressing 'Add extension'. Another popup will inform you that the extension was installed and a <img src="img/z_grey.png"> or <img src="img/z_active.png"> is added in the top right corner.
 		  </p>
 		  <p style="font-size:80%">VR Dashboard runs on Chrome, Chromium and Edge<sup>[<a href="#opera">1</a>]</sup> desktop browsers. Mobile browsers do not allow extensions.
 			Porting to other browser is difficult if not impossible, due to the lack of Websockets support.</p>
-		  
+
 		  <div id="running">
 			<h2>Running</h2>
 			<p>
@@ -107,9 +107,9 @@
 					VRDashboard will not start from the VR main page on some versions of Chrome.
 					If your version is affected, log in to Offshore first (see below). Alternatively you can use Chromium or Edge.
 				  </p>
-				  
+
 				</li>
-				
+
 				<li>
 				  A warning banner will appear above the content pane of Chrome:
 				  <img src="img/debugger_warning.png">
@@ -125,9 +125,9 @@
 				<li>
 				  Click on a race on the VR Offshore page.
 				  <p>The <a href="http://zezo.org" target="_blank">zezo.org</a> router page will open in the background, with your boat position and options set.</p>
-				  <p><b>If the router is not called, press F5 on the VR tab to reload the game.</b> 
+				  <p><b>If the router is not called, press F5 on the VR tab to reload the game.</b>
 				</li>
-				
+
 			  </ul>
 			</p>
 			<h3>Closing and Reloading</h3>
@@ -162,7 +162,7 @@
 			  </li>
 
 			  <li><b>Auto router window</b>[on]<br>
-				If switched on, the router will be called automatically when clicking on a race on the VR Offshore screen. 
+				If switched on, the router will be called automatically when clicking on a race on the VR Offshore screen.
 			  </li>
 
 			  <li><b>Reuse tabs</b>[on]<br>
@@ -191,7 +191,7 @@
 		  <div name="races_overview">
 			<h3>Race overview table</h3>
 			<p>This table displays the current boat status for each race you are participating.
-			  Selecting a race by clicking the corresponding row switches the <a href="#selection">race selection</a> drop-down and the <a href="#tabs">tabs</a> to this race.</p> 
+			  Selecting a race by clicking the corresponding row switches the <a href="#selection">race selection</a> drop-down and the <a href="#tabs">tabs</a> to this race.</p>
 			<img src="img/raceoverview_2.png">
 			<img src="img/raceoverview.png">
 			<p style="font-weight:bold">Explanation of columns</p>
@@ -217,10 +217,10 @@
 			  <li><b>TWA</b><br/>True wind angle. Set in bold if boat is in TWA<sup>[<a href="#twa">2</a>]</sup> mode. Green color if the boat is on starboard tack, red on port tack.
 			  </li>
 			  <li><b>TWS</b><br/>True wind speed at the boat position as reported by the server.<br>
-				The game UI uses its own source of wind information, which is sometimes out of sync with the game server. 
+				The game UI uses its own source of wind information, which is sometimes out of sync with the game server.
 			  </li>
 			  <li><b>TWD</b><br/>True wind direction at the boat position as reported by the server.<br>
-				As for TWS, the game UI sometimes displays differing (incorrect) values. 
+				As for TWS, the game UI sometimes displays differing (incorrect) values.
 			  </li>
 			  <li><b>aSail</b><br/>Current sail and auto sail indication.<br>
 				Red background means the sail is not the best possible sail.<br>
@@ -231,9 +231,9 @@
 			  </li>
 			  <li><b>Speed</b><br/>Current boat speed in knots
 			  </li>
-			  <li><b>Options</b><br/>Options your boat is equipped with in this race (light wind sails, foils etc.) 
+			  <li><b>Options</b><br/>Options your boat is equipped with in this race (light wind sails, foils etc.)
 			  </li>
-			  <li><b>Cards</b><br/>'Action' cards. HL=Help, AS=AutoSail, WP=Waypoint, PR=Programming 
+			  <li><b>Cards</b><br/>'Action' cards. HL=Help, AS=AutoSail, WP=Waypoint, PR=Programming
 			  </li>
 			  <li><b>Pack</b><br/>Time until card barrel opens
 			  </li>
@@ -256,7 +256,7 @@
 			  <h4>RACE LOG tab</h4>
 			  <p>This table contains the boat status history for the race selected in the race overview, along with value computed by VR Dashboard (vC, vT, Foils - see below).</p>
 			  <img src="img/tab_racelog.png">
-			  
+
 			  The first column <b>Time</b> contains the timestamp of the server message.
 			  Columns <b>Rank</b>, <b>DTL</b>, <b>DTF</b>, <b>Position</b>, <b>HDG</b>, <b>TWA</b>, <b>TWS</b>, <b>TWD</b> and <b>aSail</b> correspond to the Race Overview columns.
 			  Column <b>vR (kn)</b> is <b>Speed</b> in the Race Overview (boat speed reported by the server).<br>
@@ -270,11 +270,11 @@
 				</li>
 				<li><b>vT (kn)</b><br/>Theoretical speed (in knots).
 				  <p>This is the speed your boat could achieve, using the best sail available. VR Dashboard computes it using the TWA, TWS, available sails and options reported by the server.
-					The best sail is indicated in parenthesis. 
+					The best sail is indicated in parenthesis.
 				  </p>
-				  
+
 				</li>
-				<li><b>Foils</b><br/>Percentage of foils efficiency 
+				<li><b>Foils</b><br/>Percentage of foils efficiency
 				</li>
 				<li><b>Δd (nm)</b><br/>Distance sailed since last status message
 				  <p>When not sailing with the best available sail this column displays the theoretical distance using the optimal sail:<br>
@@ -287,7 +287,7 @@
 				  </p>
 				  <p  style="font-size:85%">
 					The delta is sometimes zero or even negative. A zero delta often occurs if you switch back to the race in the game UI.<br>
-					Negative values <em>could</em> to be indication	of messages from another server (assuming VR uses load balancing). 
+					Negative values <em>could</em> to be indication	of messages from another server (assuming VR uses load balancing).
 					The effect may be related to lost commands, but there is no conclusive proof yet.
 					In any case, <b>be sure to check your course</b> if duplicate status messages occur!
 				  </p>
@@ -300,8 +300,8 @@
 				  <img src="img/tab_racelog_3.png">
 				  <p>The <code>Command @</code>time is the time when the command was issued. The <b>Time</b> columns shows when the command will be executed.<br>
 				  </p>
-				  
-				  
+
+
 				</li>
 			  </ul>
 			</div>
@@ -386,7 +386,7 @@
 				VR Dashboard does not store UserCards or any other information about boats when terminated.
 			  </p>
 			</div>
-			
+
 			<div id="map_tab">
 			  <h4>MAP tab</h4>
 			  <p>The map displays all boats reported by VR, including your own. It also displays the race gates and the location of your waypoints. If present in the race, the ice limit is displayed as rhumb line segments.</p>
@@ -394,7 +394,7 @@
 			  <p>
 				Hovering the mouse over a mark displays its position (latitude/longitude) and other mark properties.
 			  </p>
-			  
+
 			  <img src="img/Map_3-12-3.png">
 			  <p><b>Please note:</b>
 				<ul>
@@ -416,7 +416,7 @@
 				  <li>Passed gate appears dimmed<br><img src="img/map_gate_passed.png"></li>
 				</ul>
 			  </p>
-			  
+
 			  <p>
 				<b>Gate/buoy tooltip</b><br>
 				The tooltip displays the checkpoint number followod by a '.' and a buoy counter, whether to leave to port or starboard, name (if any), position, and wether the mark was passed.
@@ -443,7 +443,7 @@
 					<img src="img/map_tooltip_boat_record_2.png">
 				  </li>
 				</ul>
-				
+
 			  </p>
 
 			  <p>
@@ -469,9 +469,9 @@
 					</ul>
 				  </li>
 				</ul>
-				
+
 			  </p>
-			  
+
 			</div>
 
 			<div id="raw_log">
@@ -491,7 +491,7 @@
 				  <li>Locate the corresponding LogEventResponse (usually it is on the next line but sometimes may be found further down).</li>
 				  <li>Mark whole line by triple-clicking it and press Ctrl-c to copy the line.</li>
 				</ul>
-				
+
 			</div>
 
 			<div id="nmea">
@@ -529,17 +529,25 @@
 						Listening on port 8081<br>
 					  </code>
 					</div>
+					Or if you want to bind a specific inteface (0.0.0.0 for all interfaces)
+					<div class="code">
+						<code>
+						  $ cd NMEA_PROXY<br>
+						  $ python3 nmea_proxy.py --bind inteface_ip <br>
+						  Listening on port 8081<br>
+						</code>
+					  </div>
 				  </li>
 				  <li>Start VRDashboard and switch on NMEA output.<br>
 					After a while, you should see messages like below:<br>
 					<div class="code">
 					  <code>
-						Creating socket for race ID 461<br>					  
+						Creating socket for race ID 461<br>
 						Creating socket for race ID 434<br>
 					  </code>
 					</div>
 					where the numbers correspond to the active races listed in the race selector.
-					<p>Note: The sockets are created only when the first message is received. This may take up to 5min.</p>					
+					<p>Note: The sockets are created only when the first message is received. This may take up to 5min.</p>
 				  </li>
 				  <li>Connect your NMEA software to localhost, TCP port <code>10nnn</code> where <code>nnn</code> is there race ID.<br>
 					You should see connection messages like below:<br>
@@ -551,7 +559,7 @@
 						Accepted connection on port 10434<br>
 					  </code>
 					</div>
-					
+
 				  </li>
 				  <li>
 					VRDashboard sends a GNRMC and INMWV message once per second:
@@ -575,7 +583,7 @@
 
 
 		<div id="tips">
-		  
+
 		  <h2>Tips and tricks</h2>
 		  <h3>Fine-tuning TWA</h3>
 		  The command log (in the <b>RACE LOG</b> table) can help you to fine-tune TWA.
@@ -585,7 +593,7 @@
 			<li>Observe the TWA value in the Dashboard</li>
 			<li>Repeat steps 2-3 until the desired fractional TWA is reached</li>
 		  </ol>
-		  To fine-tune heading instead of TWA, move the programmed time while switched to TWA mode. 
+		  To fine-tune heading instead of TWA, move the programmed time while switched to TWA mode.
 		  <h3>Superseding commands</h3>
 		  <p>Notice that commands are always executed on the full minute. This allows you sometimes to undo a command issued by mistake,
 			or to avoid double penalties by performing a gybe or tack and a sail change at the same minute.</p>
@@ -615,7 +623,7 @@
 			<li>Race xxx is not available from the race selection drop-down?
 			  <p>Cvetan may not have set up a router for the race yet. Please ask (politely) on the zezo.org <a href="http://zezo.org/forum.pl">forum</a>.</p>
 			</li>
-			
+
 			<li>Race selection is empty?
 			  <p>
 				<ul>
@@ -623,7 +631,7 @@
 				</ul>
 			  </p>
 			</li>
-			
+
 			<li>VR Dashboard does not start from the VR main page. There is an error alert, or the Dashboard tab opens and closes immediately.
 			  <p>This seems to be a Chrome bug. Either use Chromium, or try one of the following workarounds:
 				<ul>
@@ -656,16 +664,16 @@
 				make the game available on their sites, but you can't activate the extension on these site. Head over to the VR Offshore homepage and join the race from there.
 			  </p>
 			</li>
-			
+
 			<li>Can you please add &lt;your favorite feature&gt; to VRDashboard?
 			  <p>
 				Probably yes, but I only have limited time and I might reject your request if it's too much work,
 				and especially if it involves adding columns to one of the tables. The Dashboard UI looks quite crowded already.<br>
-				Btw, the VR Dashbaord source code is <a href="https://github.com/mak08/VRDashboard.git">available on Github</a>. 
+				Btw, the VR Dashbaord source code is <a href="https://github.com/mak08/VRDashboard.git">available on Github</a>.
 			  </p>
 			</li>
 		  </ul>
-		  
+
 		</div>
 
 		<div id="donate">
@@ -673,15 +681,15 @@
 		  <p>
 			If you like VR Dashboard, feel free to make a small donation to the maintainer (michael.kappert@gmx.net) to keep things going!
 		  </p>
-		  
+
 		  <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">
 			<input type="hidden" name="cmd" value="_s-xclick" />
 			<input type="hidden" name="hosted_button_id" value="ZUPP95R3A3686" />
 			<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="Donate to VR Dashboard" alt="Donate with PayPal button" />
 			<img alt="" border="0" src="https://www.paypal.com/en_DE/i/scr/pixel.gif" width="1" height="1" />
 		  </form>
-		</div>	
-		
+		</div>
+
 
 		<div id="about">
 		  <h2>About</h2>

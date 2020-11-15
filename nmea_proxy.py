@@ -2,10 +2,13 @@ import http.server
 import socketserver
 import socket
 import logging
+import argparse
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--bind', help='Set the server interface to bind')
+args = parser.parse_args()
 
-HOST = 'localhost'
-
+HOST = (args.bind if args.bind else 'localhost')
 
 PORT = 8081
 
