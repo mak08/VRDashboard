@@ -171,6 +171,7 @@
 
 			  <li><b>Show track info</b>[off]<br>
 				If switched on, display infos on each track segment in tooltips on the boat tracks. See <a href="#map_tab">Map</a> section.
+				<p><b>Warning:</b><br>Enabling this switch may cause VR Dashboard to become unresponsive or sluggish if you are following many boats.</p>
 			  </li>
 
 			  <li><b>Local times</b>[off]<br>
@@ -309,8 +310,8 @@
 			  <h4>FLEET tab</h4>
 			  <p>This tab displays information about your followed players and players of various other categories as selected by VR.
 				Click on a category in the <code>Filters</code> box to toggle the displaying of boats in this category.<br>
-				Some information (like a player's start time in a record race) is only available on the player's 'User Card'.
-				The User Card is only transmitted on request, by clicking on the respective boat in the game UI.
+				Some information (like a player's start time in a record race) is only available on the player's 'UserCard'.
+				The UserCard is only transmitted on request, by clicking on the respective boat in the game UI.
 			  </p>
 			  <p>
 				The <b>FLEET</b> tab has three additional columns <b>Start Date</b>, <b>ERT</b> and <b>avgS</b> when displaying a record race.<br>
@@ -376,12 +377,13 @@
 				  'no' is displayed if the boat is in foiling conditions but has no foils.<br>
 				  '?' is displayed if the boat is not in foiling conditions (and therefor, VR Dashboard cannot determine if the boat has foils).
 				</li>
-				<li><b>Hull</b><br/>
-				  Indicates if the boat has the hull polish option.
+				<li><b>Options</b><br/>
+				  If the UserCard for the boat is available, displays the boat's options (sails, foils, hull etc.).<br>
+				  Remember that the UserCard is retrieved by clicking on the boat in the game UI.
 				</li>
 			  </ul>
 			  <p><b>Note:</b>
-				VR Dashboard does not remember the foils option or the sails used by a boat.
+				VR Dashboard does not store UserCards or any other information about boats when terminated.
 			  </p>
 			</div>
 			
@@ -429,7 +431,7 @@
 			  </p>
 			  <p>
 				<b>Boat tooltip</b><br>
-				Displays name, heading, TWA and speed. Displays elapsed race time of user if boat was clicked on the VR map (User Card is available).
+				Displays name, heading, TWA and speed. Displays elapsed race time of user if boat was clicked on the VR map (UserCard is available).
 				<ul>
 				  <li>Example: Boat in normal race<br>
 					<img src="img/map_tooltip_boat_norecord.png">
@@ -446,7 +448,7 @@
 
 			  <p>
 				<b>Track tooltips</b>
-				If <code>Show track info</code> is enabled, boat tracks are decorated with black dots.
+				If <code>Show track info</code> is enabled, tracks of followed boats are decorated with black dots.
 				The dots have tooltips with the following information:
 				<ul>
 				  <li>boat name

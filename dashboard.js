@@ -564,9 +564,22 @@ var controller = function () {
         if (data["rank"] > 0) ndata["rank"] = data["rank"];
     }
 
+    function initFoils (boatData) {
+        if (boatData.options) {
+            for (const feature of boatData.options) {
+                if (feature == "foil") {
+                    return "0%";
+                }
+            }
+            return "no";
+        } else {
+            return "?";
+        }
+    }
+    
     function explain(ndata, foilFactor, hullFactor, speedT) {
         ndata.xfactor = ndata.speed / speedT;
-        ndata.xoption_foils = "?";
+        ndata.xoption_foils = initFoils(ndata);
         ndata.xoption_options = "?";
         ndata.xplained = false;
 
@@ -2024,7 +2037,7 @@ var controller = function () {
                         var segment = elem.track[i];
                         var pos = new google.maps.LatLng(segment.lat, segment.lon);
                         tpath.push(pos);
-                        if (cbMarkers.checked) {
+                        if (cbMarkers.checked && elem.mode == "followed") {
                             if (i > 0) {
                                 var deltaT = (segment.ts -  elem.track[i-1].ts) / 1000;
                                 var deltaD =  gcDistance(elem.track[i-1], segment);
@@ -2340,12 +2353,15 @@ var controller = function () {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
     
-    function handleBoatInfo (debuggeeId, params) {
+    async function handleBoatInfo (debuggeeId, params) {
+        // How does Networl.getResponseBody work, anyway?!
+        await sleep(2500);
         sendDebuggerCommand(debuggeeId, params, "Network.getResponseBody", _handleBoatInfo);
     }
 
     async function handleFleet (debuggeeId, params) {
-        await sleep(1000);
+        // How does Networl.getResponseBody work, anyway?!
+        await sleep(3000);
         sendDebuggerCommand(debuggeeId, params, "Network.getResponseBody", (response) => {_handleFleet(xhrMap.get(params.requestId), response)});
     }
 
