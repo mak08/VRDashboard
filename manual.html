@@ -89,7 +89,7 @@
 			Find the extension in <a href="https://chrome.google.com/webstore/detail/vr-dashboard/amknkhejaogpekncjekiaolgldbejjan?hl=en">chrome web store</a> and press 'Add to Chrome'.
 			Confirm the popup by pressing 'Add extension'. Another popup will inform you that the extension was installed and a <img src="img/z_grey.png"> or <img src="img/z_active.png"> is added in the top right corner. 
 		  </p>
-		  <p style="font-size:80%">VR Dashboard only runs in Chrome<sup>[<a href="#opera">1</a>]</sup> - more specifically, in the Desktop version of Chrome. Mobile versions of Chrome do not allow extensions.
+		  <p style="font-size:80%">VR Dashboard runs on Chrome, Chromium and Edge<sup>[<a href="#opera">1</a>]</sup> desktop browsers. Mobile browsers do not allow extensions.
 			Porting to other browser is difficult if not impossible, due to the lack of Websockets support.</p>
 		  
 		  <div id="running">
@@ -102,8 +102,14 @@
 				  Go to <a href="https://virtualregatta.com">virtualregatta.com</a>
 				</li>
 				<li>
-				  Activate the extension.				  
+				  Activate the extension.
+				  <p style="font-size:80%"><b>Note:</b><br>
+					VRDashboard will not start from the VR main page on some versions of Chrome.
+					If your version is affected, log in to Offshore first (see below). Alternatively you can use Chromium or Edge.
+				  </p>
+				  
 				</li>
+				
 				<li>
 				  A warning banner will appear above the content pane of Chrome:
 				  <img src="img/debugger_warning.png">
@@ -114,10 +120,12 @@
 				</li>
 				<li>
 				  Log in to VR Offshore.
+				  <p style="font-size:80%">After a few seconds, your boat name should appear in the top left corner.</p>
 				</li>
 				<li>
-				  Enter a race.
+				  Click on a race on the VR Offshore page.
 				  <p>The <a href="http://zezo.org" target="_blank">zezo.org</a> router page will open in the background, with your boat position and options set.</p>
+				  <p><b>If the router is not called, press F5 on the VR tab to reload the game.</b> 
 				</li>
 				
 			  </ul>
@@ -127,7 +135,7 @@
 			  VR Dashboard is closed automatically if you close the VR browser tab, but it remains open if you simply navigate away from VR.
 			</p>
 			<p>
-			  <b>Reloading</b> the VR Dashboard tab discards all data, but it no longer closes the tab. VR Dashboard keeps running.<br>
+			  <b>Reloading</b> the VR Dashboard tab discards all data, but it does not close the tab. VR Dashboard keeps running.<br>
 			  Log off from VR Offshore and log into each race again to re-populate the race list.
 			</p>
 		  </div>
@@ -138,7 +146,7 @@
 
 		  <div id="top_bar">
 			<h3> Top bar</h3>
-			<img src="img/topbar.png">
+			<img src="img/Topbar_3-12-3.png">
 			<ul>
 			  <li><b>Boat</b><br>
 				Displays your boat name.
@@ -154,11 +162,16 @@
 			  </li>
 
 			  <li><b>Auto router window</b>[on]<br>
-				If switched off, the router will not be called automatically when entering a race from the VR Offshore screen.
+				If switched on, the router will be called automatically when clicking on a race on the VR Offshore screen. 
 			  </li>
 
 			  <li><b>Reuse tabs</b>[on]<br>
 				If switched on, routing requests for a race will reuse the previously opened tab. Different races always open in different tabs.
+			  </li>
+
+			  <li><b>Show track info</b>[off]<br>
+				If switched on, display infos on each track segment in tooltips on the boat tracks. See <a href="#map_tab">Map</a> section.
+				<p><b>Warning:</b><br>Enabling this switch may cause VR Dashboard to become unresponsive or sluggish if you are following many boats.</p>
 			  </li>
 
 			  <li><b>Local times</b>[off]<br>
@@ -297,8 +310,8 @@
 			  <h4>FLEET tab</h4>
 			  <p>This tab displays information about your followed players and players of various other categories as selected by VR.
 				Click on a category in the <code>Filters</code> box to toggle the displaying of boats in this category.<br>
-				Some information (like a player's start time in a record race) is only available on the player's 'User Card'.
-				The User Card is only transmitted on request, by clicking on the respective boat in the game UI.
+				Some information (like a player's start time in a record race) is only available on the player's 'UserCard'.
+				The UserCard is only transmitted on request, by clicking on the respective boat in the game UI.
 			  </p>
 			  <p>
 				The <b>FLEET</b> tab has three additional columns <b>Start Date</b>, <b>ERT</b> and <b>avgS</b> when displaying a record race.<br>
@@ -364,24 +377,25 @@
 				  'no' is displayed if the boat is in foiling conditions but has no foils.<br>
 				  '?' is displayed if the boat is not in foiling conditions (and therefor, VR Dashboard cannot determine if the boat has foils).
 				</li>
-				<li><b>Hull</b><br/>
-				  Indicates if the boat has the hull polish option.
+				<li><b>Options</b><br/>
+				  If the UserCard for the boat is available, displays the boat's options (sails, foils, hull etc.).<br>
+				  Remember that the UserCard is retrieved by clicking on the boat in the game UI.
 				</li>
 			  </ul>
 			  <p><b>Note:</b>
-				VR Dashboard does not remember the foils option or the sails used by a boat.
+				VR Dashboard does not store UserCards or any other information about boats when terminated.
 			  </p>
 			</div>
 			
 			<div id="map_tab">
 			  <h4>MAP tab</h4>
-			  <p>The map displays all boats reported by VR, including your own. It also displays the race gates and the location of your waypoints.</p>
+			  <p>The map displays all boats reported by VR, including your own. It also displays the race gates and the location of your waypoints. If present in the race, the ice limit is displayed as rhumb line segments.</p>
 			  <p>For record races, the map displays the leader ghost track and the ghost track of your own best try.</p>
 			  <p>
 				Hovering the mouse over a mark displays its position (latitude/longitude) and other mark properties.
 			  </p>
 			  
-			  <img src="img/tab_map_1.png">
+			  <img src="img/Map_3-12-3.png">
 			  <p><b>Please note:</b>
 				<ul>
 				  <li>
@@ -417,7 +431,7 @@
 			  </p>
 			  <p>
 				<b>Boat tooltip</b><br>
-				Displays name, heading, TWA and speed. Displays elapsed race time of user if boat was clicked on the VR map (User Card is available).
+				Displays name, heading, TWA and speed. Displays elapsed race time of user if boat was clicked on the VR map (UserCard is available).
 				<ul>
 				  <li>Example: Boat in normal race<br>
 					<img src="img/map_tooltip_boat_norecord.png">
@@ -427,6 +441,32 @@
 				  </li>
 				  <li>Example Boat in record race, User Card available<br>
 					<img src="img/map_tooltip_boat_record_2.png">
+				  </li>
+				</ul>
+				
+			  </p>
+
+			  <p>
+				<b>Track tooltips</b>
+				If <code>Show track info</code> is enabled, tracks of followed boats are decorated with black dots.
+				The dots have tooltips with the following information:
+				<ul>
+				  <li>boat name
+				  </li>
+				  <li>timestamp
+				  </li>
+				  <li>boat speed<br>
+					Calculated from the track point position and timestamp w.r.t. previous point.
+				  </li>
+				  <li>tag indicating the action performed at this point (as provided by the VR server).
+					<ul>
+					  <li>t - no action</li>
+					  <li>hdg - manual heading change</li>
+					  <li>twa - manual TWA change</li>
+					  <li>hdg-prg - programmed heading change</li>
+					  <li>twa-prg - programmed TWA change</li>
+					  <li>wp - waypoint</li>
+					</ul>
 				  </li>
 				</ul>
 				
@@ -568,8 +608,12 @@
 		<div id="faq">
 		  <h2>Frequently asked questions</h2>
 		  <ul>
+			<li>I have installed VR Dashboard but there is no Z icon?
+			  <p>Click the plugin icon in the top right corner of your browser. You should see a VR Dashboard entry there. You can start it from there, or pin it to the task bar.</p>
+			</li>
+
 			<li>Race xxx is not available from the race selection drop-down?
-			  <p>Cvetan may not have added the race yet. Please ask (politely) on the zezo.org <a href="http://zezo.org/forum.pl">forum</a>.</p>
+			  <p>Cvetan may not have set up a router for the race yet. Please ask (politely) on the zezo.org <a href="http://zezo.org/forum.pl">forum</a>.</p>
 			</li>
 			
 			<li>Race selection is empty?
@@ -580,6 +624,15 @@
 			  </p>
 			</li>
 			
+			<li>VR Dashboard does not start from the VR main page. There is an error alert, or the Dashboard tab opens and closes immediately.
+			  <p>This seems to be a Chrome bug. Either use Chromium, or try one of the following workarounds:
+				<ul>
+				  <li>Start VR Dashboard <em>immediately</em> after navigating to the VR main page (while the page is still loading)</li>
+				  <li>Log on to VR Offshore, and start VR Dashboard immediately</li>
+				</ul>
+			  </p>
+			</li>
+
 			<li>VR Dashboard isn't working / has stopped working?<br>
 			  Some table cells are empty/only display a '-'?<br>
 			  My boat name is not displayed?<br>

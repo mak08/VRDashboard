@@ -31,7 +31,7 @@ def forward_message(conn_id, message):
     conn = find_or_create_connection(conn_id)
     if conn:
         try:
-            conn.send(message + '\n'.encode('ascii'))
+            conn.send(message + '\r\n'.encode('ascii'))
         except Exception:
             print('Connection lost on port ' + str(conn_id) + ', closing.')
             conn.close()
@@ -70,6 +70,7 @@ def accept_connection(sock):
         return None
 
 
+print("Creating Server")
 server = socketserver.TCPServer(("", PORT), NMEAHandler)
 print("Listening on port", PORT)
 try:

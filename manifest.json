@@ -2,7 +2,7 @@
     "name": "VR Dashboard",
     "short_name": "VR Dashboard",
     "description": "Monitor boat position & call virtual sailor weather router",
-    "version": "3.12.2",
+    "version": "3.12.10",
     "permissions": [
         "debugger",
         "tabs",
@@ -10,7 +10,8 @@
     ],
     "content_security_policy": "script-src 'self' https://maps.googleapis.com/; object-src 'self'",
     "background": {
-        "scripts": ["background.js"]
+        "scripts": ["background.js"],
+        "persistent": true
     },
     "page_action": {
         "default_icon": "zicon.png",
