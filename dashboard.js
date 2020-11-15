@@ -2317,7 +2317,7 @@ var controller = function () {
         bitArray += longToBitArray(mmsi, 30) ;                                  // Boat MMSI
         bitArray += longToBitArray(8, 4);                                       // Nav status -> Navigation
         bitArray += longToBitArray(0, 8);                                       // Rot - rotate level
-        bitArray += longToBitArray(roundTo(uinfo.speed*10, 1), 10);             // SOG             
+        bitArray += longToBitArray(roundTo(uinfo.speed*10, 0), 10);             // SOG
         bitArray += longToBitArray(0, 1);                                       // Position accuracy
 
         bitArray += longToBitArray(roundTo(uinfo.pos.lon * 10000 * 60, 0), 28); // Longitude
