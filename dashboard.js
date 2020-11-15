@@ -2012,6 +2012,30 @@ var controller = function () {
         cbNMEAOutput.addEventListener("change", saveOption);
     }
 
+    function makeCRCTable(){
+        var c;
+        var crcTable = [];
+        for(var n =0; n < 256; n++){
+            c = n;
+            for(var k =0; k < 8; k++){
+                c = ((c&1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+            }
+            crcTable[n] = c;
+        }
+        return crcTable;
+    }
+    
+    function crc32(str) {
+        var crcTable = window.crcTable || (window.crcTable = makeCRCTable());
+        var crc = 0 ^ (-1);
+    
+        for (var i = 0; i < str.length; i++ ) {
+            crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xFF];
+        }
+    
+        return (crc ^ (-1)) >>> 0;
+    };
+
     function sendNMEA () {
         if (cbNMEAOutput.checked) {
             races.forEach(function (r) {
@@ -2020,6 +2044,43 @@ var controller = function () {
                     var mwv = formatINMWV(r.curr);
                     sendSentence(r.id, "$" + rmc + "*" + nmeaChecksum(rmc)); 
                     sendSentence(r.id, "$" + mwv + "*" + nmeaChecksum(mwv)); 
+                }
+            });
+        }
+    }
+
+    // Send fleet through NMEA/AIS
+    function sendAIS() {
+        if (cbNMEAOutput.checked) {
+            races.forEach(function (r) {
+                if (r.curr) {
+                    
+                    var curr_fleet = fleet.get(selRace.value);
+
+                    // For each opponent
+                    for (var i = 0; i < curr_fleet.table.length; i++) {
+                        var curr_sailor = curr_fleet.uinfo[curr_fleet.table[i]];
+
+                        // TODO add filter configuration like fleet view 
+                        if (curr_sailor.team ||
+                            curr_sailor.mode == "followed" ||
+                            curr_sailor.type == "certified" ||
+                            curr_sailor.type == "real") {
+
+                            // Skip self
+                            if (curr_sailor.displayName == r.curr.displayName) {
+                                continue;
+                            }
+                            
+                            // Add a mmsi base on displayName (30 bits for AIS message)
+                            if (!curr_sailor.mmsi) {
+                                curr_sailor.mmsi = crc32(curr_sailor.displayName) & 0x3FFFFFFF;
+                            }
+
+                            var aivdm = formatAIVDM_AIS_msg1(curr_sailor.mmsi, curr_sailor);
+                            sendSentence(r.id, "$" + aivdm + "*" + nmeaChecksum(aivdm));
+                        }
+                    }
                 }
             });
         }
@@ -2077,6 +2138,85 @@ var controller = function () {
             sum ^= s.charCodeAt(i);
         }
         return pad0(sum, 2, 16).toUpperCase();
+    }
+
+    function longToBitArray(long, array_size) {
+        var bitArray = [];
+
+        for ( var index = 0; index < array_size ; index ++ ) {
+            var byte = long & 1;
+            bitArray = [byte] + bitArray;
+            long = long >> 1 ;
+        }
+
+        return bitArray;
+    };
+
+    function formatUtilAIVDM_AIS_msg1(mmsi, uinfo)
+    {
+        var bitArray = [];
+
+        bitArray += longToBitArray(1, 6);                                       // Message type 1
+        bitArray += longToBitArray(0, 2);                                       // Message repeat indicator
+
+        bitArray += longToBitArray(mmsi, 30) ;                                  // Boat MMSI
+        bitArray += longToBitArray(8, 4);                                       // Nav status -> Navigation
+        bitArray += longToBitArray(0, 8);                                       // Rot - rotate level
+        bitArray += longToBitArray(roundTo(uinfo.speed*10, 1), 10);             // SOG             
+        bitArray += longToBitArray(0, 1);                                       // Position accuracy
+
+        bitArray += longToBitArray(roundTo(uinfo.pos.lon * 10000 * 60, 0), 28); // Longitude
+        bitArray += longToBitArray(roundTo(uinfo.pos.lat * 10000 * 60, 0), 27); // Latitude
+        bitArray += longToBitArray(uinfo.heading*10, 12);                       // COG
+        bitArray += longToBitArray(uinfo.heading, 9);                           // HDG
+        bitArray += longToBitArray(13, 6);                                      // Time stamp
+        bitArray += longToBitArray(0, 1);                                       // other / reserved
+        bitArray += longToBitArray(81942, 24);                                  // other / reserved
+        
+
+        // Convert bitArray to ASCII
+
+        // * Prepare conversion
+        var map_bit_to_ascii = {};
+
+        for (var i =48; i < 128; i++) {
+            var chr_val = i - 48;
+            if (chr_val > 40) {
+                chr_val = chr_val - 8;
+            }
+
+            var bits = longToBitArray(chr_val, 6);
+
+            if ( map_bit_to_ascii[bits] == undefined) {
+                map_bit_to_ascii[bits] = String.fromCharCode(i);
+            } else {
+                if (String.fromCharCode(i) == "`") {
+                    map_bit_to_ascii[bits] = String.fromCharCode(i);
+                }
+            }
+        }
+
+        // * Convert
+        var str = "";
+        for (var i = 0; i < (bitArray.length / 6); i++)
+        {
+            str += map_bit_to_ascii[bitArray.slice(i * 6, i * 6 + 6)];
+        }
+
+        return str;
+    }
+
+    function formatAIVDM_AIS_msg1 (mmsi, uinfo) {
+        // https://castoo.pagesperso-orange.fr/navigation/analys_nmea_ais.html
+        var s = "AIVDM";
+        s += "," + "1";                                        // number of fragment
+        s += "," + "1";                                        // fragment number
+        s += "," + "";                                         // message id
+        s += "," + "B";                                        // Radio Canal
+        s += "," + formatUtilAIVDM_AIS_msg1(mmsi, uinfo);      // payload
+        s += ",0"                                              // padding
+    
+        return s;
     }
 
     function filterChanged (e) {
