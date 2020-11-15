@@ -2231,7 +2231,7 @@ var controller = function () {
                             }
 
                             var aivdm = formatAIVDM_AIS_msg1(curr_sailor.mmsi, curr_sailor);
-                            sendSentence(r.id, "$" + aivdm + "*" + nmeaChecksum(aivdm));
+                            sendSentence(r.id, "!" + aivdm + "*" + nmeaChecksum(aivdm));
                         }
                     }
                 }
