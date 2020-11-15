@@ -2230,8 +2230,13 @@ var controller = function () {
                                 curr_sailor.mmsi = crc32(curr_sailor.displayName) & 0x3FFFFFFF;
                             }
 
+                            // Send position report data (Type1)
                             var aivdm = formatAIVDM_AIS_msg1(curr_sailor.mmsi, curr_sailor);
                             sendSentence(r.id, "$" + aivdm + "*" + nmeaChecksum(aivdm));
+                            // Send static and voyage related data (Type5)
+                            aivdm = formatAIVDM_AIS_msg5(curr_sailor.mmsi, curr_sailor);
+                            sendSentence(r.id, "$" + aivdm + "*" + nmeaChecksum(aivdm));
+
                         }
                     }
                 }
@@ -2330,7 +2335,45 @@ var controller = function () {
 
 
         // Convert bitArray to ASCII
+        var str = bitArray2ASCII(bitArray);
 
+        return str;
+    }
+
+    function formatUtilAIVDM_AIS_msg5(mmsi, uinfo)
+    {
+        var bitArray = [];
+
+        bitArray += longToBitArray(5, 6);                                       // Message type 5
+        bitArray += longToBitArray(0, 2);                                       // Message repeat indicator
+
+        bitArray += longToBitArray(mmsi, 30);                                   // Boat MMSI
+        bitArray += longToBitArray(0, 2);                                       // AIS Version
+        bitArray += longToBitArray(uinfo.mmsi, 30);                             // IMO Number
+        bitArray += longToBitArray(0, 42);                                      // Call Sign - 7 six-bit characters
+        bitArray += longToBitArray(0, 120);                                     // Vessel Name - 20 six-bit characters => uinfo.displayName
+        bitArray += longToBitArray(0, 8);                                       // Ship Type => not available
+        bitArray += longToBitArray(0, 9);                                       // Dimension to Bow
+        bitArray += longToBitArray(0, 9);                                       // Dimension to Stern
+        bitArray += longToBitArray(0, 6);                                       // Dimension to Port
+        bitArray += longToBitArray(0, 6);                                       // Dimension to Starboard
+        bitArray += longToBitArray(0, 4);                                       // Position Fix Type => Undefined
+        bitArray += longToBitArray(0, 4);                                       // ETA month => Undefined
+        bitArray += longToBitArray(0, 5);                                       // ETA day => Undefined
+        bitArray += longToBitArray(0, 5);                                       // ETA hour => Undefined
+        bitArray += longToBitArray(0, 6);                                       // ETA minute => Undefined
+        bitArray += longToBitArray(0, 8);                                       // Draught
+        bitArray += longToBitArray(0, 120);                                     // Destination - 20 six-bit characters
+        bitArray += longToBitArray(1, 1);                                       // DTE => 1 == Not ready (default)
+        bitArray += longToBitArray(0, 1);                                       // Spare
+
+        // Convert bitArray to ASCII
+        var str = bitArray2ASCII(bitArray);
+        return str;
+    }
+
+    function bitArray2ASCII(bitArray)
+    {
         // * Prepare conversion
         var map_bit_to_ascii = {};
 
@@ -2361,14 +2404,28 @@ var controller = function () {
         return str;
     }
 
+
     function formatAIVDM_AIS_msg1 (mmsi, uinfo) {
         // https://castoo.pagesperso-orange.fr/navigation/analys_nmea_ais.html
         var s = "AIVDM";
-        s += "," + "1";                                        // number of fragment
+        s += "," + "2";                                        // number of fragment
         s += "," + "1";                                        // fragment number
-        s += "," + "";                                         // message id
+        s += "," + "1";                                         // message id
         s += "," + "B";                                        // Radio Canal
         s += "," + formatUtilAIVDM_AIS_msg1(mmsi, uinfo);      // payload
+        s += ",0"                                              // padding
+
+        return s;
+    }
+
+    function formatAIVDM_AIS_msg5 (mmsi, uinfo) {
+        // https://castoo.pagesperso-orange.fr/navigation/analys_nmea_ais.html
+        var s = "AIVDM";
+        s += "," + "2";                                        // number of fragment
+        s += "," + "2";                                        // fragment number
+        s += "," + "1";                                         // message id
+        s += "," + "B";                                        // Radio Canal
+        s += "," + formatUtilAIVDM_AIS_msg5(mmsi, uinfo);      // payload
         s += ",0"                                              // padding
 
         return s;
