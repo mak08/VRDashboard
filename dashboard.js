@@ -85,7 +85,6 @@ var controller = function () {
     var initialized = false;
 
     var tableHeader = '<tr>'
-        + '<th>' + "Time" + '</th>'
         + commonHeaders()
         + '<th title="Reported speed">' + "vR (kn)" + '</th>'
         + '<th title="Calculated speed (Δd/Δt)">' + "vC (kn)" + '</th>'
@@ -158,7 +157,8 @@ var controller = function () {
     }
 
     function commonHeaders() {
-        return '<th>' + "Rank" + '</th>'
+        return '<th>' + "Time" + '</th>'
+            + '<th>' + "Rank" + '</th>'
             + '<th title="Distance To Leader">' + "DTL" + '</th>'
             + '<th title="Distance To Finish">' + "DTF" + '</th>'
             + '<th>' + "Position" + '</th>'
@@ -203,6 +203,14 @@ var controller = function () {
             sailInfo = sailInfo + " (Man)";
         }
 
+        // Remember when this message was received ...
+        if (! r.curr.receivedTS) {
+            r.curr.receivedTS = new Date();
+        }
+        // ... so we can tell if lastCalcDate was outdated (by more than 15min) already when we received it.
+        var lastCalcDelta = r.curr.receivedTS - r.curr.lastCalcDate; 
+        var lastCalcStyle = (lastCalcDelta > 900000)?  'style="background-color: red"':'';
+        
         var sailNameBG = r.curr.badSail ? LightRed : "lightgreen";
 
         // This can occasionally fail when twa equals twaAuto by accident.
@@ -214,7 +222,8 @@ var controller = function () {
         var hdgFG = isTWAMode ? "black" : "blue";
         var hdgBold = isTWAMode ? "font-weight: normal;" : "font-weight: bold;";
 
-        return '<td>' + (r.rank ? r.rank : "-") + '</td>'
+        return '<td ' + lastCalcStyle + '>' + formatDate(r.curr.lastCalcDate) + '</td>'
+            + '<td>' + (r.rank ? r.rank : "-") + '</td>'
             + '<td>' + (r.dtl ? roundTo(r.dtl, 2) : "-") + '</td>'
             + '<td>' + roundTo(r.curr.distanceToEnd, 1) + '</td>'
             + '<td>' + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + '</td>'
@@ -622,7 +631,7 @@ var controller = function () {
             if (ndata.options.length == 8) {
                 ndata.xoption_options = "Full Pack";
             } else {
-                ndata.xoption_options = ndata.options.toString();
+                ndata.xoption_options = ndata.options.sort().toString();
             }
         }
     }
@@ -942,7 +951,6 @@ var controller = function () {
         var tacking = formatSeconds(r.curr.tsEndOfTack - r.curr.lastCalcDate);
 
         return '<tr>'
-            + '<td>' + formatDate(r.curr.lastCalcDate) + '</td>'
             + commonTableLines(r)
             + '<td>' + roundTo(r.curr.speed, 2) + '</td>'
             + '<td ' + speedCStyle + '>' + roundTo(r.curr.speedC, 2) + " (" + sailNames[(r.curr.sail % 10)] + ")" + '</td>'
@@ -1464,8 +1472,17 @@ var controller = function () {
         if (uinfo.lastCalcDate) {
             var now = new Date();
             if ((now - uinfo.lastCalcDate) > 600000) {
-                if (! confirm("Position is older than 10min, really call router?"))
+                console.log("Confirm routing for stale position?");
+                // If the Dashboard tab is not active, confirm does NOT raise a popup
+                // and returns false immediately.
+                // This means the router will not be auto-called with a stale position.
+                if (! confirm("Position is older than 10min, really call router?")) {
+                    console.log("Confirm routing ==> cancel.");
                     return;
+                } else {
+                    console.log("Confirm routing ==> confirmed.");
+                }
+
             }
         }
 
@@ -2353,15 +2370,15 @@ var controller = function () {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
     
-    async function handleBoatInfo (debuggeeId, params) {
+    function handleBoatInfo (debuggeeId, params) {
         // How does Networl.getResponseBody work, anyway?!
-        await sleep(2500);
+        // await sleep(2500);
         sendDebuggerCommand(debuggeeId, params, "Network.getResponseBody", _handleBoatInfo);
     }
 
-    async function handleFleet (debuggeeId, params) {
+    function handleFleet (debuggeeId, params) {
         // How does Networl.getResponseBody work, anyway?!
-        await sleep(3000);
+        // await sleep(3000);
         sendDebuggerCommand(debuggeeId, params, "Network.getResponseBody", (response) => {_handleFleet(xhrMap.get(params.requestId), response)});
     }
 
