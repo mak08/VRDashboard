@@ -517,7 +517,7 @@ var controller = function () {
             ndata.teamname = data.teamname;
             ndata.team = data.team;
         }
-        var elemlist = ["baseInfos", "displayName", "ts", "lastCalcDate", "startDate", "type", "state", "pos", "heading", "twa", "tws", "speed", "mode", "distanceToEnd", "distanceFromStart", "sail", "bname", "track", "options"];
+        var elemlist = ["baseInfos", "displayName", "ts", "lastCalcDate", "startDate", "type", "state", "pos", "heading", "twa", "tws", "speed", "mode", "distanceToEnd", "distanceFromStart", "sail", "bname", "track", "options", "fullOptions"];
         // copy elems from data to uinfo
         elemlist.forEach(function (tag) {
             if (tag in data) {
@@ -618,9 +618,15 @@ var controller = function () {
                 ndata.xoption_foils = roundTo(foils, 0) + "%";
             }
         }
-        if (ndata.options) {
+
+        // Filter to get unique options sorted
+        ndata.options = [...new Set(ndata.options)].sort();
+
+        if (ndata.fullOptions === true) {
+            ndata.xoption_options = "Full Pack";
+        } else if (ndata.options) {
             if (ndata.options.length == 8) {
-                ndata.xoption_options = "Full Pack";
+                ndata.xoption_options = "All Options";
             } else {
                 ndata.xoption_options = ndata.options.toString();
             }
