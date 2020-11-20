@@ -2236,7 +2236,6 @@ var controller = function () {
                             // Send static and voyage related data (Type5)
                             aivdm = formatAIVDM_AIS_msg5(curr_sailor.mmsi, curr_sailor);
                             sendSentence(r.id, "!" + aivdm + "*" + nmeaChecksum(aivdm));
-
                         }
                     }
                 }
