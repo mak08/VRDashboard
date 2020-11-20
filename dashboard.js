@@ -2413,6 +2413,8 @@ var controller = function () {
         }
 
         // * Convert
+        // Pad the bitArray to a round length of 6 bits
+        bitArray += longToBitArray(0, 6 - (bitArray.length % 6));
         var str = "";
         for (var i = 0; i < (bitArray.length / 6); i++)
         {
@@ -2444,7 +2446,7 @@ var controller = function () {
         s += "," + "";                                         // message id
         s += "," + "B";                                        // Radio Canal
         s += "," + formatUtilAIVDM_AIS_msg5(mmsi, uinfo);      // payload
-        s += ",0"                                              // padding
+        s += ",4"                                              // padding
 
         return s;
     }
