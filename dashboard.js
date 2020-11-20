@@ -2232,10 +2232,10 @@ var controller = function () {
 
                             // Send position report data (Type1)
                             var aivdm = formatAIVDM_AIS_msg1(curr_sailor.mmsi, curr_sailor);
-                            sendSentence(r.id, "$" + aivdm + "*" + nmeaChecksum(aivdm));
+                            sendSentence(r.id, "!" + aivdm + "*" + nmeaChecksum(aivdm));
                             // Send static and voyage related data (Type5)
                             aivdm = formatAIVDM_AIS_msg5(curr_sailor.mmsi, curr_sailor);
-                            sendSentence(r.id, "$" + aivdm + "*" + nmeaChecksum(aivdm));
+                            sendSentence(r.id, "!" + aivdm + "*" + nmeaChecksum(aivdm));
 
                         }
                     }
@@ -2312,16 +2312,21 @@ var controller = function () {
         return bitArray;
     };
 
-    function stringToBitArray(s, array_size) {
+    function stringToSixBitArray(s, sixBitsArraySize) {
         var bitArray = [];
-        //var bytes = s.getBytes();
-
-        for (var i = 0; i < min(s.length, array_size); i++)
+        s = s.toUpperCase();
+        for (var i = 0; i < Math.min(s.length, sixBitsArraySize); i++)
         {
-            var b = s[i].charCodeAt();
-            bitArray = [b & 64 | 63] + bitArray;
+            var b = s.charCodeAt(i);
+            bitArray += longToBitArray((b | 64) & 63, 6);
         }
-
+        // Pad with spaces (32)
+        if ( s.length < sixBitsArraySize) {
+            //bitArray += longToBitArray(0, 6);
+            for (var i = 0; i < sixBitsArraySize - s.length; i++) {
+                bitArray += longToBitArray(32, 6);
+            }
+        }
         return bitArray;
     };
 
@@ -2364,8 +2369,8 @@ var controller = function () {
         bitArray += longToBitArray(0, 2);                                       // AIS Version
         bitArray += longToBitArray(uinfo.mmsi, 30);                             // IMO Number
         bitArray += longToBitArray(0, 42);                                      // Call Sign - 7 six-bit characters
-        bitArray += stringToBitArray(uinfo.displayName, 120);                   // Vessel Name - 20 six-bit characters
-        bitArray += longToBitArray(0, 8);                                       // Ship Type => not available
+        bitArray += stringToSixBitArray(uinfo.displayName, 120/6);              // Vessel Name - 20 six-bit characters
+        bitArray += longToBitArray(36, 8);                                      // Ship Type => Sailing
         bitArray += longToBitArray(0, 9);                                       // Dimension to Bow
         bitArray += longToBitArray(0, 9);                                       // Dimension to Stern
         bitArray += longToBitArray(0, 6);                                       // Dimension to Port
@@ -2421,9 +2426,9 @@ var controller = function () {
     function formatAIVDM_AIS_msg1 (mmsi, uinfo) {
         // https://castoo.pagesperso-orange.fr/navigation/analys_nmea_ais.html
         var s = "AIVDM";
-        s += "," + "2";                                        // number of fragment
+        s += "," + "1";                                        // number of fragment
         s += "," + "1";                                        // fragment number
-        s += "," + "1";                                         // message id
+        s += "," + "";                                         // message id
         s += "," + "B";                                        // Radio Canal
         s += "," + formatUtilAIVDM_AIS_msg1(mmsi, uinfo);      // payload
         s += ",0"                                              // padding
@@ -2434,9 +2439,9 @@ var controller = function () {
     function formatAIVDM_AIS_msg5 (mmsi, uinfo) {
         // https://castoo.pagesperso-orange.fr/navigation/analys_nmea_ais.html
         var s = "AIVDM";
-        s += "," + "2";                                        // number of fragment
-        s += "," + "2";                                        // fragment number
-        s += "," + "1";                                         // message id
+        s += "," + "1";                                        // number of fragment
+        s += "," + "1";                                        // fragment number
+        s += "," + "";                                         // message id
         s += "," + "B";                                        // Radio Canal
         s += "," + formatUtilAIVDM_AIS_msg5(mmsi, uinfo);      // payload
         s += ",0"                                              // padding
