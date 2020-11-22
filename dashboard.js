@@ -2258,7 +2258,7 @@ var controller = function () {
             races.forEach(function (r) {
                 if (r.curr) {
 
-                    var curr_fleet = fleet.get(selRace.value);
+                    var curr_fleet = raceFleetMap.get(selRace.value);
 
                     // For each opponent
                     for (var i = 0; i < curr_fleet.table.length; i++) {
@@ -2956,7 +2956,7 @@ var controller = function () {
                         var fleet = raceFleetMap.get(raceId);
                         var race = races.get(raceId);
                         var uid = request.user_id;
-                        var info = fleet.uinfo[uid];
+                        var info = raceFleetMap.uinfo[uid];
 
                         if (race) {
                             if (uid == race.curr._id.user_id) {
