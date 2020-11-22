@@ -357,7 +357,7 @@ var controller = function () {
             var idx = category.indexOf(uinfo.type);
             var style = categoryStyle[idx];
             res.nameStyle = style.nameStyle;
-            res.bcolor = style.bcolorr;
+            res.bcolor = style.bcolor;
             if (uinfo.mode == "followed") {
                 res.nameStyle += " font-weight: bold;";
             } else if (uinfo.mode == "team") {
