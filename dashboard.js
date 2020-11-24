@@ -1778,7 +1778,7 @@ var controller = function () {
 
         // track wp
         var tpath = [];
-        if (race.boatActions.length > 0) {
+        if (race.boatActions && race.boatActions.length > 0) {
             if (race.boatActions[0].pos) {
                 tpath.push(new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon)); // boat
                 for (var i = 0; i < race.boatActions[0].pos.length; i++) {
@@ -2179,11 +2179,121 @@ var controller = function () {
         };
     }
 
+    function handleBoatInfo (debuggeeId, message, params, request) {
+        try {
+            chrome.debugger.sendCommand(
+                {
+                    tabId: debuggeeId.tabId,
+                },
+                "Network.getResponseBody",
+                {
+                    requestId: params.requestId,
+                },
+                function (response) {
+                    if (response) {
+                        try {
+                            var message = JSON.parse(response.body).res;
+
+                            if (message.bs) {
+                                var boatState = message.bs;
+                                var raceId = getRaceLegId(boatState._id);
+                                var race = races.get(raceId);
+                                var uid = boatState._id.user_id;
+                                if (!currentUserId) {
+                                    alert("Logged-on user is unknown, please exit and re-enter VR Offshore!");
+                                    return;
+                                } else {
+                                    if (currentUserId != uid) {
+                                        console.log("Unexpected UID " + uid + " != current user " + currentUserId +", discarding");
+                                        console.log(response);
+                                        return;
+                                    }
+                                }
+                                if (message.leg) {
+                                    race.legdata = message.leg;
+                                }
+                                
+                                if (message.boatActions) {
+                                    race.boatActions = message.boatActions;
+                                }
+
+                                initializeMap(race);
+                                
+                                updatePosition(boatState, race);
+                                updateMapMe(race);
+                                
+                                if (cbRouter.checked) {
+                                    callRouter(raceId);
+                                }
+                                
+                                // Add own info on Fleet tab
+                                updateFriendUinfo(raceId, "usercard", uid, boatState);
+                            }
+
+                        } catch (e) {
+                            console.log(e + ": " + JSON.stringify(response));
+                        }
+                    }
+                }
+            );
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
+
+    function handleFleet (debuggeeId, message, params, request) {
+        try {
+            chrome.debugger.sendCommand(
+                {
+                    tabId: debuggeeId.tabId,
+                },
+                "Network.getResponseBody",
+                {
+                    requestId: params.requestId,
+                },
+                function (response) {
+                    if (response) {
+                        try {
+                            var message = JSON.parse(response.body).res;
+                            console.log(request);
+                            console.log(message);
+                        } catch (e) {
+                            console.log(e + ": " + JSON.stringify(response));
+                        }
+                    }
+                }
+            );
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
+    var xhrMap = new Map();
+
     var onEvent = function (debuggeeId, message, params) {
         if (tabId != debuggeeId.tabId)
             return;
 
-        if (message == "Network.webSocketFrameSent") {
+
+        if (message == "Network.requestWillBeSent"
+            && params
+            && params.request 
+            && (params.request.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos"
+                || params.request.url == "https://vro-api-client.prod.virtualregatta.com/getfleet")) {
+            if (params.request.method = "POST") {
+                xhrMap.set(params.requestId, params.request);
+            }
+            
+        } else if (message == "Network.responseReceived") {
+            if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos" ) {
+                handleBoatInfo(debuggeeId, message, params, xhrMap.get(params.requestId));
+            }
+            if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getfleet" ) {
+                handleFleet(debuggeeId, message, params, xhrMap.get(params.requestId));
+            }
+            
+        } else if (message == "Network.webSocketFrameSent") {
             // Append message to raw log
             if (cbRawLog.checked) {
                 divRawLog.innerHTML = divRawLog.innerHTML + "\n" + ">>> " + params.response.payloadData;
@@ -2486,5 +2596,6 @@ window.addEventListener("load", function () {
         }
     });
     chrome.debugger.onEvent.addListener(controller.onEvent);
+    
 });
 
