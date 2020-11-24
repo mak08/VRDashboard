@@ -6,7 +6,6 @@ var controller = function () {
 
     var nmeaInterval = 1000;
     var aisInterval = 60000;
-    var nmeaPort = 8081;
 
     var crcTable = makeCRCTable();
 
@@ -97,10 +96,12 @@ var controller = function () {
     // Earth radius in nm, 360*60/(2*Pi);
     var radius = 3437.74683;
 
-    var selRace, cbRouter, cbReuseTab, cbMarkers, cbLocalTime;
+    // Fixme: Some controls are declared here, some aren't
+    var selRace, selNmeaport, cbRouter, cbReuseTab, cbMarkers, cbLocalTime;
     var lbBoatname, lbTeamname;
     var divPositionInfo, divRecordLog, divRawLog;
     var callRouterFunction;
+    
     var initialized = false;
 
     var tableHeader = '<tr>'
@@ -2287,7 +2288,7 @@ var controller = function () {
 
     function sendSentence (raceId, sentence) {
         var request = new XMLHttpRequest();
-        request.open("POST", "http://localhost:" + nmeaPort + "/nmea/" + raceId, true);
+        request.open("POST", "http://localhost:" + selNmeaport.value + "/nmea/" + raceId, true);
         request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         request.onerror = function (data) {
             console.log(data);
@@ -2502,6 +2503,7 @@ var controller = function () {
         lbBoatname = document.getElementById("lb_boatname");
         lbTeamname = document.getElementById("lb_teamname");
         selRace = document.getElementById("sel_race");
+        selNmeaport = document.getElementById("sel_nmeaport");
         selFriends = document.getElementById("sel_skippers");
         cbFriends = document.getElementById("sel_friends");
         cbOpponents = document.getElementById("sel_opponents");

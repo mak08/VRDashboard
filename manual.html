@@ -525,18 +525,23 @@
 					<div class="code">
 					  <code>
 						$ cd NMEA_PROXY<br>
-						$ python3 nmea_proxy.py<br>
+						$ python3 nmea_proxy.py --port 8081 --outport 10000<br>
+						Creating Server<br>
 						Listening on port 8081<br>
 					  </code>
 					</div>
-					Or if you want to bind a specific inteface (0.0.0.0 for all interfaces)
+					The proxy always listens on localhost. This is the only host the Chrome extension can use.<br>
+					Outbound TCP ports are created by adding the race number (e.g. 440) to the outport number. It defaults to 10000.
+					<p>
+					You can select the outgoing interface using the --bind parameter (0.0.0.0 for all interfaces):
 					<div class="code">
-						<code>
-						  $ cd NMEA_PROXY<br>
-						  $ python3 nmea_proxy.py --bind inteface_ip <br>
-						  Listening on port 8081<br>
-						</code>
-					  </div>
+					  <code>
+						$ cd NMEA_PROXY<br>
+						$ python3 nmea_proxy.py --bind inteface_ip <br>
+						Creating Server<br>
+						Listening on port 8081<br>
+					  </code>
+					</div>
 				  </li>
 				  <li>Start VRDashboard and switch on NMEA output.<br>
 					After a while, you should see messages like below:<br>

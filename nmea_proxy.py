@@ -1,16 +1,27 @@
 import http.server
 import socketserver
 import socket
-import logging
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--bind', help='Set the server interface to bind')
+
+parser.add_argument(
+    '--bind',
+    help='Set the server interface to bind (default 0.0.0.0)')
+
+parser.add_argument(
+    '--outport',
+    help='Set outbound port base (default 10000)')
+
+parser.add_argument(
+    '--port',
+    help='Set the HTTP port to bind (default 8081)')
+
 args = parser.parse_args()
+HOST = (args.bind if args.bind else '0.0.0.0')
+OUTPORT = (int(args.outport) if args.outport else 10000)
+PORT = (int(args.port) if args.port else 8081)
 
-HOST = (args.bind if args.bind else 'localhost')
-
-PORT = 8081
 
 connections = dict()
 sockets = dict()
@@ -59,7 +70,7 @@ def create_socket(conn_id):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.setblocking(False)
-    sock.bind((HOST, 10000 + conn_id))
+    sock.bind((HOST, OUTPORT + conn_id))
     sock.listen(0)
     return sock
 
