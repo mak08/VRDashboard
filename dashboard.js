@@ -8,6 +8,8 @@ var controller = function () {
     var aisInterval = 60000;
     var nmeaPort = 8081;
 
+    var crcTable = makeCRCTable();
+
     // ToDo: clear stats if user/boat changes
     var currentUserId, currentTeam;
     var requests = new Map();
@@ -2211,7 +2213,7 @@ var controller = function () {
         cbNMEAOutput.addEventListener("change", saveOption);
     }
 
-    function makeCRCTable(){
+    function makeCRCTable () {
         var c;
         var crcTable = [];
         for(var n =0; n < 256; n++){
@@ -2225,7 +2227,7 @@ var controller = function () {
     }
 
     function crc32(str) {
-        var crcTable = window.crcTable || (window.crcTable = makeCRCTable());
+
         var crc = 0 ^ (-1);
 
         for (var i = 0; i < str.length; i++ ) {
@@ -2253,41 +2255,30 @@ var controller = function () {
     }
 
     // Send fleet through NMEA/AIS
-    function sendAIS() {
+    function sendAIS () {
         if (cbNMEAOutput.checked) {
-            races.forEach(function (r) {
+            races.forEach( function (r) {
                 if (r.curr) {
-
-                    var curr_fleet = raceFleetMap.get(selRace.value);
-
+                    
+                    var fleet = raceFleetMap.get(r.id);
+                    
                     // For each opponent
-                    for (var i = 0; i < curr_fleet.table.length; i++) {
-                        var curr_sailor = curr_fleet.uinfo[curr_fleet.table[i]];
-
-                        // TODO add filter configuration like fleet view
-                        if (curr_sailor.team ||
-                            curr_sailor.mode == "followed" ||
-                            curr_sailor.type == "certified" ||
-                            curr_sailor.type == "real") {
-
-                            // Skip self
-                            if (curr_sailor.displayName == r.curr.displayName) {
-                                continue;
-                            }
-
+                    Object.keys(fleet.uinfo).forEach( function (uid) {
+                        var info = fleet.uinfo[uid];
+                        
+                        if (isDisplayEnabled(info, uid) && (info.displayName != r.curr.displayName)) {
                             // Add a mmsi base on displayName (30 bits for AIS message)
-                            if (!curr_sailor.mmsi) {
-                                curr_sailor.mmsi = crc32(curr_sailor.displayName) & 0x3FFFFFFF;
+                            if (!info.mmsi) {
+                                info.mmsi = crc32(info.displayName) & 0x3FFFFFFF;
                             }
-
                             // Send position report data (Type1)
-                            var aivdm = formatAIVDM_AIS_msg1(curr_sailor.mmsi, curr_sailor);
+                            var aivdm = formatAIVDM_AIS_msg1(info.mmsi, info);
                             sendSentence(r.id, "!" + aivdm + "*" + nmeaChecksum(aivdm));
                             // Send static and voyage related data (Type5)
-                            aivdm = formatAIVDM_AIS_msg5(curr_sailor.mmsi, curr_sailor);
+                            aivdm = formatAIVDM_AIS_msg5(info.mmsi, info);
                             sendSentence(r.id, "!" + aivdm + "*" + nmeaChecksum(aivdm));
                         }
-                    }
+                    });
                 }
             });
         }
