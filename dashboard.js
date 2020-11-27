@@ -137,7 +137,7 @@ var controller = function () {
             + genth("th_rt", "RT", "Call Router", sortField == "none", undefined)
             + genth("th_name", "Skipper", undefined, sortField == "displayName", currentSortOrder)
             + recordRaceColumns()
-            + genth("th_lu", "Last Update", undefined, sortField == "ts", currentSortOrder)
+            + genth("th_lu", "Last Update", undefined, sortField == "lastCalcDate", currentSortOrder)
             + genth("th_rank", "Rank", undefined, sortField == "rank", currentSortOrder)
             + genth("th_dtf", "DTF", "Distance to Finish", sortField == "dtf", currentSortOrder)
             + genth("th_dtu", "DTU", "Distance to Us", sortField == "distanceToUs", currentSortOrder)
@@ -362,9 +362,9 @@ var controller = function () {
             var style = categoryStyle[idx];
             res.nameStyle = style.nameStyle;
             res.bcolor = style.bcolor;
-            if (uinfo.mode == "followed") {
+            if ((uinfo.isFollowed || uinfo.followed)) {
                 res.nameStyle += " font-weight: bold;";
-            } else if (uinfo.mode == "team") {
+            } else if ((uinfo.teamname == currentTeam || uinfo.team)) {
                 res.nameStyle = "color: #C52020; font-weight: bold;";
                 res.bcolor = '#C52020'
             }
@@ -381,8 +381,8 @@ var controller = function () {
     
     function isDisplayEnabled (record, uid) {
         return  (uid == currentUserId)
-            || (record.mode == "followed" && cbFriends.checked)
-            || (record.mode == "team" && cbTeam.checked)
+            || ((record.isFollowed || record.followed) && cbFriends.checked)
+            || ((record.teamname == currentTeam || record.team) && cbTeam.checked)
             || (record.type == "normal" && cbOpponents.checked)
             || (record.type == "top" && cbTop.checked)
             || (record.type == "certified" && cbCertified.checked)
@@ -626,15 +626,6 @@ var controller = function () {
 
     
     function fixMessageData (message, userId) {
-        if (userId == currentUserId ) {
-            message.mode = "self";
-        } else if (message.isFollowed || message.followed) {
-            message.mode = "followed";
-        } else if (message.teamname == currentTeam || message.team) {
-            message.mode = "team";
-        } else {
-            message.mode = message.type;
-        }
         
         if (message.type == "pilotBoat") {
             message.displayName = "Frigate";
@@ -1075,7 +1066,7 @@ var controller = function () {
             sortField = "rank";
             break;
         case "th_lu":
-            sortField = "ts";
+            sortField = "lastCalcDate";
             break;
         case "th_sd":
             sortField = "startDate";
@@ -1527,9 +1518,11 @@ var controller = function () {
         var twa = uinfo.twa;
 
         var options = 0;
-        for (var key in uinfo.options) {
-            if (optionBits[race.curr.options[key]]) {
-                options |= optionBits[race.curr.options[key]];
+        if (uinfo.options) {
+            for (const option of uinfo.options) {
+                if (optionBits[option]) {
+                    options |= optionBits[option];
+                }
             }
         }
 
@@ -2091,7 +2084,10 @@ var controller = function () {
                         var segment = elem.track[i];
                         var pos = new google.maps.LatLng(segment.lat, segment.lon);
                         tpath.push(pos);
-                        if (cbMarkers.checked && elem.mode == "followed") {
+                        if (cbMarkers.checked && ((key = currentUserId)
+                                                  || elem.isFollowed
+                                                  || elem.followed))
+                        {
                             if (i > 0) {
                                 var deltaT = (segment.ts -  elem.track[i-1].ts) / 1000;
                                 var deltaD =  gcDistance(elem.track[i-1], segment);
@@ -2697,7 +2693,7 @@ var controller = function () {
     function handleOwnTrackInfo (message) {
         var raceId = getRaceLegId(message._id);
         var race = races.get(raceId);
-        updateMapMe(race, message);
+        updateMapMe(race, message.track);
     }
 
     function handleOwnBoatActions (message) {
