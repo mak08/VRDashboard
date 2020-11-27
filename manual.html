@@ -170,7 +170,8 @@
 			  </li>
 
 			  <li><b>Show track info</b>[off]<br>
-				If switched on, display infos on each track segment in tooltips on the boat tracks. See <a href="#map_tab">Map</a> section.
+				If switched on, display infos on each track segment in tooltips on the boat tracks. See <a href="#map_tab">Map</a> section.<br>
+				Track infos are only displayed for followed boats.
 				<p><b>Warning:</b><br>Enabling this switch may cause VR Dashboard to become unresponsive or sluggish if you are following many boats.</p>
 			  </li>
 
@@ -526,8 +527,8 @@
 					  <code>
 						$ cd NMEA_PROXY<br>
 						$ python3 nmea_proxy.py --port 8081 --outport 10000<br>
-						Creating Server<br>
-						Listening on port 8081<br>
+						INFO:root:Creating Server<br>
+						INFO:root:httpd listening on port 8081<br>
 					  </code>
 					</div>
 					The proxy always listens on localhost. This is the only host the Chrome extension can use.<br>
@@ -538,8 +539,8 @@
 					  <code>
 						$ cd NMEA_PROXY<br>
 						$ python3 nmea_proxy.py --bind inteface_ip <br>
-						Creating Server<br>
-						Listening on port 8081<br>
+						INFO:root:Creating Server<br>
+						INFO:root:httpd listening on port 8081<br>
 					  </code>
 					</div>
 				  </li>
