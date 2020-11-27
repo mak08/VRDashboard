@@ -2,6 +2,7 @@ import http.server
 import socketserver
 import socket
 import argparse
+import logging
 
 parser = argparse.ArgumentParser()
 
@@ -66,7 +67,7 @@ def find_or_create_connection(conn_id):
 
 
 def create_socket(conn_id):
-    print('Creating socket for race ID ' + str(conn_id))
+    logging.info('Creating socket for race ID ' + str(conn_id))
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.setblocking(False)
@@ -78,19 +79,24 @@ def create_socket(conn_id):
 def accept_connection(sock):
     try:
         (conn, address) = sock.accept()
-        print('Accepted connection on port ' + str(sock.getsockname()[1]))
+        logging.info('Accepted connection on port '
+                     + str(sock.getsockname()[1]))
         return conn
     except IOError:
         return None
 
 
-print("Creating Server")
+logging.basicConfig(level=logging.INFO)
+
+logging.info("Creating Server")
 server = socketserver.TCPServer(("", PORT), NMEAHandler)
-print("Listening on port", PORT)
+logging.info("httpd listening on port" + str(PORT))
 try:
     server.serve_forever()
+except KeyboardInterrupt:
+    pass
+
 finally:
-    print('Cleaning up')
-    # This still doesn't free the socket
+    logging.info('Cleaning up')
     server.server_close()
-    print('Done')
+    logging.info('Stopping httpd\n')
