@@ -23,7 +23,7 @@ class NMEAHandler(http.server.BaseHTTPRequestHandler):
         s.send_header('Access-Control-Allow-Origin', '*')
         s.end_headers()
 
-    def log_message(self, format, *args):
+    def log_message(self, format, *args):        
         pass
 
 
@@ -52,7 +52,7 @@ def find_or_create_connection(conn_id):
 
 
 def create_socket(conn_id):
-    print('Creating socket for race ID ' + str(conn_id))
+    logging.info('Creating socket for race ID ' + str(conn_id))
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.setblocking(False)
@@ -64,18 +64,23 @@ def create_socket(conn_id):
 def accept_connection(sock):
     try:
         (conn, address) = sock.accept()
-        print('Accepted connection on port ' + str(sock.getsockname()[1]))
+        logging.info('Accepted connection on port ' + str(sock.getsockname()[1]))
         return conn
     except IOError:
         return None
+    
 
-
+logging.basicConfig(level=logging.INFO)
 server = socketserver.TCPServer(("", PORT), NMEAHandler)
-print("Listening on port", PORT)
+logging.info("NMEA Listening on port" + str(PORT))
+logging.info('Starting httpd...\n')
 try:
     server.serve_forever()
+except KeyboardInterrupt:
+        pass
 finally:
-    print('Cleaning up')
+    logging.info('Cleaning up')
     # This still doesn't free the socket
     server.server_close()
-    print('Done')
+    logging.info('Stopping httpd...\n')
+    
