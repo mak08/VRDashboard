@@ -124,9 +124,9 @@ var controller = function () {
         + '<th>' + "Race" + '</th>'
         + commonHeaders()
         + '<th title="Boat speed">' + "Speed" + '</th>'
+        + '<th>' + "VMG" + '</th>'
+        + '<th>' + "Best VMG" + '</th>'
         + '<th>' + "Options" + '</th>'
-        + '<th>' + "Cards" + '</th>'
-        + '<th title="Time to next barrel">' + "Pack" + '</th>'
         + '<th title="Boat is aground">' + "Agnd" + '</th>'
         + '<th title="Boat is maneuvering, half speed">' + "Mnvr" + '</th>'
         + '<th>' + "Last Command" + '</th>'
@@ -233,9 +233,9 @@ var controller = function () {
         
         var sailNameBG = r.curr.badSail ? LightRed : "lightgreen";
 
-        // This can occasionally fail when twa equals twaAuto by accident.
-        // We really should use the Game_AddBoatAction response but it's somewhat unintelligable
-        var isTWAMode = r.curr.isRegulated || (r.curr.twa == r.curr.twaAuto);
+
+        // No need to infer TWA mode, except that we might want to factor in the last command
+        var isTWAMode = r.curr.isRegulated;
 
         var twaFG = (r.curr.twa < 0) ? "red" : "green";
         var twaBold = isTWAMode ? "font-weight: bold;" : "";
@@ -244,7 +244,7 @@ var controller = function () {
 
         return '<td ' + lastCalcStyle + '>' + formatDate(r.curr.lastCalcDate) + '</td>'
             + '<td>' + (r.rank ? r.rank : "-") + '</td>'
-            + '<td>' + (r.dtl ? roundTo(r.dtl, 2) : "-") + '</td>'
+            + '<td>' + roundTo(r.curr.distanceToEnd - r.bestDTF, 1) + '</td>'
             + '<td>' + roundTo(r.curr.distanceToEnd, 1) + '</td>'
             + '<td>' + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + '</td>'
             + '<td style="color:' + hdgFG + ";" + hdgBold + '">' + roundTo(r.curr.heading, 1) + '</td>'
@@ -275,34 +275,6 @@ var controller = function () {
                 }
             }
 
-            var cards = "";
-            var regPack = "";
-            var regColor = "";
-
-            if (r.curr.fullOptions !== undefined) {
-                cards = "Full";
-                regPack = "N/A";
-            } else {
-                for (var key in r.curr.cards) {
-                    cards = cards + " " + key + ":" + r.curr.cards[key];
-                }
-                if (r.curr.regPack) {
-                    if (r.curr.regPack.tsNext > r.curr.lastCalcDate) {
-                        regPack = formatHMS(r.curr.regPack.tsNext - r.curr.lastCalcDate);
-                    } else {
-                        regPack = "Ready";
-                        regColor = ' style="background-color: lightgreen;"';
-                    }
-                }
-                if (r.curr.soloCard) {
-                    regPack += '<br>Solo: ';
-                    if (r.curr.soloCard.ts > r.curr.lastCalcDate) {
-                        regPack += r.curr.soloCard.code + ":" + formatMS(r.curr.soloCard.ts - r.curr.lastCalcDate);
-                    } else {
-                        regPack += "?";
-                    }
-                }
-            }
 
             var info = "-";
             if (r.type === "leg") {
@@ -320,6 +292,10 @@ var controller = function () {
 
             var trstyle = "hov";
             if (r.id === selRace.value) trstyle += " sel";
+            var best = bestVMG(r.curr.tws, polars[r.curr.boat.polar_id], r.curr.options);
+            var bestVMGString = "Up:" + roundTo(best.vmgUp, 2) + "@" + best.twaUp
+                + " | " + "Down:" + roundTo(Math.abs(best.vmgDown), 2) + "@" + best.twaDown;
+
             return '<tr class="' + trstyle + '" id="rs:' + r.id + '">'
                 + (r.url ? ('<td class="tdc"><span id="rt:' + r.id + '">&#x2388;</span></td>') : '<td>&nbsp;</td>')
                 + '<td class="tdc"><span id="pl:' + r.id + '">&#x26F5;</span></td>'
@@ -327,9 +303,9 @@ var controller = function () {
                 + '<td>' + r.name + '</td>'
                 + commonTableLines(r)
                 + '<td>' + roundTo(r.curr.speed, 2) + '</td>'
-                + '<td>' + ((r.curr.options.length == 8) ? ((cards == "Full") ? "Full" : "All") : r.curr.options.join(" ")) + '</td>'
-                + '<td>' + cards + '</td>'
-                + '<td' + regColor + '>' + regPack + '</td>'
+                + '<td>' + roundTo(vmg(r.curr.speed, r.curr.twa), 2) + '</td>'
+                + '<td>' + bestVMGString + '</td>'
+                + '<td>' + ((r.curr.options.length == 8) ? ("All") : r.curr.options.join(" ")) + '</td>'
                 + '<td style="background-color:' + agroundBG + ';">' + (r.curr.aground ? "AGROUND" : "No") + '</td>'
                 + '<td>' + (manoeuvering ? "Yes" : "No") + '</td>'
                 + '<td style="background-color:' + lastCommandBG + ';">' + lastCommand + '</td>'
@@ -337,6 +313,37 @@ var controller = function () {
         }
     }
 
+    function vmg (speed, twa) {
+        var r = Math.abs(Math.cos(twa / 180 * Math.PI));
+        return speed * r;
+    }
+
+    function bestVMG(tws, polars, options) {
+        var best = {"vmgUp": 0, "twaUp": 0, "vmgDown": 0, "twaDown": 0};
+        var iS = fractionStep(tws, polars.tws);
+        for (var twaIndex=0; twaIndex < polars.twa.length; twaIndex++) {
+            for (const sail of polars.sail) {
+                var f = foilingFactor(options, tws, polars.twa[twaIndex], polars.foil);
+                var h = options.includes("hull") ? polars.hull.speedRatio : 1.0;
+                var rspeed = bilinear(0, iS.fraction,
+                                      sail.speed[twaIndex][iS.index - 1],
+                                      sail.speed[twaIndex][iS.index - 1],
+                                      sail.speed[twaIndex][iS.index],
+                                      sail.speed[twaIndex][iS.index]);
+                var speed = rspeed  * f * h;
+                var vmg = speed * Math.cos(polars.twa[twaIndex] / 180 * Math.PI);
+                if (vmg > best.vmgUp) {
+                    best.twaUp = polars.twa[twaIndex];
+                    best.vmgUp = vmg;
+                } else if (vmg < best.vmgDown) {
+                    best.twaDown = polars.twa[twaIndex];
+                    best.vmgDown = vmg;
+                }
+            }
+        }
+        return  best;
+    }
+    
     function boatinfo(uid, uinfo) {
         var res = {
             name: uinfo.displayName,
@@ -1363,7 +1370,7 @@ var controller = function () {
             };
         }
     }
-
+ 
     function maxSpeed(options, iS, iA, sailDefs) {
         var maxSpeed = 0;
         var maxSail = "";
@@ -2711,9 +2718,15 @@ var controller = function () {
         var raceId = getRaceLegId(message._id);
         var race = races.get(raceId);
         var userId = getUserId(message);
+        if ( (!race.bestDTF) || (message.distanceToEnd < race.bestDTF) ) {
+            race.bestDTF = message.distanceToEnd;
+        }
+        makeRaceStatusHTML();
+        makeTableHTML(race);
         mergeBoatInfo(raceId, "usercard", userId, message);
         updateFleetHTML(raceFleetMap.get(selRace.value));
         updateMapFleet(race);
+        document.dispatchEvent(new Event('change'))
     }
 
     function handleLegInfo (message) {

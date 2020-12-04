@@ -146,7 +146,7 @@
 
 		  <div id="top_bar">
 			<h3> Top bar</h3>
-			<img src="img/Topbar_3-12-3.png">
+			<img src="img/Topbar_3-14-0.png">
 			<ul>
 			  <li><b>Boat</b><br>
 				Displays your boat name.
@@ -179,8 +179,9 @@
 				If switched on, timestamps are displayed in the browser's local timezone. If switched off, timestamps are displayed in the UTC timezone.
 			  </li>
 
-			  <li><b>NMEA output</b>[off]<br>
-				If switched on, NMEA messages are send to a local HTTP address. See <a href="#nmea">NMEA output</a> on how to make the messages available to your NMEA softare.
+			  <li><b>NMEA</b>[off]<br>
+				If switched on, NMEA messages are send to the specifed port at localhost. Use the povided NMEA proxy to forward messages to your NMEA software.
+				See <a href="#nmea">NMEA output</a> on how to make the messages available to your NMEA softare.<br>
 			  </li>
 
 			  <li><b>Version</b><br>
@@ -193,7 +194,6 @@
 			<h3>Race overview table</h3>
 			<p>This table displays the current boat status for each race you are participating.
 			  Selecting a race by clicking the corresponding row switches the <a href="#selection">race selection</a> drop-down and the <a href="#tabs">tabs</a> to this race.</p>
-			<img src="img/raceoverview_2.png">
 			<img src="img/raceoverview.png">
 			<p style="font-weight:bold">Explanation of columns</p>
 			<ul>
@@ -232,11 +232,11 @@
 			  </li>
 			  <li><b>Speed</b><br/>Current boat speed in knots
 			  </li>
+			  <li><b>VMG</b><br/>Velocity Made Good (speed component directly towards or away from wind)
+			  </li>
+			  <li><b>Best VMG</b><br/>Best upwind and downwind VMG achievable at current wind speed 
+			  </li>
 			  <li><b>Options</b><br/>Options your boat is equipped with in this race (light wind sails, foils etc.)
-			  </li>
-			  <li><b>Cards</b><br/>'Action' cards. HL=Help, AS=AutoSail, WP=Waypoint, PR=Programming
-			  </li>
-			  <li><b>Pack</b><br/>Time until card barrel opens
 			  </li>
 			  <li><b>Agnd</b><br/>Boat is aground
 			  </li>
