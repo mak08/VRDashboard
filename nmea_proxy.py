@@ -48,7 +48,8 @@ def forward_message(conn_id, message):
         try:
             conn.send(message + '\r\n'.encode('ascii'))
         except Exception:
-            print('Connection lost on port ' + str(conn_id) + ', closing.')
+            logging.info('Connection lost on port ' + str(conn_id)
+                         + ', closing.')
             conn.close()
             connections.pop(conn_id, None)
 
@@ -90,7 +91,7 @@ logging.basicConfig(level=logging.INFO)
 
 logging.info("Creating Server")
 server = socketserver.TCPServer(("", PORT), NMEAHandler)
-logging.info("httpd listening on port" + str(PORT))
+logging.info("httpd listening on port " + str(PORT))
 try:
     server.serve_forever()
 except KeyboardInterrupt:
