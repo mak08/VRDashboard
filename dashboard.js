@@ -2318,11 +2318,12 @@ var controller = function () {
     }
 
     function formatINMWV (m) {
-        // $INMWV True Wind Speed and Direction
+        // $INMWV Wind Speed and Angle
         var s = "INMWV";
         var tws = m.tws || 0;
-        var twd = m.twd || 0;
-        s += "," + pad0(roundTo(twd, 2), 6) + ",T";
+        var twa = m.twa || 0;
+        var pTWA = (twa > 0)? twa: twa + 360;
+        s += "," + pad0(roundTo(pTWA, 2), 6) + ",T";
         s += "," + pad0(roundTo(tws, 2), 5) + ",N";
         s += ",A"
         return s;
