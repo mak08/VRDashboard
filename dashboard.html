@@ -37,12 +37,22 @@
             <label>Reuse tabs</label>
           </div>
           <div>
+            <input type="checkbox" id="markers">
+            <label>Show track info</label>
+          </div>
+          <div>
             <input type="checkbox" id="local_time">
             <label>Local times</label>
           </div>
           <div>
             <input type="checkbox" id="nmea_output">
-            <label>NMEA output</label>
+            <label>NMEA</label>
+            <select id="sel_nmeaport" name="nmeaport">
+			  <option value="8081">8081</option>
+			  <option value="8082">8082</option>
+			  <option value="8083">8083</option>
+			  <option value="8084">8084</option>
+			</select>
           </div>
           <div>
 			<label type="button"><a href="manual.html" target="_blank">User manual</a></label>
@@ -103,6 +113,10 @@
               <li class="tab">
                 <input type="checkbox" id="sel_sponsors" name="checkbox6" class="content hidden" checked>
                 <label for:"sel_sponsors" id="lbl_sponsors">Sponsors</label>
+              </li>
+              <li class="tab">
+                <input type="checkbox" id="sel_certified" name="checkbox8" class="content hidden" checked>
+                <label for:"sel_certified" id="lbl_certified">Certified</label>
               </li>
               <li class="tab">
                 <input type="checkbox" id="sel_reals" name="checkbox5" class="content hidden" checked>

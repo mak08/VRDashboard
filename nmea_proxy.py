@@ -1,13 +1,28 @@
 import http.server
 import socketserver
 import socket
+import argparse
 import logging
 
+parser = argparse.ArgumentParser()
 
-HOST = 'localhost'
+parser.add_argument(
+    '--bind',
+    help='Set the server interface to bind (default 0.0.0.0)')
 
+parser.add_argument(
+    '--outport',
+    help='Set outbound port base (default 10000)')
 
-PORT = 8081
+parser.add_argument(
+    '--port',
+    help='Set the HTTP port to bind (default 8081)')
+
+args = parser.parse_args()
+HOST = (args.bind if args.bind else '0.0.0.0')
+OUTPORT = (int(args.outport) if args.outport else 10000)
+PORT = (int(args.port) if args.port else 8081)
+
 
 connections = dict()
 sockets = dict()
@@ -31,9 +46,10 @@ def forward_message(conn_id, message):
     conn = find_or_create_connection(conn_id)
     if conn:
         try:
-            conn.send(message + '\n'.encode('ascii'))
+            conn.send(message + '\r\n'.encode('ascii'))
         except Exception:
-            print('Connection lost on port ' + str(conn_id) + ', closing.')
+            logging.info('Connection lost on port ' + str(conn_id)
+                         + ', closing.')
             conn.close()
             connections.pop(conn_id, None)
 
@@ -56,7 +72,7 @@ def create_socket(conn_id):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.setblocking(False)
-    sock.bind((HOST, 10000 + conn_id))
+    sock.bind((HOST, OUTPORT + conn_id))
     sock.listen(0)
     return sock
 
@@ -64,23 +80,25 @@ def create_socket(conn_id):
 def accept_connection(sock):
     try:
         (conn, address) = sock.accept()
-        logging.info('Accepted connection on port ' + str(sock.getsockname()[1]))
+        logging.info('Accepted connection on port '
+                     + str(sock.getsockname()[1]))
         return conn
     except IOError:
         return None
-    
+
 
 logging.basicConfig(level=logging.INFO)
+
+logging.info("Creating Server")
 server = socketserver.TCPServer(("", PORT), NMEAHandler)
-logging.info("NMEA Listening on port" + str(PORT))
-logging.info('Starting httpd...\n')
+logging.info("httpd listening on port " + str(PORT))
+
 try:
     server.serve_forever()
 except KeyboardInterrupt:
-        pass
+    pass
+
 finally:
     logging.info('Cleaning up')
-    # This still doesn't free the socket
     server.server_close()
-    logging.info('Stopping httpd...\n')
-    
+    logging.info('Stopping httpd\n')
