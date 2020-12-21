@@ -43,7 +43,7 @@ var controller = function () {
         // "normal"
         {nameStyle: "color: Iron;", bcolor: 'Iron'}
     ];
-    
+
     function isShowMarkers(userId) {
         if (showMarkers.get(userId) == undefined) {
             showMarkers.set(userId, true);
@@ -343,7 +343,7 @@ var controller = function () {
         }
         return  best;
     }
-    
+
     function boatinfo(uid, uinfo) {
         var res = {
             name: uinfo.displayName,
@@ -525,7 +525,7 @@ var controller = function () {
     var elemList = ["_id",                                     //  boatinfo
                     "baseInfos",                               //  UserCard - .team.name
                     "boat",                                    //  baotinfo, fleet
-                    "displayName",                             //  boatinfo, fleet      
+                    "displayName",                             //  boatinfo, fleet
                     "distanceFromStart",                       //  boatinfo
                     "distanceToEnd",                           //  boatinfo
                     "extendedInfos",                           //  UserCard, fleet (real boat)
@@ -631,7 +631,6 @@ var controller = function () {
         if (data["rank"] > 0) storedInfo["rank"] = data["rank"];
     }
 
-    
     function fixMessageData (message, userId) {
         
         if (message.type == "pilotBoat") {
@@ -828,13 +827,15 @@ var controller = function () {
             + pad0(d.getUTCMonth() + 1)
             + d.getUTCFullYear().toString().substring(2,4);
         return s;
-
     }
-    function formatHHMMSSSS (d) {
+
+    function formatHHMMSSSS(d) {
         var s = ""
             + pad0(d.getUTCHours())
             + pad0(d.getUTCMinutes())
-            + pad0(d.getUTCSeconds());
+            + pad0(d.getUTCSeconds())
+            + "."
+            + pad0(d.getUTCMilliseconds(), 3);
         return s;
     }
 
@@ -1341,8 +1342,6 @@ var controller = function () {
         return ( x < 0 )? -1: 1;
     }
 
-
-
     function angle(h0, h1) {
         return Math.abs(Math.PI - Math.abs(h1 - h0));
     }
@@ -1370,7 +1369,7 @@ var controller = function () {
             };
         }
     }
- 
+
     function maxSpeed(options, iS, iA, sailDefs) {
         var maxSpeed = 0;
         var maxSail = "";
@@ -2241,13 +2240,13 @@ var controller = function () {
         return (crc ^ (-1)) >>> 0;
     };
 
-    function sendNMEA () {
+    function sendNMEA() {
         if (cbNMEAOutput.checked) {
             try {
                 races.forEach(function (r) {
                     if (r.curr) {
-                        var rmc = formatGNRMC(r.curr);
-                        var mwv = formatINMWV(r.curr);
+                        var rmc = formatGPRMC(r.curr);
+                        var mwv = formatIIMWV(r.curr);
                         sendSentence(r.id, "$" + rmc + "*" + nmeaChecksum(rmc));
                         sendSentence(r.id, "$" + mwv + "*" + nmeaChecksum(mwv));
                     }
@@ -2299,39 +2298,39 @@ var controller = function () {
         request.send(sentence);
     }
 
-    function formatGNRMC (m) {
+    function formatGPRMC(m) {
         // http://www.nmea.de/nmea0183datensaetze.html#rmc
         // https://gpsd.gitlab.io/gpsd/NMEA.html#_rmc_recommended_minimum_navigation_information
         var d = new Date(m.lastCalcDate || new Date());
-        var s = "GNRMC";
-        s += "," + formatHHMMSSSS(d) + ",A";                 // UTC time & status
-        s += "," + formatNMEALatLon(Math.abs(m.pos.lat), 9); // Latitude & N/S
+        var s = "GPRMC";
+        s += "," + formatHHMMSSSS(d) + ",A";                  // UTC time & status
+        s += "," + formatNMEALatLon(Math.abs(m.pos.lat), 11); // Latitude & N/S
         s += "," + ((m.pos.lat < 0) ? "S":"N");
-        s += "," + formatNMEALatLon(Math.abs(m.pos.lon), 10); // Longitude & E/W
+        s += "," + formatNMEALatLon(Math.abs(m.pos.lon), 12); // Longitude & E/W
         s += "," + ((m.pos.lon < 0) ? "W":"E");
-        s += "," + roundTo(m.speed, 1);                      // SOG
-        s += "," + roundTo(m.heading, 1);                    // Track made good
-        s += "," + formatDDMMYY(d);                          // Date
-        s += ",,";                                           //
-        s += ",A";                                           // Valid
+        s += "," + m.speed.toFixed(5);                        // SOG
+        s += "," + m.heading.toFixed(5);                      // Track made good
+        s += "," + formatDDMMYY(d);                           // Date
+        s += ",,";                                            //
+        s += ",A";                                            // Valid
         return s;
     }
 
-    function formatINMWV (m) {
-        // $INMWV Wind Speed and Angle
-        var s = "INMWV";
+    function formatIIMWV(m) {
+        // $IIMWV Wind Speed and Angle
+        var s = "IIMWV";
         var tws = m.tws || 0;
         var twa = m.twa || 0;
-        var pTWA = (twa > 0)? twa: twa + 360;
-        s += "," + pad0(roundTo(pTWA, 2), 6) + ",T";
-        s += "," + pad0(roundTo(tws, 2), 5) + ",N";
+        var pTWA = (twa > 0) ? twa : twa + 360;
+        s += "," + pTWA + ",T";
+        s += "," + tws + ",N";
         s += ",A"
         return s;
     }
 
-    function formatNMEALatLon (l, len) {
+    function formatNMEALatLon(l, len) {
         var deg = Math.trunc(l);
-        var min = pad0(roundTo((l - deg) * 60, 4), 7);
+        var min = pad0(((l - deg) * 60).toFixed(6));
         var result = "" + deg + min;
         return pad0(result, len);
     }
@@ -2735,7 +2734,6 @@ var controller = function () {
         var race = races.get(raceId);
         race.legdata = message;
         initializeMap(race);
-
     }
 
     var xhrMap = new Map();
