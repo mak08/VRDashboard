@@ -2309,7 +2309,7 @@ var controller = function () {
         s += "," + formatNMEALatLon(Math.abs(m.pos.lon), 12); // Longitude & E/W
         s += "," + ((m.pos.lon < 0) ? "W":"E");
         s += "," + m.speed.toFixed(5);                        // SOG
-        s += "," + + m.heading.toFixed(5);                    // Track made good
+        s += "," + m.heading.toFixed(5);                      // Track made good
         s += "," + formatDDMMYY(d);                           // Date
         s += ",,";                                            //
         s += ",A";                                            // Valid
@@ -2317,8 +2317,8 @@ var controller = function () {
     }
 
     function formatIIMWV(m) {
-        // $INMWV Wind Speed and Angle
-        var s = "INMWV";
+        // $IIMWV Wind Speed and Angle
+        var s = "IIMWV";
         var tws = m.tws || 0;
         var twa = m.twa || 0;
         var pTWA = (twa > 0) ? twa : twa + 360;
