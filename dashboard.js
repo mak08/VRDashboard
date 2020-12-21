@@ -194,13 +194,13 @@ var controller = function () {
 
         lcActions.map(function (action) {
             if (action.type == "heading") {
-                lastCommand += (action.autoTwa ? " TWA" : " HDG") + "=" + roundTo(action.value, 1);
+                lastCommand += (action.autoTwa ? " TWA" : " HDG") + "=" + roundTo(action.value, 3);
             } else if (action.type == "sail") {
                 lastCommand += " Sail=" + sailNames[action.value];
             } else if (action.type == "prog") {
                 action.values.map(function (progCmd) {
                     var progTime = formatDate(progCmd.ts);
-                    lastCommand += (progCmd.autoTwa ? " TWA" : " HDG") + "=" + roundTo(progCmd.heading, 1) + " @ " + progTime + "; ";
+                    lastCommand += (progCmd.autoTwa ? " TWA" : " HDG") + "=" + roundTo(progCmd.heading, 3) + " @ " + progTime + "; ";
                 });
             } else if (action.type == "wp") {
                 action.values.map(function (waypoint) {
@@ -1919,24 +1919,42 @@ var controller = function () {
 
     function updateMapWaypoints(race) {
 
-        var map = race.gmap;
+        var googleMap = race.gmap;
         var bounds = race.gbounds;
 
         if (!race.curr) return; // current position unknown
-        if (!map) return; // no map yet
-        clearTrack(map,"_db_wp");
+        if (!googleMap) return; // no map yet
+        clearTrack(googleMap,"_db_wp");
 
         // track wp
         var tpath = [];
-        if (race.boatActions && race.boatActions.length > 0) {
-            if (race.boatActions[0].pos) {
+        if (race.waypoints) {
+            var action = race.waypoints
+            if (action.pos) {
+
+                // Waypoint lines
                 tpath.push(new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon)); // boat
-                for (var i = 0; i < race.boatActions[0].pos.length; i++) {
-                    tpath.push(new google.maps.LatLng(race.boatActions[0].pos[i].lat, race.boatActions[0].pos[i].lon));
+                for (var i = 0; i < action.pos.length; i++) {
+                    tpath.push(new google.maps.LatLng(action.pos[i].lat, action.pos[i].lon));
                 }
-                var ttpath = makeTTPath(tpath,"#FF00FF");
-                ttpath.setMap(map);
-                map._db_wp.push(ttpath);
+                var ttpath = makeTTPath(tpath,"#8000FF");
+                ttpath.setMap(googleMap);
+                googleMap._db_wp.push(ttpath);
+                
+                // Waypoint markers
+                for (var i = 0; i < action.pos.length; i++) {
+                    var waypoint = new google.maps.Marker({
+                        title: formatPosition(action.pos[i].lat, action.pos[i].lon),
+                        position: {"lat": action.pos[i].lat,
+                                   "lng": action.pos[i].lon
+                                  },
+                        map: googleMap,
+                        draggable: false
+                    });
+                    googleMap._db_wp.push(waypoint);
+                }
+            } else {
+                console.error("Unexpected waypoint format: " + JSON.stringify(action));
             }
         }
     }
@@ -2651,7 +2669,7 @@ var controller = function () {
                         return;
                     }
                     if (currentUserId ==  message.bs._id.user_id) {
-                        var isFirstBoatInfo =  (message.leg != undefined);
+                        var isFirstBoatInfo = (message.leg != undefined);
                         handleOwnBoatInfo(message.bs, isFirstBoatInfo);
                     } else {
                         handleFleetBoatInfo(message.bs);
@@ -2659,6 +2677,9 @@ var controller = function () {
                 }
                 if (message.track) {
                     handleOwnTrackInfo(message.track);
+                }
+                if (message.ba) {
+                    handleBoatActions(message.ba);
                 }
 
             } catch (e) {
@@ -2703,13 +2724,6 @@ var controller = function () {
         updateMapMe(race, message.track);
     }
 
-    function handleOwnBoatActions (message) {
-        // ToDo - refactor updateFleetUinfo message
-        if (message.boatActions) {
-            race.boatActions = message.boatActions;
-        }
-    }
-
     function getUserId(message) {
         return (message._id)?message._id.user_id:message.userId;
     }
@@ -2736,6 +2750,17 @@ var controller = function () {
         race.legdata = message;
         initializeMap(race);
 
+    }
+
+    function handleBoatActions (message) {
+        for (const action of message) {
+            var raceId = getRaceLegId(action._id);
+            var race = races.get(raceId);
+            if (action.pos) {
+                race.waypoints = action;
+                updateMapWaypoints(race);
+            }
+        }
     }
 
     var xhrMap = new Map();
@@ -2911,11 +2936,10 @@ var controller = function () {
                             };
                             addTableCommandLine(race);
                             divRaceStatus.innerHTML = makeRaceStatusHTML();
+                            clearTrack(race.gmap,"_db_wp");
                             if (response.scriptData.boatActions) {
-                                race.boatActions = response.scriptData.boatActions;
+                                handleBoatActions(response.scriptData.boatActions);
                             }
-                            updateMapWaypoints(race);
-                            updateMapMe(race);
                         }
                     } else if (request.eventKey == "Meta_GetPolar") {
                         // Always overwrite cached data...
@@ -2924,11 +2948,6 @@ var controller = function () {
                             "polars": polars
                         });
                         console.info("Stored polars " + response.scriptData.polar.label);
-                    } else if (request.eventKey == "Shop_GetCardsPack") {
-                        var card = races.get(getRaceLegId(request)).curr.soloCard;
-                        card.code = response.scriptData.packs[0].code;
-                        card.ts = response.scriptData.tsSoloCard;
-                        divRaceStatus.innerHTML = makeRaceStatusHTML();
                     } else if (request.eventKey == "Game_GetFollowedBoats") {
                         var raceId = getRaceLegId(request);
                         var race = races.get(raceId);
@@ -2986,6 +3005,7 @@ var controller = function () {
                         var raceId = getRaceLegId(request);
                         var uid = request.user_id;
                         mergeBoatInfo(raceId, "usercard", uid, response.scriptData.baseInfos);
+                        mergeBoatInfo(raceId, "usercard", uid, response.scriptData.legInfos);
                         if (raceId == selRace.value) {
                             updateFleetHTML(raceFleetMap.get(selRace.value));
                         }
