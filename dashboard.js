@@ -2348,7 +2348,7 @@ var controller = function () {
 
     function formatNMEALatLon(l, len) {
         var deg = Math.trunc(l);
-        var min = pad0(((l - deg) * 60).toFixed(6));
+        var min = pad0(((l - deg) * 60).toFixed(6), 9);
         var result = "" + deg + min;
         return pad0(result, len);
     }
