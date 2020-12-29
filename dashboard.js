@@ -101,7 +101,7 @@ var controller = function () {
     var lbBoatname, lbTeamname;
     var divPositionInfo, divRecordLog, divRawLog;
     var callRouterFunction;
-    
+
     var initialized = false;
 
     var tableHeader = '<tr>'
@@ -228,9 +228,9 @@ var controller = function () {
             r.curr.receivedTS = new Date();
         }
         // ... so we can tell if lastCalcDate was outdated (by more than 15min) already when we received it.
-        var lastCalcDelta = r.curr.receivedTS - r.curr.lastCalcDate; 
+        var lastCalcDelta = r.curr.receivedTS - r.curr.lastCalcDate;
         var lastCalcStyle = (lastCalcDelta > 900000)?  'style="background-color: red"':'';
-        
+
         var sailNameBG = r.curr.badSail ? LightRed : "lightgreen";
 
 
@@ -385,7 +385,7 @@ var controller = function () {
 
         return (res);
     }
-    
+
     function isDisplayEnabled (record, uid) {
         return  (uid == currentUserId)
             || ((record.isFollowed || record.followed) && cbFriends.checked)
@@ -574,7 +574,7 @@ var controller = function () {
         if (!storedInfo) {
             storedInfo = new Object();
             fleet.uinfo[uid] = storedInfo;
-            fleet.table.push(uid); 
+            fleet.table.push(uid);
         }
 
         if (data.team && data.team.name) {
@@ -600,7 +600,7 @@ var controller = function () {
                 }
             }
         });
-        
+
         fixMessageData(storedInfo, uid);
 
         if (boatPolars) {
@@ -632,7 +632,7 @@ var controller = function () {
     }
 
     function fixMessageData (message, userId) {
-        
+
         if (message.type == "pilotBoat") {
             message.displayName = "Frigate";
         } else if (message.type == "real") {
@@ -642,7 +642,7 @@ var controller = function () {
 
         message.tsRecord = message.lastCalcDate || Date.now();
     }
-    
+
     function initFoils (boatData) {
         if (boatData.options) {
             for (const feature of boatData.options) {
@@ -655,7 +655,7 @@ var controller = function () {
             return "?";
         }
     }
-    
+
     function explain(info, foilFactor, hullFactor, speedT) {
         info.xfactor = info.speed / speedT;
         info.xoption_foils = initFoils(info);
@@ -773,7 +773,7 @@ var controller = function () {
         function sortPrio (uinfo) {
             return category.indexOf(uinfo.type);
         }
-        
+
         Object.keys(fleet.uinfo).forEach( function (key) {
             fln.push(key);
         });
@@ -1939,7 +1939,7 @@ var controller = function () {
                 var ttpath = makeTTPath(tpath,"#8000FF");
                 ttpath.setMap(googleMap);
                 googleMap._db_wp.push(ttpath);
-                
+
                 // Waypoint markers
                 for (var i = 0; i < action.pos.length; i++) {
                     var waypoint = new google.maps.Marker({
@@ -2265,8 +2265,12 @@ var controller = function () {
                     if (r.curr) {
                         var rmc = formatGPRMC(r.curr);
                         var mwv = formatIIMWV(r.curr);
+                        var vwr = formatIIVWR(r.curr);
+                        var vhw = formatIIVHW(r.curr);
                         sendSentence(r.id, "$" + rmc + "*" + nmeaChecksum(rmc));
                         sendSentence(r.id, "$" + mwv + "*" + nmeaChecksum(mwv));
+                        sendSentence(r.id, "$" + vwr + "*" + nmeaChecksum(vwr));
+                        sendSentence(r.id, "$" + vhw + "*" + nmeaChecksum(vhw));
                     }
                 });
             } catch (e) {
@@ -2280,13 +2284,13 @@ var controller = function () {
         if (cbNMEAOutput.checked) {
             races.forEach( function (r) {
                 if (r.curr) {
-                    
+
                     var fleet = raceFleetMap.get(r.id);
-                    
+
                     // For each opponent
                     Object.keys(fleet.uinfo).forEach( function (uid) {
                         var info = fleet.uinfo[uid];
-                        
+
                         if (isDisplayEnabled(info, uid) && (info.displayName != r.curr.displayName)) {
                             // Add a mmsi base on displayName (30 bits for AIS message)
                             if (!info.mmsi) {
@@ -2343,6 +2347,43 @@ var controller = function () {
         s += "," + pTWA + ",T";
         s += "," + tws + ",N";
         s += ",A"
+        return s;
+    }
+
+    function formatIIVWR(m) {
+        // VWR - Relative Wind Speed and Angle
+        // --VWR,x.x,a,x.x,N,x.x,M,x.x,K
+        // https://gpsd.gitlab.io/gpsd/NMEA.html#_vwr_relative_wind_speed_and_angle
+
+        var tws = m.tws || 0;
+        var twa = m.twa || 0;
+        var sog = m.speed || 0;
+
+        // Cosinus law
+        var cosTwaLaw = Math.cos(toRad(180 - Math.abs(twa)));
+        var aws = Math.sqrt(sog**2 + tws**2 - 2 * sog * tws * cosTwaLaw);
+        var awd = toDeg(Math.acos((sog**2 + aws**2 - tws**2) / (2 * sog * aws)));
+        var awside = (twa < 0) ? "L" : "R";
+
+        // The message
+        var s = "IIVWR";
+        s += "," + awd.toFixed(5);
+        s += "," + awside;
+        s += "," + aws.toFixed(5) + ",N";
+        s += ",,,,";
+        return s;
+    }
+
+    function formatIIVHW(m) {
+        // VHW - Water speed and heading
+        // --VHW,x.x,T,x.x,M,x.x,N,x.x,K
+        // https://gpsd.gitlab.io/gpsd/NMEA.html#_vhw_water_speed_and_heading
+
+        var s = "IIVHW";
+        s += "," + m.heading.toFixed(5) + ",T";
+        s += ",,";
+        s += "," + m.speed.toFixed(5) + ",N";
+        s += ",,";
         return s;
     }
 
