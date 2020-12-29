@@ -2675,7 +2675,12 @@ var controller = function () {
                     }
                 }
                 if (message.track) {
-                    handleOwnTrackInfo(message.track);
+                    if (message.track._id.user_id == currentUserId) {
+                        handleOwnTrackInfo(message.track);
+                    } else {
+                        // Ignore track info.
+                        // There is currently no function to update a single competitor track.
+                    }
                 }
                 if (message.ba) {
                     handleBoatActions(message.ba);
@@ -3002,13 +3007,17 @@ var controller = function () {
                     } else if (request.eventKey == "User_GetCard") {
                         var raceId = getRaceLegId(request);
                         var uid = request.user_id;
-                        mergeBoatInfo(raceId, "usercard", uid, response.scriptData.baseInfos);
-                        mergeBoatInfo(raceId, "usercard", uid, response.scriptData.legInfos);
-                        if (raceId == selRace.value) {
-                            updateFleetHTML(raceFleetMap.get(selRace.value));
+                        if ( response.scriptData.baseInfos
+                             && response.scriptData.legInfos
+                             && response.scriptData.legInfos.type) {
+                            mergeBoatInfo(raceId, "usercard", uid, response.scriptData.baseInfos);
+                            mergeBoatInfo(raceId, "usercard", uid, response.scriptData.legInfos);
+                            if (raceId == selRace.value) {
+                                updateFleetHTML(raceFleetMap.get(selRace.value));
+                            }
+                            var race = races.get(raceId);
+                            updateMapFleet(race);
                         }
-                        var race = races.get(raceId);
-                        updateMapFleet(race);
                     }
                 } else if (responseClass == ".ScriptMessage") {
                     // There is no request for .ScriptMessages.
