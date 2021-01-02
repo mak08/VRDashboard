@@ -1,5 +1,7 @@
 // UI Controller
 
+import * as Util from './util.js';
+
 var controller = function () {
 
     const LightRed = '#FFA0A0';
@@ -93,13 +95,10 @@ var controller = function () {
         xhr.send();
     }
 
-    // Earth radius in nm, 360*60/(2*Pi);
-    var radius = 3437.74683;
-
-    // Fixme: Some controls are declared here, some aren't
-    var selRace, selNmeaport, cbRouter, cbReuseTab, cbMarkers, cbLocalTime;
-    var lbBoatname, lbTeamname;
-    var divPositionInfo, divRecordLog, divRawLog;
+    var selRace, selNmeaport, selFriends;
+    var cbFriends, cbOpponents, cbCertified, cbTeam, cbTop, cbReals, cbSponsors, cbInRace, cbRouter, cbReuseTab, cbMarkers, cbLocalTime, cbRawLog, cbNMEAOutput;
+    var lbBoatname, lbTeamname, lbRace, lbCurTime, lbCurPos, lbHeading, lbTWS, lbTWD, lbTWA, lbDeltaD, lbDeltaT, lbSpeedC, lbSpeedR, lbSpeedT;
+    var divPositionInfo, divRaceStatus, divRecordLog, divFriendList, divRawLog;
     var callRouterFunction;
     
     var initialized = false;
@@ -194,17 +193,17 @@ var controller = function () {
 
         lcActions.map(function (action) {
             if (action.type == "heading") {
-                lastCommand += (action.autoTwa ? " TWA" : " HDG") + "=" + roundTo(action.value, 3);
+                lastCommand += (action.autoTwa ? " TWA" : " HDG") + "=" + Util.roundTo(action.value, 3);
             } else if (action.type == "sail") {
                 lastCommand += " Sail=" + sailNames[action.value];
             } else if (action.type == "prog") {
                 action.values.map(function (progCmd) {
                     var progTime = formatDate(progCmd.ts);
-                    lastCommand += (progCmd.autoTwa ? " TWA" : " HDG") + "=" + roundTo(progCmd.heading, 3) + " @ " + progTime + "; ";
+                    lastCommand += (progCmd.autoTwa ? " TWA" : " HDG") + "=" + Util.roundTo(progCmd.heading, 3) + " @ " + progTime + "; ";
                 });
             } else if (action.type == "wp") {
                 action.values.map(function (waypoint) {
-                    lastCommand += " WP: " + formatPosition(waypoint.lat, waypoint.lon) + "; ";
+                    lastCommand += " WP: " + Util.formatPosition(waypoint.lat, waypoint.lon) + "; ";
                 });
             }
         });
@@ -216,7 +215,7 @@ var controller = function () {
 
         var isAutoSail = r.curr.hasPermanentAutoSails ||
             (r.curr.tsEndOfAutoSail &&(r.curr.tsEndOfAutoSail - r.curr.lastCalcDate) > 0);
-        var autoSailTime = r.curr.hasPermanentAutoSails?'∞':formatHMS(r.curr.tsEndOfAutoSail - r.curr.lastCalcDate);
+        var autoSailTime = r.curr.hasPermanentAutoSails?'∞':Util.formatHMS(r.curr.tsEndOfAutoSail - r.curr.lastCalcDate);
         if (isAutoSail) {
             sailInfo = sailInfo + " (A " + autoSailTime + ")";
         } else {
@@ -244,13 +243,13 @@ var controller = function () {
 
         return '<td ' + lastCalcStyle + '>' + formatDate(r.curr.lastCalcDate) + '</td>'
             + '<td>' + (r.rank ? r.rank : "-") + '</td>'
-            + '<td>' + roundTo(r.curr.distanceToEnd - r.bestDTF, 1) + '</td>'
-            + '<td>' + roundTo(r.curr.distanceToEnd, 1) + '</td>'
-            + '<td>' + formatPosition(r.curr.pos.lat, r.curr.pos.lon) + '</td>'
-            + '<td style="color:' + hdgFG + ";" + hdgBold + '">' + roundTo(r.curr.heading, 3) + '</td>'
-            + '<td style="color:' + twaFG + ";" + twaBold + '">' + roundTo(Math.abs(r.curr.twa), 3) + '</td>'
-            + '<td>' + roundTo(r.curr.tws, 2) + '</td>'
-            + '<td>' + roundTo(r.curr.twd, 1) + '</td>'
+            + '<td>' + Util.roundTo(r.curr.distanceToEnd - r.bestDTF, 1) + '</td>'
+            + '<td>' + Util.roundTo(r.curr.distanceToEnd, 1) + '</td>'
+            + '<td>' + Util.formatPosition(r.curr.pos.lat, r.curr.pos.lon) + '</td>'
+            + '<td style="color:' + hdgFG + ";" + hdgBold + '">' + Util.roundTo(r.curr.heading, 3) + '</td>'
+            + '<td style="color:' + twaFG + ";" + twaBold + '">' + Util.roundTo(Math.abs(r.curr.twa), 3) + '</td>'
+            + '<td>' + Util.roundTo(r.curr.tws, 2) + '</td>'
+            + '<td>' + Util.roundTo(r.curr.twd, 1) + '</td>'
             + '<td style="background-color:' + sailNameBG + ';">' + sailInfo + '</td>';
     }
 
@@ -293,8 +292,8 @@ var controller = function () {
             var trstyle = "hov";
             if (r.id === selRace.value) trstyle += " sel";
             var best = bestVMG(r.curr.tws, polars[r.curr.boat.polar_id], r.curr.options);
-            var bestVMGString = "Up:" + roundTo(best.vmgUp, 2) + "@" + best.twaUp
-                + " | " + "Down:" + roundTo(Math.abs(best.vmgDown), 2) + "@" + best.twaDown;
+            var bestVMGString = "Up:" + Util.roundTo(best.vmgUp, 2) + "@" + best.twaUp
+                + " | " + "Down:" + Util.roundTo(Math.abs(best.vmgDown), 2) + "@" + best.twaDown;
 
             return '<tr class="' + trstyle + '" id="rs:' + r.id + '">'
                 + (r.url ? ('<td class="tdc"><span id="rt:' + r.id + '">&#x2388;</span></td>') : '<td>&nbsp;</td>')
@@ -302,8 +301,8 @@ var controller = function () {
                 + '<td class="tdc"><span id="wi:' + r.id + '"><img class="icon" src="wind.svg"/></span></td>'
                 + '<td>' + r.name + '</td>'
                 + commonTableLines(r)
-                + '<td>' + roundTo(r.curr.speed, 2) + '</td>'
-                + '<td>' + roundTo(vmg(r.curr.speed, r.curr.twa), 2) + '</td>'
+                + '<td>' + Util.roundTo(r.curr.speed, 2) + '</td>'
+                + '<td>' + Util.roundTo(vmg(r.curr.speed, r.curr.twa), 2) + '</td>'
                 + '<td>' + bestVMGString + '</td>'
                 + '<td>' + ((r.curr.options.length == 8) ? ("All") : r.curr.options.join(" ")) + '</td>'
                 + '<td style="background-color:' + agroundBG + ';">' + (r.curr.aground ? "AGROUND" : "No") + '</td>'
@@ -408,7 +407,7 @@ var controller = function () {
             var bi = boatinfo(uid, r);
 
             r.dtf = r.distanceToEnd;
-            r.dtfC = gcDistance(r.pos, race.legdata.end);
+            r.dtfC = Util.gcDistance(r.pos, race.legdata.end);
             if (!r.dtf || r.dtf == "null") {
                 r.dtf = r.dtfC;
             }
@@ -422,17 +421,17 @@ var controller = function () {
                     + recordRaceFields(race, r)
                     + '<td>' + formatDateShort(r.lastCalcDate) + '</td>'
                     + '<td>' + (r.rank ? r.rank : "-") + '</td>'
-                    + "<td>" + ((r.dtf==r.dtfC)?"(" + roundTo(r.dtfC, 1) + ")":r.dtf) + "</td>"
+                    + "<td>" + ((r.dtf==r.dtfC)?"(" + Util.roundTo(r.dtfC, 1) + ")":r.dtf) + "</td>"
                     + '<td>' + (r.distanceToUs ? r.distanceToUs : "-") + '</td>'
                     + '<td>' + (r.bearingFromUs ? r.bearingFromUs + "&#x00B0;" : "-") + '</td>'
                     + '<td>' + bi.sail + '</td>'
                     + '<td>' + (r.state || "-") + '</td>'
-                    + '<td>' + (r.pos ? formatPosition(r.pos.lat, r.pos.lon) : "-") + '</td>'
-                    + '<td>' + roundTo(bi.heading, 3) + '</td>'
-                    + '<td ' + bi.twaStyle + '>' + roundTo(bi.twa, 3) + '</td>'
-                    + '<td>' + roundTo(bi.tws, 1) + '</td>'
-                    + '<td>' + roundTo(bi.speed, 2) + '</td>'
-                    + '<td ' + bi.xfactorStyle + '>' + roundTo(r.xfactor, 4) + '</td>'
+                    + '<td>' + (r.pos ? Util.formatPosition(r.pos.lat, r.pos.lon) : "-") + '</td>'
+                    + '<td>' + Util.roundTo(bi.heading, 3) + '</td>'
+                    + '<td ' + bi.twaStyle + '>' + Util.roundTo(bi.twa, 3) + '</td>'
+                    + '<td>' + Util.roundTo(bi.tws, 1) + '</td>'
+                    + '<td>' + Util.roundTo(bi.speed, 2) + '</td>'
+                    + '<td ' + bi.xfactorStyle + '>' + Util.roundTo(r.xfactor, 4) + '</td>'
                     + '<td>' + (r.xoption_foils || "?") + '</td>'
                     + '<td>' + (r.xoption_options || "?") + '</td>'
                     + '</tr>';
@@ -454,8 +453,8 @@ var controller = function () {
                     r.eRT = e.toString();
                 }
                 return '<td>' + formatDate(r.startDate, 'UserCard missing') + '</td>'
-                    + '<td>' + formatDHMS(r.eRT) + '</td>'
-                    + '<td>' + roundTo(r.avgSpeed, 2) + '</td>';
+                    + '<td>' + Util.formatDHMS(r.eRT) + '</td>'
+                    + '<td>' + Util.roundTo(r.avgSpeed, 2) + '</td>';
             } else {
                 return '<td>' + 'UserCard missing' + '</td>'
                     + '<td> - </td>'
@@ -464,14 +463,6 @@ var controller = function () {
         } else {
             return "";
         }
-    }
-
-    function raceDistance (course) {
-        var dist = 0;
-        for (i = 1; i < course.length; i++) {
-            dist += gcDistance(course[i-1], course[i]);
-        }
-        return dist;
     }
 
     function makeRaceStatusHTML() {
@@ -591,8 +582,8 @@ var controller = function () {
                 if (tag == "baseInfos") {
                     storedInfo.displayName = data["baseInfos"].displayName;
                 } else if (tag == "pos") { // calc gc distance to us
-                    storedInfo.distanceToUs = roundTo(gcDistance(race.curr.pos, data.pos), 1);
-                    storedInfo.bearingFromUs = roundTo(courseAngle(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon) * 180 / Math.PI, 1);
+                    storedInfo.distanceToUs = Util.roundTo(Util.gcDistance(race.curr.pos, data.pos), 1);
+                    storedInfo.bearingFromUs = Util.roundTo(Util.courseAngle(race.curr.pos.lat, race.curr.pos.lon, data.pos.lat, data.pos.lon) * 180 / Math.PI, 1);
                     var ad = storedInfo.bearingFromUs - race.curr.heading + 90;
                     if (ad < 0) ad += 360;
                     if (ad > 360) ad -= 360;
@@ -680,7 +671,7 @@ var controller = function () {
                 if (epsEqual(hullFactor, foilFactor)) {
                     // Both hull and foil match.
                     // info.xoption_options = "(hull), ?";
-                    info.xoption_foils = "(" + roundTo(foils, 0) + "%)";
+                    info.xoption_foils = "(" + Util.roundTo(foils, 0) + "%)";
                 } else {
                     // info.xoption_options = "hull, ?";
                     if (foilFactor > 1.0) {
@@ -690,11 +681,11 @@ var controller = function () {
             } else if (epsEqual(info.speed, speedT * foilFactor)) {
                 info.xplained = true;
                 // info.xoption_options = "hull=no, ?";
-                info.xoption_foils = roundTo(foils, 0) + "%";
+                info.xoption_foils = Util.roundTo(foils, 0) + "%";
             } else if (epsEqual(info.speed, speedT * foilFactor * hullFactor)) {
                 info.xplained = true;
                 // info.xoption_options = "hull, ?";
-                info.xoption_foils = roundTo(foils, 0) + "%";
+                info.xoption_foils = Util.roundTo(foils, 0) + "%";
             }
         }
 
@@ -817,69 +808,8 @@ var controller = function () {
         if (value < 0) {
             return "-";
         } else {
-            return roundTo(value / 1000, 0);
+            return Util.roundTo(value / 1000, 0);
         }
-    }
-
-    function formatDDMMYY (d) {
-        var s = ""
-            + pad0(d.getUTCDate())
-            + pad0(d.getUTCMonth() + 1)
-            + d.getUTCFullYear().toString().substring(2,4);
-        return s;
-    }
-
-    function formatHHMMSSSS(d) {
-        var s = ""
-            + pad0(d.getUTCHours())
-            + pad0(d.getUTCMinutes())
-            + pad0(d.getUTCSeconds())
-            + "."
-            + pad0(d.getUTCMilliseconds(), 3);
-        return s;
-    }
-
-    function formatHMS (seconds) {
-        if (seconds === undefined || isNaN(seconds) || seconds < 0) {
-            return "-";
-        }
-
-        seconds = Math.floor(seconds / 1000);
-
-        var hours = Math.floor(seconds / 3600);
-        seconds -= 3600 * hours;
-
-        var minutes = Math.floor(seconds / 60);
-        seconds -= minutes * 60;
-
-        return pad0(hours) + "h" + pad0(minutes) + "m"; // + seconds + "s";
-    }
-
-    function formatDHMS (seconds) {
-        if (seconds === undefined || isNaN(seconds) || seconds < 0) {
-            return "-";
-        }
-
-        seconds = Math.floor(seconds / 1000);
-
-        var days = Math.floor(seconds / 86400);
-        var hours = Math.floor(seconds / 3600) % 24;
-        var minutes = Math.floor(seconds / 60) % 60;
-
-        return pad0(days) + "d" + pad0(hours) + "h" + pad0(minutes) + "m"; // + seconds + "s";
-    }
-
-    function formatMS(seconds) {
-        if (seconds === undefined || isNaN(seconds) || seconds < 0) {
-            return "-";
-        }
-
-        seconds = Math.floor(seconds / 1000);
-
-        var minutes = Math.floor(seconds / 60);
-        seconds -= minutes * 60;
-
-        return pad0(minutes) + "m" + pad0(seconds) + "s";
     }
 
     function formatDate(ts,
@@ -966,10 +896,10 @@ var controller = function () {
 
         var speedCStyle = "";
         var speedTStyle = "";
-        var deltaDist = roundTo(r.curr.deltaD, 3);
+        var deltaDist = Util.roundTo(r.curr.deltaD, 3);
         var speedT = "-";
         if (r.curr.speedT) {
-            speedT = roundTo(r.curr.speedT.speed, 2) + "&nbsp;(" + r.curr.speedT.sail + ")";
+            speedT = Util.roundTo(r.curr.speedT.speed, 2) + "&nbsp;(" + r.curr.speedT.sail + ")";
         }
 
         if (isPenalty()) {
@@ -979,7 +909,7 @@ var controller = function () {
         } else if (r.curr.speedT && isDifferingSpeed(r.curr.speedT.speed)) {
             // Speed differs but not due to penalty - assume "Bad Sail" and display theoretical delta
             speedTStyle = 'style="background-color: ' + LightRed + ';"';
-            deltaDist = deltaDist + " (" + roundTo(r.curr.deltaD_T, 3) + ")";
+            deltaDist = deltaDist + " (" + Util.roundTo(r.curr.deltaD_T, 3) + ")";
         }
 
         var sailChange = formatSeconds(r.curr.tsEndOfSailChange - r.curr.lastCalcDate);
@@ -988,12 +918,12 @@ var controller = function () {
 
         return '<tr>'
             + commonTableLines(r)
-            + '<td>' + roundTo(r.curr.speed, 2) + '</td>'
-            + '<td ' + speedCStyle + '>' + roundTo(r.curr.speedC, 2) + " (" + sailNames[(r.curr.sail % 10)] + ")" + '</td>'
+            + '<td>' + Util.roundTo(r.curr.speed, 2) + '</td>'
+            + '<td ' + speedCStyle + '>' + Util.roundTo(r.curr.speedC, 2) + " (" + sailNames[(r.curr.sail % 10)] + ")" + '</td>'
             + '<td ' + speedTStyle + '>' + speedT + '</td>'
-            + '<td>' + (r.curr.speedT ? (roundTo(r.curr.speedT.foiling, 0) + "%") : "-") + '</td>'
+            + '<td>' + (r.curr.speedT ? (Util.roundTo(r.curr.speedT.foiling, 0) + "%") : "-") + '</td>'
             + '<td ' + speedTStyle + '>' + deltaDist + '</td>'
-            + '<td>' + roundTo(r.curr.deltaT, 0) + '</td>'
+            + '<td>' + Util.roundTo(r.curr.deltaT, 0) + '</td>'
             + '<td ' + getBG(r.curr.tsEndOfSailChange) + '>' + sailChange + '</td>'
             + '<td ' + getBG(r.curr.tsEndOfGybe) + '>' + gybing + '</td>'
             + '<td ' + getBG(r.curr.tsEndOfTack) + '>' + tacking + '</td>'
@@ -1265,22 +1195,22 @@ var controller = function () {
         r.curr = message;
         r.curr.speedT = theoreticalSpeed(message);
         if (r.prev != undefined) {
-            var d = gcDistance(r.prev.pos, r.curr.pos);
-            var delta = courseAngle(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon);
-            var alpha = Math.PI - angle(toRad(r.prev.heading), delta);
-            var beta = Math.PI - angle(toRad(r.curr.heading), delta);
-            var gamma = angle(toRad(r.curr.heading), toRad(r.prev.heading));
+            var d = Util.gcDistance(r.prev.pos, r.curr.pos);
+            var delta = Util.courseAngle(r.prev.pos.lat, r.prev.pos.lon, r.curr.pos.lat, r.curr.pos.lon);
+            var alpha = Math.PI - Util.angle(Util.toRad(r.prev.heading), delta);
+            var beta = Math.PI - Util.angle(Util.toRad(r.curr.heading), delta);
+            var gamma = Util.angle(Util.toRad(r.curr.heading), Util.toRad(r.prev.heading));
             // Epoch timestamps are milliseconds since 00:00:00 UTC on 1 January 1970.
             r.curr.deltaT = (r.curr.lastCalcDate - r.prev.lastCalcDate) / 1000;
             if (r.curr.deltaT > 0
-                && Math.abs(toDeg(gamma) - 180) > 1
-                && toDeg(alpha) > 1
-                && toDeg(beta) > 1) {
+                && Math.abs(Util.toDeg(gamma) - 180) > 1
+                && Util.toDeg(alpha) > 1
+                && Util.toDeg(beta) > 1) {
                 r.curr.deltaD = d / Math.sin(gamma) * (Math.sin(beta) + Math.sin(alpha));
             } else {
                 r.curr.deltaD = d;
             }
-            r.curr.speedC = Math.abs(roundTo(r.curr.deltaD / r.curr.deltaT * 3600, 2));
+            r.curr.speedC = Math.abs(Util.roundTo(r.curr.deltaD / r.curr.deltaT * 3600, 2));
             // deltaD_T = Delta distance computed from speedT is only displayed when it deviates
             if (r.curr.speedT) {
                 r.curr.deltaD_T = r.curr.deltaD / r.curr.speedC * r.curr.speedT.speed;
@@ -1294,57 +1224,6 @@ var controller = function () {
         divRaceStatus.innerHTML = makeRaceStatusHTML();
     }
 
-
-    function intersectionPoint (p, q, m, r) {
-        // Compute the intersection points of a line (p, q) and a circle (m, r)
-
-        // Center on circle
-        var s = {}; s.x = p.lat - m.lat; s.y = p.lon - m.lon;
-        var t = {}; t.x = q.lat - m.lat; t.y = q.lon - m.lon;
-
-        // Aux variables
-        var d = {}; d.x = t.x - s.x; d.y = t.y - s.y;
-
-        var dr2 = d.x * d.x + d.y * d.y;
-        var D =  s.x * t.y - t.x * s.y;
-        var D2 = D * D;
-
-        // Check if line intersects at all
-        var discr = r * r * dr2 - D2;
-        if (discr < 0) {
-            return null;
-        }
-
-        // Compute intersection point of (infinite) line and circle
-        var R = Math.sqrt( r * r * dr2 - D2);
-
-        var x1 = (D*d.y + sign(d.y) * d.x * R)/dr2;
-        var x2 = (D*d.y - sign(d.y) * d.x * R)/dr2;
-
-        var y1 = (-D*d.x + Math.abs(d.y) * R)/dr2;
-        var y2 = (-D*d.x - Math.abs(d.y) * R)/dr2;
-
-        var l1 = (x1 - s.x) / d.x;
-        var l2 = (x2 - s.x) / d.x;
-
-        // Check if intersection point is on line segment;
-        // choose intersection point closer to p
-        if (l1 >= 0 && l1 <= 1 && l1 <= l2) {
-            return {"lat": x1 + m.lat, "lng": y1 + m.lon, "lambda": l1};
-        } else if (l2 >= 0 && l2 <= 1) {
-            return {"lat": x2 + m.lat, "lng": y2 + m.lon, "lambda": l2};
-        } else {
-            return null;
-        }
-    }
-
-    function sign (x) {
-        return ( x < 0 )? -1: 1;
-    }
-
-    function angle(h0, h1) {
-        return Math.abs(Math.PI - Math.abs(h1 - h0));
-    }
 
     function theoreticalSpeed(message) {
         var boatPolars = polars[message.boat.polar_id];
@@ -1363,7 +1242,7 @@ var controller = function () {
             var twaLookup = fractionStep(twa, boatPolars.twa);
             var speed = maxSpeed(options, twsLookup, twaLookup, boatPolars.sail);
             return {
-                "speed": roundTo(speed.speed * foil * hull * ratio, 2),
+                "speed": Util.roundTo(speed.speed * foil * hull * ratio, 2),
                 "sail": sailNames[speed.sail],
                 "foiling": foiling
             };
@@ -1569,8 +1448,8 @@ var controller = function () {
         var baseURL = "http://toxcct.free.fr/polars/?race_id=" + raceId;
         var race = races.get(raceId);
 
-        var twa = Math.abs(roundTo(race.curr.twa || 20, 0));
-        var tws = roundTo(race.curr.tws || 4, 1);
+        var twa = Math.abs(Util.roundTo(race.curr.twa || 20, 0));
+        var tws = Util.roundTo(race.curr.tws || 4, 1);
 
         if (!race.curr.tws || !race.curr.twa) {
             alert("Missing TWA and/or TWS, calling polars with TWA=" + twa + "°, TWS=" + tws + "kn");
@@ -1585,99 +1464,6 @@ var controller = function () {
         url += "&utm_source=VRDashboard";
 
         window.open(url, cbReuseTab.checked ? baseURL : "_blank");
-    }
-
-    // Greate circle distance
-    function gcDistance(pos0, pos1) {
-        // e = r · arccos(sin(φA) · sin(φB) + cos(φA) · cos(φB) · cos(λB – λA))
-        var rlat0 = toRad(pos0.lat);
-        var rlat1 = toRad(pos1.lat);
-        var rlon0 = toRad(pos0.lon);
-        var rlon1 = toRad(pos1.lon);
-        return radius * gcAngle(rlat0, rlon0, rlat1, rlon1);
-    }
-
-    function gcAngle(rlat0, rlon0, rlat1, rlon1) {
-        return Math.acos(Math.sin(rlat0) * Math.sin(rlat1) + Math.cos(rlat0) * Math.cos(rlat1) * Math.cos(rlon1 - rlon0));
-    }
-
-    function courseAngle(lat0, lon0, lat1, lon1) {
-        var rlat0 = toRad(lat0);
-        var rlat1 = toRad(lat1);
-        var rlon0 = toRad(lon0);
-        var rlon1 = toRad(lon1);
-        var xi = gcAngle(rlat0, rlon0, rlat1, rlon1);
-        var a = Math.acos((Math.sin(rlat1) - Math.sin(rlat0) * Math.cos(xi)) / (Math.cos(rlat0) * Math.sin(xi)));
-        return (Math.sin(rlon1 - rlon0) > 0) ? a : (2 * Math.PI - a);
-    }
-
-    function addDistance (pos, distnm, angle, radiusnm) {
-        var posR = {};
-        posR.lat = toRad(pos.lat);
-        posR.lon = toRad(pos.lon);
-        var d = distnm / radiusnm;
-        var angleR = toRad(angle);
-        var dLatR = d * Math.cos(angleR);
-        var dLonR = d * (Math.sin(angleR) / Math.cos(posR.lat + dLatR));
-        return { "lat": toDeg(posR.lat + dLatR),
-                 "lon": toDeg(posR.lon + dLonR) };
-    }
-
-    function toRad(angle) {
-        return angle / 180 * Math.PI;
-    }
-
-    function toDeg(angle) {
-        return angle / Math.PI * 180;
-    }
-
-    function toDMS(number) {
-        var u = sign(number);
-        number = Math.abs(number);
-        var g = Math.floor(number);
-        var frac = number - g;
-        var m = Math.floor(frac * 60);
-        frac = frac - m / 60;
-        var s = Math.floor(frac * 3600);
-        var cs = roundTo(360000 * (frac - s / 3600), 0);
-        while (cs >= 100) {
-            cs = cs - 100;
-            s = s + 1;
-        }
-        return {
-            "u": u,
-            "g": g,
-            "m": m,
-            "s": s,
-            "cs": cs
-        };
-    }
-
-    function roundTo(number, digits) {
-        if (number !== undefined && !isNaN(number)) {
-            var scale = Math.pow(10, digits);
-            return (Math.round(number * scale) / scale).toFixed(digits);
-        } else {
-            return "-";
-        }
-    }
-
-    function sign(x) {
-        return (x < 0) ? -1 : 1;
-    }
-
-    function pad0 (val, length=2, base=10) {
-        var result = val.toString(base)
-        while (result.length < length) result = '0' + result;
-        return result;
-    }
-
-    function formatPosition(lat, lon) {
-        var latDMS = toDMS(lat);
-        var lonDMS = toDMS(lon);
-        var latString = latDMS.g + "°" + pad0(latDMS.m) + "'" + pad0(latDMS.s) + "." + pad0(latDMS.cs, 2) + '"';
-        var lonString = lonDMS.g + "°" + pad0(lonDMS.m) + "'" + pad0(lonDMS.s) + "." + pad0(lonDMS.cs, 2) + '"';
-        return latString + ((latDMS.u == 1) ? "N" : "S") + " " + lonString + ((lonDMS.u == 1) ? "E" : "W");
     }
 
     function switchMap(race) {
@@ -1723,12 +1509,12 @@ var controller = function () {
             addmarker(map, bounds, pos, undefined, {
                 color: "blue",
                 text: "S"
-            }, "Start: " + race.legdata.start.name + "\nPosition: " + formatPosition(race.legdata.start.lat, race.legdata.start.lon), "S", 10, 1);
+            }, "Start: " + race.legdata.start.name + "\nPosition: " + Util.formatPosition(race.legdata.start.lat, race.legdata.start.lon), "S", 10, 1);
             pos = new google.maps.LatLng(race.legdata.end.lat, race.legdata.end.lon);
             addmarker(map, bounds, pos, undefined, {
                 color: "yellow",
                 text: "F"
-            }, "Finish: " + race.legdata.end.name + "\nPosition: " + formatPosition(race.legdata.end.lat, race.legdata.end.lon), "F", 10, 1);
+            }, "Finish: " + race.legdata.end.name + "\nPosition: " + Util.formatPosition(race.legdata.end.lat, race.legdata.end.lon), "F", 10, 1);
             var fincircle = new google.maps.Circle({
                 strokeColor: "#FF0000",
                 strokeOpacity: 0.8,
@@ -1866,8 +1652,8 @@ var controller = function () {
             var label_g = "checkpoint " + cp.group + "." + cp.id +  ", type: " + cp_name + ", engine: " + cp.engine + ", name: " + cp.name + (g_passed ? ", PASSED" : "");
             var side_s =  cp.side ;
             var side_e = (cp.side == "stbd")?"port":"stbd";
-            var label_s = label_g + ", side: " + side_s + "\nPosition: " + formatPosition(cp.start.lat, cp.start.lon);
-            var label_e = label_g + ", side: " + side_e + "\nPosition: " + formatPosition(cp.end.lat, cp.end.lon);
+            var label_s = label_g + ", side: " + side_s + "\nPosition: " + Util.formatPosition(cp.start.lat, cp.start.lon);
+            var label_e = label_g + ", side: " + side_e + "\nPosition: " + Util.formatPosition(cp.end.lat, cp.end.lon);
 
             if (cp.side == "stbd") {
                 map._db_cp.push(addmarker(map, bounds, position_s, pinSymbol(c_sb, "C"), undefined, label_s, i, zi, op));
@@ -1943,7 +1729,7 @@ var controller = function () {
                 // Waypoint markers
                 for (var i = 0; i < action.pos.length; i++) {
                     var waypoint = new google.maps.Marker({
-                        title: formatPosition(action.pos[i].lat, action.pos[i].lon),
+                        title: Util.formatPosition(action.pos[i].lat, action.pos[i].lon),
                         position: {"lat": action.pos[i].lat,
                                    "lng": action.pos[i].lon
                                   },
@@ -1974,8 +1760,8 @@ var controller = function () {
                 if (cbMarkers.checked) {
                     if (i > 0) {
                         var deltaT = (segment.ts -  track[i-1].ts) / 1000;
-                        var deltaD =  gcDistance(track[i-1], segment);
-                        var speed = roundTo(Math.abs(deltaD / deltaT * 3600), 2);
+                        var deltaD =  Util.gcDistance(track[i-1], segment);
+                        var speed = Util.roundTo(Math.abs(deltaD / deltaT * 3600), 2);
                         var timeStamp = new Date(segment.ts);
                         var label =  "Me" + "|" + timeStamp.toISOString() + "|" + speed + "kn" + "|" + (segment.tag || "-");
                         var marker = new google.maps.Marker({
@@ -2002,7 +1788,7 @@ var controller = function () {
         // boat
         if (race.curr && race.curr.pos) {
             var pos = new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon);
-            var title =  "HDG: " + roundTo(race.curr.heading, 1) + " | TWA: " + roundTo(race.curr.twa, 1) + " | SPD: " + roundTo(race.curr.speed, 2)
+            var title =  "HDG: " + Util.roundTo(race.curr.heading, 1) + " | TWA: " + Util.roundTo(race.curr.twa, 1) + " | SPD: " + Util.roundTo(race.curr.speed, 2)
             map._db_me.push(addmarker(map, bounds, pos, pinSymbol("#44FF44", "B", 0.7, race.curr.heading), undefined, title, 'me', 20, 0.7));
         }
     }
@@ -2020,10 +1806,10 @@ var controller = function () {
 
         // track
         if (race.leaderTrack) {
-            addGhostTrack(map, race.gbounds, race.leaderTrack, "Leader", "Leader: " + race.leaderName + " | Elapsed: " + formatDHMS(offset), offset, "_db_leader", "#3d403a");
+            addGhostTrack(map, race.gbounds, race.leaderTrack, "Leader", "Leader: " + race.leaderName + " | Elapsed: " + Util.formatDHMS(offset), offset, "_db_leader", "#3d403a");
         }
         if (race.myTrack) {
-            addGhostTrack(map, race.gbounds, race.myTrack, "Best Attempt", "Best Attempt" + " | Elapsed: " + formatDHMS(offset), offset, "_db_self", "#4d504a");
+            addGhostTrack(map, race.gbounds, race.myTrack, "Best Attempt", "Best Attempt" + " | Elapsed: " + Util.formatDHMS(offset), offset, "_db_self", "#4d504a");
         }
     }
 
@@ -2069,7 +1855,7 @@ var controller = function () {
             var lon1 = ghostTrack[ghostPos].lon
             var lat0 = ghostTrack[Math.max(ghostPos - 1, 0)].lat;
             var lon0 = ghostTrack[Math.max(ghostPos - 1, 0)].lon;
-            var heading = courseAngle(lat0, lon0, lat1, lon1) * 180 / Math.PI;
+            var heading = Util.courseAngle(lat0, lon0, lat1, lon1) * 180 / Math.PI;
             var d = (ghostPosTS - ghostTrack[ghostPos - 1].ts ) / (ghostTrack[ghostPos].ts - ghostTrack[ghostPos - 1].ts)
             var lat = lat0 + (lat1-lat0) * d;
             var lon = lon0 + (lon1-lon0) * d;
@@ -2096,9 +1882,9 @@ var controller = function () {
             if (isDisplayEnabled(elem, key)) {
                 var pos = new google.maps.LatLng(elem.pos.lat, elem.pos.lon);
 
-                var info = bi.name + " | HDG: " + roundTo(bi.heading, 1) + " | TWA: " + roundTo(bi.twa, 1) + " | SPD: " + roundTo(bi.speed, 2);
+                var info = bi.name + " | HDG: " + Util.roundTo(bi.heading, 1) + " | TWA: " + Util.roundTo(bi.twa, 1) + " | SPD: " + Util.roundTo(bi.speed, 2);
                 if (elem.startDate && race.type == "record") {
-                    info += " | Elapsed: " + formatDHMS(elem.ts - elem.startDate);
+                    info += " | Elapsed: " + Util.formatDHMS(elem.ts - elem.startDate);
                 }
                 map._db_op.push(addmarker(map, bounds, pos, pinSymbol(bi.bcolor, "B", 0.7, elem.heading), undefined, info, "U:" + key, 18, 0.7));
                 // track
@@ -2114,8 +1900,8 @@ var controller = function () {
                         {
                             if (i > 0) {
                                 var deltaT = (segment.ts -  elem.track[i-1].ts) / 1000;
-                                var deltaD =  gcDistance(elem.track[i-1], segment);
-                                var speed = roundTo(Math.abs(deltaD / deltaT * 3600), 2);
+                                var deltaD =  Util.gcDistance(elem.track[i-1], segment);
+                                var speed = Util.roundTo(Math.abs(deltaD / deltaT * 3600), 2);
                                 var timeStamp = new Date(segment.ts);
                                 var label =  elem.displayName + "|" + timeStamp.toISOString() + "|" + speed + "kn" + "|" + (segment.tag || "-");
                                 var marker = new google.maps.Marker({
@@ -2211,7 +1997,7 @@ var controller = function () {
     function getOption(name) {
         var value = localStorage["cb_" + name];
         if (value !== undefined) {
-            cb = document.getElementById(name).checked = (value === "true");
+            document.getElementById(name).checked = (value === "true");
         }
     }
 
@@ -2321,14 +2107,14 @@ var controller = function () {
         // https://gpsd.gitlab.io/gpsd/NMEA.html#_rmc_recommended_minimum_navigation_information
         var d = new Date(m.lastCalcDate || new Date());
         var s = "GPRMC";
-        s += "," + formatHHMMSSSS(d) + ",A";                  // UTC time & status
+        s += "," + Util.formatHHMMSSSS(d) + ",A";                  // UTC time & status
         s += "," + formatNMEALatLon(Math.abs(m.pos.lat), 11); // Latitude & N/S
         s += "," + ((m.pos.lat < 0) ? "S":"N");
         s += "," + formatNMEALatLon(Math.abs(m.pos.lon), 12); // Longitude & E/W
         s += "," + ((m.pos.lon < 0) ? "W":"E");
         s += "," + m.speed.toFixed(5);                        // SOG
         s += "," + m.heading.toFixed(5);                      // Track made good
-        s += "," + formatDDMMYY(d);                           // Date
+        s += "," + Util.formatDDMMYY(d);                           // Date
         s += ",,";                                            //
         s += ",A";                                            // Valid
         return s;
@@ -2348,9 +2134,9 @@ var controller = function () {
 
     function formatNMEALatLon(l, len) {
         var deg = Math.trunc(l);
-        var min = pad0(((l - deg) * 60).toFixed(6), 9);
+        var min = Util.pad0(((l - deg) * 60).toFixed(6), 9);
         var result = "" + deg + min;
-        return pad0(result, len);
+        return Util.pad0(result, len);
     }
 
     function nmeaChecksum (s) {
@@ -2358,7 +2144,7 @@ var controller = function () {
         for (var i = 0; i < s.length; i++) {
             sum ^= s.charCodeAt(i);
         }
-        return pad0(sum, 2, 16).toUpperCase();
+        return Util.pad0(sum, 2, 16).toUpperCase();
     }
 
     function longToBitArray(long, array_size) {
@@ -2401,11 +2187,11 @@ var controller = function () {
         bitArray += longToBitArray(mmsi, 30) ;                                  // Boat MMSI
         bitArray += longToBitArray(8, 4);                                       // Nav status -> Navigation
         bitArray += longToBitArray(0, 8);                                       // Rot - rotate level
-        bitArray += longToBitArray(roundTo(uinfo.speed*10, 0), 10);             // SOG
+        bitArray += longToBitArray(Util.roundTo(uinfo.speed*10, 0), 10);             // SOG
         bitArray += longToBitArray(0, 1);                                       // Position accuracy
 
-        bitArray += longToBitArray(roundTo(uinfo.pos.lon * 10000 * 60, 0), 28); // Longitude
-        bitArray += longToBitArray(roundTo(uinfo.pos.lat * 10000 * 60, 0), 27); // Latitude
+        bitArray += longToBitArray(Util.roundTo(uinfo.pos.lon * 10000 * 60, 0), 28); // Longitude
+        bitArray += longToBitArray(Util.roundTo(uinfo.pos.lat * 10000 * 60, 0), 27); // Latitude
         bitArray += longToBitArray(uinfo.heading*10, 12);                       // COG
         bitArray += longToBitArray(uinfo.heading, 9);                           // HDG
         bitArray += longToBitArray(13, 6);                                      // Time stamp
@@ -2429,7 +2215,7 @@ var controller = function () {
         bitArray += longToBitArray(mmsi, 30);                                   // Boat MMSI
         bitArray += longToBitArray(0, 2);                                       // AIS Version
         bitArray += longToBitArray(uinfo.mmsi, 30);                             // IMO Number
-        bitArray += longToBitArray(0, 42);                                      // Call Sign - 7 six-bit characters
+        bitArray += longToBitArray(0, 42);                                      // Call sign - 7 six-bit characters
         bitArray += stringToSixBitArray(uinfo.displayName, 120/6);              // Vessel Name - 20 six-bit characters
         bitArray += longToBitArray(36, 8);                                      // Ship Type => Sailing
         bitArray += longToBitArray(0, 9);                                       // Dimension to Bow
