@@ -2052,11 +2052,11 @@ var controller = function () {
                         var rmc = formatGPRMC(r.curr);
                         var mwv = formatIIMWV(r.curr);
                         var vwr = formatIIVWR(r.curr);
-                        var vhw = formatIIVHW(r.curr);
+                        var hdt = formatIIHDT(r.curr);
                         sendSentence(r.id, "$" + rmc + "*" + nmeaChecksum(rmc));
                         sendSentence(r.id, "$" + mwv + "*" + nmeaChecksum(mwv));
                         sendSentence(r.id, "$" + vwr + "*" + nmeaChecksum(vwr));
-                        sendSentence(r.id, "$" + vhw + "*" + nmeaChecksum(vhw));
+                        sendSentence(r.id, "$" + hdt + "*" + nmeaChecksum(hdt));
                     }
                 });
             } catch (e) {
@@ -2160,16 +2160,13 @@ var controller = function () {
         return s;
     }
 
-    function formatIIVHW(m) {
-        // VHW - Water speed and heading
-        // --VHW,x.x,T,x.x,M,x.x,N,x.x,K
-        // https://gpsd.gitlab.io/gpsd/NMEA.html#_vhw_water_speed_and_heading
+    function formatIIHDT(m) {
+        // HDT - Heading - True
+        // --HDT,x.x,T
+        // https://gpsd.gitlab.io/gpsd/NMEA.html#_hdt_heading_true
 
-        var s = "IIVHW";
+        var s = "IIHDT";
         s += "," + m.heading.toFixed(5) + ",T";
-        s += ",,";
-        s += "," + m.speed.toFixed(5) + ",N";
-        s += ",,";
         return s;
     }
 
