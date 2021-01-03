@@ -1120,8 +1120,8 @@ var controller = function () {
     }
 
     function changeState(lbl_tochange) {
-        cbxlbl = lbl_tochange.replace("lbl_", "sel_");
-        selectedcbx = document.getElementById(cbxlbl);
+        var cbxlbl = lbl_tochange.replace("lbl_", "sel_");
+        var selectedcbx = document.getElementById(cbxlbl);
         if (selectedcbx.checked) {
             selectedcbx.checked = false;
         } else {
