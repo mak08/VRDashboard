@@ -16,12 +16,11 @@
 
   <body>
     <div class="container">
-      <div class="top">
-        <div class="flexrow">
-          <div>
-            <label><b>Boat :</b></label>
+      <div class="topgrid">
+
+		  <div>
+            <label><b>Boat: </b></label>
             <label id="lb_boatname">&lt;unknown&gt;</label>
-            <label id="lb_teamname">&nbsp;</label>
           </div>
           <div>
             <label>Select Race</label>
@@ -37,6 +36,38 @@
             <label>Reuse tabs</label>
           </div>
           <div>
+            <input type="checkbox" id="nmea_output">
+            <label>NMEA</label>
+            <select id="sel_nmeaport" name="nmeaport">
+              <option value="8081">8081</option>
+              <option value="8082">8082</option>
+              <option value="8083">8083</option>
+              <option value="8084">8084</option>
+            </select>
+          </div>
+          <div>
+            <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">
+              <input type="hidden" name="cmd" value="_s-xclick" />
+              <input type="hidden" name="hosted_button_id" value="ZUPP95R3A3686" />
+              <input type="image" width="70" height="18" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="Donate to VR Dashboard" alt="Donate with PayPal button" />
+            </form>
+          </div>
+          <div>
+            <label>Version</label>
+            <label id="lb_version"></label>
+          </div>
+
+          <div>
+            <label><b>Team: </b></label>
+            <label id="lb_teamname">-</label>
+          </div>
+		  
+		  <div>
+            <label>NOAA Cycle: </label>
+            <label id="lb_cycle">-</label>
+		  </div>
+		  
+          <div>
             <input type="checkbox" id="markers">
             <label>Show track info</label>
           </div>
@@ -44,34 +75,20 @@
             <input type="checkbox" id="local_time">
             <label>Local times</label>
           </div>
-          <div>
-            <input type="checkbox" id="nmea_output">
-            <label>NMEA</label>
-            <select id="sel_nmeaport" name="nmeaport">
-			  <option value="8081">8081</option>
-			  <option value="8082">8082</option>
-			  <option value="8083">8083</option>
-			  <option value="8084">8084</option>
-			</select>
-          </div>
-          <div>
-			<label type="button"><a href="manual.html" target="_blank">User manual</a></label>
-          </div>
 		  <div>
-			<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">
-			  <input type="hidden" name="cmd" value="_s-xclick" />
-			  <input type="hidden" name="hosted_button_id" value="ZUPP95R3A3686" />
-			  <input type="image" width="70" height="18" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="Donate to VR Dashboard" alt="Donate with PayPal button" />
-			  <img alt="" border="0" src="https://www.paypal.com/en_DE/i/scr/pixel.gif" width="1" height="1" />
-			</form>
+		  </div>
+		  <div>
 		  </div>
           <div>
-            <label>Version</label>
-            <label id="lb_version"></label>
+            <label type="button"><a href="manual.html" target="_blank">User manual</a></label>
           </div>
-        </div>
+
+
+		</div>
+        
         <div id="raceStatus">
         </div>
+		
         <ul class="tabs">
           <li class="tab">
             <input type="radio" name="tabs" checked="checked" id="ts:1"/>

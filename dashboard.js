@@ -37,9 +37,9 @@ var controller = function () {
         // "sponsor"
         {nameStyle: "color: BlueViolet;", bcolor: 'BlueViolet'},
         // "normal"
-        {nameStyle: "color: Iron;", bcolor: 'Iron'},
+        {nameStyle: "color: #2020AA;", bcolor: '#2020AA'},
         // "normal"
-        {nameStyle: "color: Iron;", bcolor: 'Iron'}
+        {nameStyle: "color: #2020AA;", bcolor: '#2020AA'}
     ];
 
     function isShowMarkers(userId) {
@@ -93,7 +93,7 @@ var controller = function () {
 
     var selRace, selNmeaport, selFriends;
     var cbFriends, cbOpponents, cbCertified, cbTeam, cbTop, cbReals, cbSponsors, cbInRace, cbRouter, cbReuseTab, cbMarkers, cbLocalTime, cbRawLog, cbNMEAOutput;
-    var lbBoatname, lbTeamname, lbRace, lbCurTime, lbCurPos, lbHeading, lbTWS, lbTWD, lbTWA, lbDeltaD, lbDeltaT, lbSpeedC, lbSpeedR, lbSpeedT;
+    var lbBoatname, lbTeamname, lbRace, lbCycle, lbCurTime, lbCurPos, lbHeading, lbTWS, lbTWD, lbTWA, lbDeltaD, lbDeltaT, lbSpeedC, lbSpeedR, lbSpeedT;
     var divPositionInfo, divRaceStatus, divRecordLog, divFriendList, divRawLog;
     var callRouterFunction;
 
@@ -366,9 +366,10 @@ var controller = function () {
             res.bcolor = style.bcolor;
             if ((uinfo.isFollowed || uinfo.followed)) {
                 res.nameStyle += " font-weight: bold;";
+                res.bcolor = '#108040';
             } else if ((uinfo.teamname == currentTeam || uinfo.team)) {
                 res.nameStyle = "color: #C52020; font-weight: bold;";
-                res.bcolor = '#C52020'
+                res.bcolor = '#C52020';
             }
         }
 
@@ -2031,6 +2032,7 @@ var controller = function () {
         lbBoatname = document.getElementById("lb_boatname");
         lbTeamname = document.getElementById("lb_teamname");
         selRace = document.getElementById("sel_race");
+        lbCycle = document.getElementById("lb_cycle");
         selNmeaport = document.getElementById("sel_nmeaport");
         selFriends = document.getElementById("sel_skippers");
         cbFriends = document.getElementById("sel_friends");
@@ -2286,21 +2288,32 @@ var controller = function () {
     }
 
     var xhrMap = new Map();
+    var currentCycle = 0;
 
     var onEvent = function (debuggeeId, message, params) {
-        if (tabId != debuggeeId.tabId)
+        if ( tabId != debuggeeId.tabId )
             return;
 
-        if (message == "Network.requestWillBeSent"
-            && params
-            && params.request
-            && (params.request.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos"
-                || params.request.url == "https://vro-api-client.prod.virtualregatta.com/getfleet")) {
-            if (params.request.method = "POST") {
+        if ( message == "Network.requestWillBeSent" && params && params.request ) {
+            if  ((   params.request.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos"
+                     || params.request.url == "https://vro-api-client.prod.virtualregatta.com/getfleet" )
+                 && params.request.method == "POST" ) {
                 if (cbRawLog.checked && params) {
                     divRawLog.innerHTML = divRawLog.innerHTML + "\n" + ">>> " + JSON.stringify(params.request);
                 }
                 xhrMap.set(params.requestId, params.request);
+            } else if ( params.request.url.substring(0, 45) == "https://static.virtualregatta.com/winds/live/" ) {
+                console.log("Loading wind " + params.request.url.substring(45));
+                if ( params.request.url.endsWith('wnd') ) {
+                    var cycleString = params.request.url.substring(45, 56);
+                    var d = parseInt(cycleString.substring(0, 8));
+                    var c = parseInt(cycleString.substring(9, 11));
+                    var cycle = d * 100 + c;
+                    if (cycle > currentCycle) {
+                        currentCycle = cycle;
+                        lbCycle.innerHTML = cycleString;
+                    }
+                }
             }
 
         } else if (message == "Network.responseReceived") {
@@ -2348,7 +2361,7 @@ var controller = function () {
                     currentUserId = response.userId;
                     lbBoatname.innerHTML = response.displayName;
                     if (response.scriptData.team) {
-                        lbTeamname.innerHTML = "&nbsp; <b>Team : </b>" + response.scriptData.team.name;
+                        lbTeamname.innerHTML = response.scriptData.team.name;
                         currentTeam = response.scriptData.team.name;
                     }
                 } else if (responseClass == ".LogEventResponse") {
