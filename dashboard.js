@@ -122,7 +122,11 @@ import * as NMEA from './nmea.js';
         + commonHeaders()
         + '<th title="Boat speed">' + "Speed" + '</th>'
         + '<th>' + "VMG" + '</th>'
-        + '<th>' + "Best VMG" + '</th>'
+        + '<th>' + "Up" + '</th>'
+        + '<th>' + "Down" + '</th>'
+        + '<th>' + "Tack" + '</th>'
+        + '<th>' + "Gybe" + '</th>'
+        + '<th>' + "Sail" + '</th>'
         + '<th>' + "Options" + '</th>'
         + '<th title="Boat is aground">' + "Agnd" + '</th>'
         + '<th title="Boat is maneuvering, half speed">' + "Mnvr" + '</th>'
@@ -290,8 +294,13 @@ import * as NMEA from './nmea.js';
             var trstyle = "hov";
             if (r.id === selRace.value) trstyle += " sel";
             var best = bestVMG(r.curr.tws, polars[r.curr.boat.polar_id], r.curr.options);
-            var bestVMGString = "Up:" + Util.roundTo(best.vmgUp, 2) + "@" + best.twaUp
-                + " | " + "Down:" + Util.roundTo(Math.abs(best.vmgDown), 2) + "@" + best.twaDown;
+            var up = Util.roundTo(best.vmgUp, 2) + "@" + best.twaUp;
+            var down =Util.roundTo(Math.abs(best.vmgDown), 2) + "@" + best.twaDown;
+
+            var penalties = manoeuveringPenalties(r);
+            var tack = penalties.tack.dist + "nm " + penalties.tack.time + "s";
+            var gybe = penalties.gybe.dist + "nm " + penalties.gybe.time + "s";
+            var sail = penalties.sail.dist + "nm " + penalties.sail.time + "s";
 
             return '<tr class="' + trstyle + '" id="rs:' + r.id + '">'
                 + (r.url ? ('<td class="tdc"><span id="rt:' + r.id + '">&#x2388;</span></td>') : '<td>&nbsp;</td>')
@@ -301,7 +310,11 @@ import * as NMEA from './nmea.js';
                 + commonTableLines(r)
                 + '<td>' + Util.roundTo(r.curr.speed, 2) + '</td>'
                 + '<td>' + Util.roundTo(vmg(r.curr.speed, r.curr.twa), 2) + '</td>'
-                + '<td>' + bestVMGString + '</td>'
+                + '<td>' + up + '</td>'
+                + '<td>' + down + '</td>'
+                + '<td>' + tack + '</td>'
+                + '<td>' + gybe + '</td>'
+                + '<td>' + sail + '</td>'
                 + '<td>' + ((r.curr.options.length == 8) ? ("All") : r.curr.options.join(" ")) + '</td>'
                 + '<td style="background-color:' + agroundBG + ';">' + (r.curr.aground ? "AGROUND" : "No") + '</td>'
                 + '<td>' + (manoeuvering ? "Yes" : "No") + '</td>'
@@ -310,6 +323,40 @@ import * as NMEA from './nmea.js';
         }
     }
 
+    function manoeuveringPenalties (record) {
+        var winch = polars[record.curr.boat.polar_id].winch;
+        var tws = record.curr.tws;
+        var speed = record.curr.speed;
+        var options = record.curr.options;
+        var fraction;
+        if  ((winch.lws <= tws) && (tws <= winch.hws)) {
+            fraction = (tws - winch.lws) / (winch.hws - winch.lws);
+        } else if (tws < winch.lws) {
+            fraction = 0;
+        } else {
+            fraction = 1;
+        }
+        return {
+            "gybe" : penalty(speed, options, fraction, winch.gybe),
+            "tack" : penalty(speed, options, fraction, winch.tack),
+            "sail" : penalty(speed, options, fraction, winch.sailChange)
+        };
+    }
+
+    function penalty (speed, options, fraction, spec) {
+        if (options.indexOf("winch") >= 0) {
+            spec = spec.pro;
+        } else {
+            spec = spec.std;
+        }
+        var time = spec.lw.timer + (spec.hw.timer - spec.lw.timer) * fraction;
+        var dist = speed * time / 3600;
+        return {
+            "time" : time.toFixed(),
+            "dist" : (dist * (1- spec.lw.ratio)).toFixed(3)
+        };
+    }
+    
     function vmg (speed, twa) {
         var r = Math.abs(Math.cos(twa / 180 * Math.PI));
         return speed * r;
