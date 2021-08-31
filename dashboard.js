@@ -944,10 +944,10 @@ import * as NMEA from './nmea.js';
         } else if (isDifferingSpeed(r.curr.speedC)) {
             speedCStyle = 'style="background-color: yellow;"';
         } else if (r.curr.speedT && isDifferingSpeed(r.curr.speedT.speed)) {
-            // Speed differs but not due to penalty - assume "Bad Sail" and display theoretical delta
+            // Speed differs but not due to penalty
             speedTStyle = 'style="background-color: ' + LightRed + ';"';
-            deltaDist = deltaDist + " (" + Util.roundTo(r.curr.deltaD_T, 3) + ")";
         }
+        deltaDist = deltaDist + " (" + Util.roundTo(r.curr.deltaD_T, 3) + ")";
 
         var sailChange = formatSeconds(r.curr.tsEndOfSailChange - r.curr.lastCalcDate);
         var gybing = formatSeconds(r.curr.tsEndOfGybe - r.curr.lastCalcDate);
@@ -1252,7 +1252,7 @@ import * as NMEA from './nmea.js';
                 r.curr.deltaD = d;
             }
             r.curr.speedC = Math.abs(Util.roundTo(r.curr.deltaD / r.curr.deltaT * 3600, 2));
-            // deltaD_T = Delta distance computed from speedT is only displayed when it deviates
+            // deltaD_T = Delta distance computed from speedT
             if (r.curr.speedT) {
                 r.curr.deltaD_T = r.curr.deltaD / r.curr.speedC * r.curr.speedT.speed;
             }
