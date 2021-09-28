@@ -1447,6 +1447,8 @@ import * as NMEA from './nmea.js';
         var url = baseURL + "/" + urlBeta + "/chart.pl"
             + "?lat=" + pos.lat
             + "&lon=" + pos.lon
+            + "&clat=" + pos.lat
+            + "&clon=" + pos.lon
             + "&ts=" + (race.curr.lastCalcDate / 1000)
             + "&o=" + options
             + "&twa=" + twa
