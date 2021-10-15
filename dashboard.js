@@ -86,7 +86,7 @@ import * as NMEA from './nmea.js';
             divRaceStatus = document.getElementById("raceStatus");
             divRaceStatus.innerHTML = makeRaceStatusHTML();
             divFriendList = document.getElementById("friendList");
-            "No boats positions received yet";
+            divFriendList.innerHTML = "No boats positions received yet";
         }
         xhr.open("GET", "http://zezo.org/races2.json");
         //xhr.open("GET", "races2.json");
@@ -97,7 +97,6 @@ import * as NMEA from './nmea.js';
     var cbFriends, cbOpponents, cbCertified, cbTeam, cbTop, cbReals, cbSponsors, cbInRace, cbRouter, cbReuseTab, cbMarkers, cbLocalTime, cbRawLog, cbNMEAOutput;
     var lbBoatname, lbTeamname, lbRace, lbCycle, lbCurTime, lbCurPos, lbHeading, lbTWS, lbTWD, lbTWA, lbDeltaD, lbDeltaT, lbSpeedC, lbSpeedR, lbSpeedT;
     var divPositionInfo, divRaceStatus, divRecordLog, divFriendList, divRawLog;
-    var callRouterFunction;
 
     var initialized = false;
 
@@ -217,7 +216,7 @@ import * as NMEA from './nmea.js';
 
         var isAutoSail = r.curr.hasPermanentAutoSails ||
             (r.curr.tsEndOfAutoSail &&(r.curr.tsEndOfAutoSail - r.curr.lastCalcDate) > 0);
-        var autoSailTime = r.curr.hasPermanentAutoSails?'∞':Util.formatHMS(r.curr.tsEndOfAutoSail - r.curr.lastCalcDate);
+        var autoSailTime = r.curr.hasPermanentAutoSails ? '∞':Util.formatHMS(r.curr.tsEndOfAutoSail - r.curr.lastCalcDate);
         if (isAutoSail) {
             sailInfo = sailInfo + " (A " + autoSailTime + ")";
         } else {
@@ -230,7 +229,7 @@ import * as NMEA from './nmea.js';
         }
         // ... so we can tell if lastCalcDate was outdated (by more than 15min) already when we received it.
         var lastCalcDelta = r.curr.receivedTS - r.curr.lastCalcDate;
-        var lastCalcStyle = (lastCalcDelta > 900000)?  'style="background-color: red"':'';
+        var lastCalcStyle = (lastCalcDelta > 900000) ?  'style="background-color: red"':'';
 
         var sailNameBG = r.curr.badSail ? LightRed : "lightgreen";
 
@@ -458,7 +457,7 @@ import * as NMEA from './nmea.js';
                     + recordRaceFields(race, r)
                     + '<td>' + formatDateShort(r.lastCalcDate) + '</td>'
                     + '<td>' + (r.rank ? r.rank : "-") + '</td>'
-                    + "<td>" + ((r.dtf==r.dtfC)?"(" + Util.roundTo(r.dtfC, 1) + ")":r.dtf) + "</td>"
+                    + "<td>" + ((r.dtf==r.dtfC) ?"(" + Util.roundTo(r.dtfC, 1) + ")":r.dtf) + "</td>"
                     + '<td>' + (r.distanceToUs ? r.distanceToUs : "-") + '</td>'
                     + '<td>' + (r.bearingFromUs ? r.bearingFromUs + "&#x00B0;" : "-") + '</td>'
                     + '<td>' + bi.sail + '</td>'
@@ -1370,93 +1369,7 @@ import * as NMEA from './nmea.js';
         }
     }
 
-    function callRouterZezo (raceId, userId, beta, auto = false) {
-        var optionBits = {
-            "winch": 4,
-            "foil": 16,
-            "light": 32,
-            "reach": 64,
-            "heavy": 128
-        };
 
-        var baseURL = "http://zezo.org";
-        var race = races.get(raceId);
-
-        // Get race URL
-        if (!race.url) {
-            // Panic - check if the race_id part is known.
-            // In the unlikely case when the polars change from one leg to another,
-            // this will give surprising results...
-            var race_id = Number(raceId.split('.')[0]);
-            var r = races.get(race_id);
-            race.url = r.url;
-        }
-        if (!race.url) {
-            alert("Unknown race - no routing available");
-            return;
-        }
-
-        var urlBeta = race.url + (beta ? "b" : "");
-
-        // Get boat position and options (self or opponent)
-        var uinfo;
-
-        var type = "me";
-        if (userId != currentUserId) {
-            uinfo = raceFleetMap.get(raceId).uinfo[userId];
-            if (!uinfo) {
-                alert("Can't find record for user id " + userId);
-                return;
-            }
-            type = "friend";
-        } else {
-            uinfo = race.curr;
-        }
-
-        if (uinfo.lastCalcDate) {
-            var now = new Date();
-            if ((now - uinfo.lastCalcDate) > 750000) {
-                console.log("Confirm routing for stale position?");
-                // If the Dashboard tab is not active, confirm does NOT raise a popup
-                // and returns false immediately.
-                // This means the router will not be auto-called with a stale position.
-                if (! confirm("Position is older than 10min, really call router?")) {
-                    console.log("Confirm routing ==> cancel.");
-                    return;
-                } else {
-                    console.log("Confirm routing ==> confirmed.");
-                }
-
-            }
-        }
-
-        var pos = uinfo.pos;
-        var twa = uinfo.twa;
-
-        var options = 0;
-        if (uinfo.options) {
-            for (const option of uinfo.options) {
-                if (optionBits[option]) {
-                    options |= optionBits[option];
-                }
-            }
-        }
-
-        var flagIsAuto = (auto ? "&auto=yes" : "&auto=no");
-
-        var url = baseURL + "/" + urlBeta + "/chart.pl"
-            + "?lat=" + pos.lat
-            + "&lon=" + pos.lon
-            + "&clat=" + pos.lat
-            + "&clon=" + pos.lon
-            + "&ts=" + (race.curr.lastCalcDate / 1000)
-            + "&o=" + options
-            + "&twa=" + twa
-            + "&userid=" + userId
-            + "&type=" + type
-            + flagIsAuto;
-        window.open(url, cbReuseTab.checked ? urlBeta : "_blank");
-    }
 
     function callWindy (raceId, userId) {
         var baseURL = "https://www.windy.com";
@@ -2062,35 +1975,95 @@ import * as NMEA from './nmea.js';
     }
 
 
-    function callRouter (raceId, userId = currentUserId, auto = false) {
-        var beta = false;
+    function onCallRouter (event) {
+        callRouter(selRace.value);
+    }
 
+    function callRouter (raceId, userId = currentUserId, auto = false) {
         if (selRace.selectedIndex == -1) {
             alert("Race info not available - please reload VR Offshore");
             return;
         }
 
-        if (typeof raceId === "object") { // button event
-            raceId = selRace.value;
-            beta = selRace.options[selRace.selectedIndex].betaflag;
-        } else { // new tab
-            var race = selRace.options[selRace.selectedIndex];
-            if (race && race.value == raceId) {
-                beta = race.betaflag;
+        var race = races.get(raceId);
+        if (!race) {
+            alert("Unsupported race #" + raceId);
+            return;
+        }
+
+        // Get boat status
+        var isMe = (userId == currentUserId);
+        var userInfo = (isMe) ? race.curr : raceFleetMap.get(raceId).uinfo[userId];
+        if (!userInfo) {
+            alert("No position received yet. Please retry later.");
+            return;
+        }
+
+        callRouterZezo(race, userInfo, isMe, auto);
+
+    }
+
+    function callRouterZezo (race, userInfo, isMe, auto) {
+
+        // Zezo race set up?
+        if (race.url === undefined) {
+            alert("Unsupported race, no router support yet.");
+            return;
+        }
+
+        // Ask user confirmation if position is stale
+        if (userInfo.lastCalcDate) {
+            var now = new Date();
+            if ((now - userInfo.lastCalcDate) > 750000) {
+                console.log("Confirm routing for stale position?");
+                // If the Dashboard tab is not active, confirm does NOT raise a popup
+                // and returns false immediately.
+                // This means the router will not be auto-called with a stale position.
+                if (! confirm("Position is older than 10min, really call router?")) {
+                    console.log("Confirm routing ==> cancel.");
+                    return;
+                } else {
+                    console.log("Confirm routing ==> confirmed.");
+                }
             }
         }
 
-        if (!races.get(raceId)) {
-            alert("Unsupported race #" + raceId);
-        } else if (races.get(raceId).curr === undefined) {
-            alert("No position received yet. Please retry later.");
-        } else if (races.get(raceId).url === undefined) {
-            alert("Unsupported race, no router support yet.");
-        } else {
-            callRouterZezo(raceId, userId, beta, auto);
-        }
-    }
+        var baseURL = `http://zezo.org/${race.url}/chart.pl`;
 
+        var optionBits = {
+            "winch": 4,
+            "foil": 16,
+            "light": 32,
+            "reach": 64,
+            "heavy": 128
+        };
+
+        var pos = userInfo.pos;
+        var twa = userInfo.twa;
+
+        var options = 0;
+        if (userInfo.options) {
+            for (const option of userInfo.options) {
+                if (optionBits[option]) {
+                    options |= optionBits[option];
+                }
+            }
+        }
+
+        var url = baseURL
+            + "?lat=" + pos.lat
+            + "&lon=" + pos.lon
+            + "&clat=" + pos.lat
+            + "&clon=" + pos.lon
+            + "&ts=" + (race.curr.lastCalcDate / 1000)
+            + "&o=" + options
+            + "&twa=" + twa
+            + "&userid=" + userInfo._id.user_id
+            + "&type=" + (isMe ? "me":"friend")
+            + "&auto=" + (auto ? "yes" : "no")
+        window.open(url, cbReuseTab.checked ? baseURL : "_blank");
+    }
+    
     function reInitUI (newId) {
         if (currentUserId != undefined && currentUserId != newId) {
             // Re-initialize statistics
@@ -2497,7 +2470,7 @@ import * as NMEA from './nmea.js';
         cbRawLog = document.getElementById("cb_rawlog");
         divRawLog = document.getElementById("rawlog");
 
-        document.getElementById("bt_router").addEventListener("click", callRouter);
+        document.getElementById("bt_router").addEventListener("click", onCallRouter);
         document.getElementById("sel_race").addEventListener("change", changeRace);
         document.getElementById("sel_skippers").addEventListener("change", updateFleetFilter);
         document.getElementById("sel_friends").addEventListener("change", updateFleetFilter);
