@@ -7,7 +7,7 @@ html, body {
 
 .topgrid {
 	display: grid;
-	grid-template-columns: 15% 30% 20% 10% 10% 5% 7%;
+	grid-template-columns: 15% 20% 20% 10% 10% 10% 5% 7%;
 	grid-template-rows: repeat(2, 20px);
 	gap: 5px;
 }

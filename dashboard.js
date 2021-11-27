@@ -93,7 +93,7 @@ import * as NMEA from './nmea.js';
         xhr.send();
     }
 
-    var selRace, selNmeaport, selFriends;
+    var selRace, selRouter, selNmeaport, selFriends;
     var cbFriends, cbOpponents, cbCertified, cbTeam, cbTop, cbReals, cbSponsors, cbInRace, cbRouter, cbReuseTab, cbMarkers, cbLocalTime, cbRawLog, cbNMEAOutput;
     var lbBoatname, lbTeamname, lbRace, lbCycle, lbCurTime, lbCurPos, lbHeading, lbTWS, lbTWD, lbTWA, lbDeltaD, lbDeltaT, lbSpeedC, lbSpeedR, lbSpeedT;
     var divPositionInfo, divRaceStatus, divRecordLog, divFriendList, divRawLog;
@@ -1999,8 +1999,11 @@ import * as NMEA from './nmea.js';
             return;
         }
 
-        callRouterZezo(race, userInfo, isMe, auto);
-
+        if (selRouter.value == 'zezo') {
+            callRouterZezo(race, userInfo, isMe, auto);
+        } else {
+            callRouterBitSailor(race, userInfo);
+        }
     }
 
     function callRouterZezo (race, userInfo, isMe, auto) {
@@ -2058,12 +2061,32 @@ import * as NMEA from './nmea.js';
             + "&ts=" + (race.curr.lastCalcDate / 1000)
             + "&o=" + options
             + "&twa=" + twa
-            + "&userid=" + userInfo._id.user_id
+            + "&userid=" + getUserId(userInfo)
             + "&type=" + (isMe ? "me":"friend")
             + "&auto=" + (auto ? "yes" : "no")
         window.open(url, cbReuseTab.checked ? baseURL : "_blank");
     }
-    
+
+    function callRouterBitSailor (race, userInfo) {
+
+        var host;
+        if (selRouter.value == 'bitsailor') {
+            host = 'bitsailor.net';
+        } else {
+            host = 'localhost:8080';
+        }
+        var baseURL = `http://${host}/router?race=${race.id}`;
+        var pos = userInfo.pos
+        var d = new Date(race.curr.lastCalcDate);
+
+        var url = baseURL
+            + "&starttime=" + d.toISOString().substring(0, 16)
+            + "&slat=" + pos.lat
+            + "&slon=" + pos.lon;
+
+        window.open(url, cbReuseTab.checked ? baseURL : "_blank");
+    }
+
     function reInitUI (newId) {
         if (currentUserId != undefined && currentUserId != newId) {
             // Re-initialize statistics
@@ -2436,6 +2459,7 @@ import * as NMEA from './nmea.js';
         lbBoatname = document.getElementById("lb_boatname");
         lbTeamname = document.getElementById("lb_teamname");
         selRace = document.getElementById("sel_race");
+        selRouter = document.getElementById("sel_router");
         lbCycle = document.getElementById("lb_cycle");
         selNmeaport = document.getElementById("sel_nmeaport");
         selFriends = document.getElementById("sel_skippers");
