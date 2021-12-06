@@ -133,6 +133,7 @@ import * as NMEA from './nmea.js';
         + '<th>' + "Last Command" + '</th>'
         + '</tr>';
 
+
     function friendListHeader () {
         return '<tr>'
             + genth("th_rt", "RT", "Call Router", sortField == "none", undefined)
@@ -145,6 +146,7 @@ import * as NMEA from './nmea.js';
             + genth("th_brg", "BRG", "Bearing from Us", undefined)
             + genth("th_sail", "Sail", undefined, sortField == "sail", currentSortOrder)
             + genth("th_state", "State", undefined, sortField == "state", currentSortOrder)
+            + raceTimeColumns()
             + genth("th_psn", "Position", undefined)
             + genth("th_hdg", "HDG", "Heading", sortField == "heading", currentSortOrder)
             + genth("th_twa", "TWA", "True Wind Angle", sortField == "twa", currentSortOrder)
@@ -154,6 +156,14 @@ import * as NMEA from './nmea.js';
             + genth("th_foils", "Foils", "Foiling percentage", undefined)
             + genth("th_options", "Options", "Options accordng to user card", sortField == "xoption_options", currentSortOrder)
             + '</tr>';
+    }
+    function raceTimeColumns () {
+        var race = races.get(selRace.value);
+        if (race.type === "record") {
+            return "";
+        } else {
+            return genth("th_racetime", "RaceTime", undefined, sortField == "rank", currentSortOrder)
+        }
     }
 
     function recordRaceColumns () {
@@ -243,10 +253,25 @@ import * as NMEA from './nmea.js';
         var hdgFG = isTWAMode ? "black" : "blue";
         var hdgBold = isTWAMode ? "font-weight: normal;" : "font-weight: bold;";
 
+/*
+        the below is currently commmented because not sure when and how this method is used. but would a way to add
+        racetime there.
+
+        var raceTime = "";
+        if (r.curr.legStartDate != undefined && r.curr.legStartDate > 0)
+        {raceTime = Util.durationDHMS(r.curr.lastCalcDate,r.curr.legStartDate)};
+
+        //    + '<td>' + raceTime + '</td>'
+
+*/
+
+
+
         return '<td ' + lastCalcStyle + '>' + formatDate(r.curr.lastCalcDate) + '</td>'
             + '<td>' + (r.rank ? r.rank : "-") + '</td>'
             + '<td>' + Util.roundTo(r.curr.distanceToEnd - r.bestDTF, 1) + '</td>'
             + '<td>' + Util.roundTo(r.curr.distanceToEnd, 1) + '</td>'
+
             + '<td>' + Util.formatPosition(r.curr.pos.lat, r.curr.pos.lon) + '</td>'
             + '<td style="color:' + hdgFG + ";" + hdgBold + '">' + Util.roundTo(r.curr.heading, 3) + '</td>'
             + '<td style="color:' + twaFG + ";" + twaBold + '">' + Util.roundTo(Math.abs(r.curr.twa), 3) + '</td>'
@@ -451,6 +476,25 @@ import * as NMEA from './nmea.js';
 
             var isDisplay = isDisplayEnabled(r, uid) &&  ( !cbInRace.checked || r.state == "racing" );
 
+        var raceTime = "";
+        var legS = 0;
+        if (r.legStartDate != undefined && r.legStartDate > 0)
+        {legS = r.legStartDate;
+        }else
+        {
+           try
+           {
+               legS = race.legdata.start.date;
+           }catch(dontcare)
+           {
+             console.log(" not working");
+           }
+        }
+        if (legS > 0)
+        {raceTime = Util.durationDHMS(r.lastCalcDate,legS)};
+
+
+
             if (isDisplay) {
                 return '<tr class="hov" id="ui:' + uid + '">'
                     + (race.url ? ('<td class="tdc"><span id="rt:' + uid + '">&#x2388;</span></td>') : '<td>&nbsp;</td>')
@@ -463,6 +507,7 @@ import * as NMEA from './nmea.js';
                     + '<td>' + (r.bearingFromUs ? r.bearingFromUs + "&#x00B0;" : "-") + '</td>'
                     + '<td>' + bi.sail + '</td>'
                     + '<td>' + (r.state || "-") + '</td>'
+                    + racetimeFields(race,raceTime)
                     + '<td>' + (r.pos ? Util.formatPosition(r.pos.lat, r.pos.lon) : "-") + '</td>'
                     + '<td>' + Util.roundTo(bi.heading, 3) + '</td>'
                     + '<td ' + bi.twaStyle + '>' + Util.roundTo(bi.twa, 3) + '</td>'
@@ -475,6 +520,16 @@ import * as NMEA from './nmea.js';
             }
         }
     }
+
+    function racetimeFields (race, raceTime) {
+        if (race.type === "record") {
+             return "";
+             } else
+             {
+               return '<td>' + raceTime + '</td>'
+             }
+    }
+
 
     function recordRaceFields (race, r) {
         if (race.type === "record") {

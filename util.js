@@ -88,6 +88,22 @@ function formatMS(seconds) {
     return pad0(minutes) + "m" + pad0(seconds) + "s";
 }
 
+function durationDHMS(d1,d2) {
+    var daydiff = (d1 - d2)/(1000 * 60 * 60 * 24);
+    var s = ""  
+        + parseInt (daydiff)
+        + "d "
+        + pad0(parseInt (daydiff %1 * 24))
+        + "h "
+        + pad0(parseInt (daydiff %1 * 24 %1 * 60))
+        + "m "
+        + pad0(parseInt (daydiff %1 * 24 %1 * 60 %1 * 60))
+        + "s";
+    return s;
+}
+
+
+
 function formatPosition(lat, lon) {
     var latDMS = toDMS(lat);
     var lonDMS = toDMS(lon);
@@ -219,6 +235,7 @@ export { angle,
          formatHHMMSSSS,
          formatHMS,
          formatMS,
+         durationDHMS,
          formatPosition,
          gcAngle,
          gcDistance,
