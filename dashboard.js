@@ -166,11 +166,11 @@ import * as NMEA from './nmea.js';
         }
     }
 
-    function genth (id, content, title, sortfield, sortmark) {
+    function genth (id, content, title, sortfield, sortmark, hidden) {
         if (sortfield && sortmark != undefined) {
             content = content + " " + (sortmark ? "&#x25b2;" : "&#x25bc;");
         }
-        return '<th id="' + id + '"'
+        return '<th ' + '' + 'id="' + id + '"'
             + (sortfield ? ' style="background: DarkBlue;"' : "")
             + (title ? (' title="' + title + '"') : "")
             + '>' + content + '</th>';
@@ -456,7 +456,7 @@ import * as NMEA from './nmea.js';
                     + '<td style="' + bi.nameStyle + '">' + bi.name + '</td>'
                     + recordRaceFields(race, r)
                     + '<td>' + formatDateShort(r.lastCalcDate) + '</td>'
-                    + '<td>' + (r.rank ? r.rank : "-") + '</td>'
+                    + '<td style="display: none;">' + (r.rank ? r.rank : "-") + '</td>'
                     + "<td>" + ((r.dtf==r.dtfC) ?"(" + Util.roundTo(r.dtfC, 1) + ")":r.dtf) + "</td>"
                     + '<td>' + (r.distanceToUs ? r.distanceToUs : "-") + '</td>'
                     + '<td>' + (r.bearingFromUs ? r.bearingFromUs + "&#x00B0;" : "-") + '</td>'
@@ -550,8 +550,9 @@ import * as NMEA from './nmea.js';
     // We store all the information in one place and update fields,
     // assuming same-named fields have the same meaning in both messages.
     var elemList = ["_id",                                     //  boatinfo
+                    "userId",                                  //  getfleet 
                     "baseInfos",                               //  UserCard - .team.name
-                    "boat",                                    //  baotinfo, fleet
+                    "boat",                                    //  boatinfo, fleet
                     "displayName",                             //  boatinfo, fleet
                     "distanceFromStart",                       //  boatinfo
                     "distanceToEnd",                           //  boatinfo
@@ -1444,7 +1445,10 @@ import * as NMEA from './nmea.js';
                 scaleControl: true
             };
             var map = new google.maps.Map(divMap, mapOptions);
-            map.setTilt(45);
+
+            map.addListener("rightclick", onMapRightClick);
+            
+            map.setTilt(90);
             race.gmap = map;
 
             // Customize & init map
@@ -1975,6 +1979,27 @@ import * as NMEA from './nmea.js';
     }
 
 
+    function onMapRightClick (event) {
+        alert(JSON.stringify(event));
+        var windowEvent = window.event;
+        var mapMenu = document.getElementById("mapMenu");
+        var pageY;
+        var pageX;
+        if (windowEvent != undefined) {
+            pageX = windowEvent.pageX;
+            pageY = windowEvent.pageY;
+        } else {
+            pageX = event.pixel.x;
+            pageY = event.pixel.y;
+        }
+        
+        mapMenu.style.display = "block";
+        mapMenu.style["z-index"] = 400;
+        mapMenu.style.top = pageY + "px";
+        mapMenu.style.left = pageX + "px";
+        return false;
+    }
+    
     function onCallRouter (event) {
         callRouter(selRace.value);
     }
@@ -2058,7 +2083,7 @@ import * as NMEA from './nmea.js';
             + "&ts=" + (race.curr.lastCalcDate / 1000)
             + "&o=" + options
             + "&twa=" + twa
-            + "&userid=" + userInfo._id.user_id
+            + "&userid=" + getUserId(userInfo)
             + "&type=" + (isMe ? "me":"friend")
             + "&auto=" + (auto ? "yes" : "no")
         window.open(url, cbReuseTab.checked ? baseURL : "_blank");

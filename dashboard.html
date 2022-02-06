@@ -15,152 +15,158 @@
   </head>
 
   <body>
-    <div class="container">
+
+	<div class="container">
       <div class="topgrid">
 
-		  <div>
-            <label><b>Boat: </b></label>
-            <label id="lb_boatname">&lt;unknown&gt;</label>
-          </div>
-          <div>
-            <label>Select Race</label>
-            <select id="sel_race" name="race"></select>
-            <button id="bt_router">Go</button>
-          </div>
-          <div>
-            <input type="checkbox" id="auto_router" checked>
-            <label>Auto router window</label>
-          </div>
-          <div>
-            <input type="checkbox" id="reuse_tab" checked>
-            <label>Reuse tabs</label>
-          </div>
-          <div>
-            <input type="checkbox" id="nmea_output">
-            <label>NMEA</label>
-            <select id="sel_nmeaport" name="nmeaport">
-              <option value="8081">8081</option>
-              <option value="8082">8082</option>
-              <option value="8083">8083</option>
-              <option value="8084">8084</option>
-            </select>
-          </div>
-          <div>
-            <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">
-              <input type="hidden" name="cmd" value="_s-xclick" />
-              <input type="hidden" name="hosted_button_id" value="ZUPP95R3A3686" />
-              <input type="image" width="70" height="18" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="Donate to VR Dashboard" alt="Donate with PayPal button" />
-            </form>
-          </div>
-          <div>
-            <label>Version</label>
-            <label id="lb_version"></label>
-          </div>
+		<div>
+          <label><b>Boat: </b></label>
+          <label id="lb_boatname">&lt;unknown&gt;</label>
+        </div>
+        <div>
+          <label>Select Race</label>
+          <select id="sel_race" name="race"></select>
+          <button id="bt_router">Go</button>
+        </div>
+        <div>
+          <input type="checkbox" id="auto_router" checked>
+          <label>Auto router window</label>
+        </div>
+        <div>
+          <input type="checkbox" id="reuse_tab" checked>
+          <label>Reuse tabs</label>
+        </div>
+        <div>
+          <input type="checkbox" id="nmea_output">
+          <label>NMEA</label>
+          <select id="sel_nmeaport" name="nmeaport">
+            <option value="8081">8081</option>
+            <option value="8082">8082</option>
+            <option value="8083">8083</option>
+            <option value="8084">8084</option>
+          </select>
+        </div>
+        <div>
+          <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">
+            <input type="hidden" name="cmd" value="_s-xclick" />
+            <input type="hidden" name="hosted_button_id" value="ZUPP95R3A3686" />
+            <input type="image" width="70" height="18" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="Donate to VR Dashboard" alt="Donate with PayPal button" />
+          </form>
+        </div>
+        <div>
+          <label>Version</label>
+          <label id="lb_version"></label>
+        </div>
 
-          <div>
-            <label><b>Team: </b></label>
-            <label id="lb_teamname">-</label>
-          </div>
-		  
-		  <div>
-            <label>NOAA Cycle: </label>
-            <label id="lb_cycle">-</label>
-		  </div>
-		  
-          <div>
-            <input type="checkbox" id="markers">
-            <label>Show track info</label>
-          </div>
-          <div>
-            <input type="checkbox" id="local_time">
-            <label>Local times</label>
-          </div>
-		  <div>
-		  </div>
-		  <div>
-		  </div>
-          <div>
-            <label type="button"><a href="manual.html" target="_blank">User manual</a></label>
-          </div>
-
-
-		</div>
-        
-        <div id="raceStatus">
+        <div>
+          <label><b>Team: </b></label>
+          <label id="lb_teamname">-</label>
         </div>
 		
-        <ul class="tabs">
-          <li class="tab">
-            <input type="radio" name="tabs" checked="checked" id="ts:1"/>
-            <label for="ts:1">Race Log</label>
-          </li>
-          <li class="tab">
-            <input type="radio" name="tabs" id="ts:2"/>
-            <label for="ts:2">Fleet</label>
-          </li>
-          <li class="tab">
-            <input type="radio" name="tabs" id="ts:4"/>
-            <label for="ts:4">Map</label>
-          </li>
-          <li class="tab">
-            <input type="radio" name="tabs" id="ts:3"/>
-            <label for="ts:3">Raw Log</label>
-          </li>
-        </ul>
-        <div align="center">
-          <fieldset class="fieldset" id="sel_skippers" align="left">
-            <legend>Filters</legend>
-            <ul class="tab2">
-              <li class="tab">
-                <input type="checkbox" id="sel_friends" name="checkbox1" class="content hidden" checked>
-                <label for:"sel_friends" id="lbl_friends">Friends</label>
-              </li>
-              <li class="tab">
-                <input type="checkbox" id="sel_team" name="checkbox3" class="content hidden" checked>
-                <label for:"sel_team" id="lbl_team">Team</label>
-              </li>
-              <li class="tab">
-                <input type="checkbox" id="sel_top" name="checkbox4" class="content hidden" checked>
-                <label for:"sel_top" id="lbl_top">Top VSR</label>
-              </li>
-              <li class="tab">
-                <input type="checkbox" id="sel_opponents" name="checkbox2" class="content hidden" checked>
-                <label for:"sel_opponents" id="lbl_opponents">Opponents</label>
-              </li>
-              <li class="tab">
-                <input type="checkbox" id="sel_sponsors" name="checkbox6" class="content hidden" checked>
-                <label for:"sel_sponsors" id="lbl_sponsors">Sponsors</label>
-              </li>
-              <li class="tab">
-                <input type="checkbox" id="sel_certified" name="checkbox8" class="content hidden" checked>
-                <label for:"sel_certified" id="lbl_certified">Certified</label>
-              </li>
-              <li class="tab">
-                <input type="checkbox" id="sel_reals" name="checkbox5" class="content hidden" checked>
-                <label for:"sel_reals" id="lbl_reals">Reals</label>
-              </li>
-              <li class="tab">
-                <input type="checkbox" id="sel_inrace" name="checkbox7" class="content hidden">
-                <label for:"sel_inrace" id="lbl_inrace">Racing</label>
-              </li>
-            </ul>
-          </fieldset>
+		<div>
+          <label>NOAA Cycle: </label>
+          <label id="lb_cycle">-</label>
+		</div>
+		
+        <div>
+          <input type="checkbox" id="markers">
+          <label>Show track info</label>
         </div>
+        <div>
+          <input type="checkbox" id="local_time">
+          <label>Local times</label>
+        </div>
+		<div>
+		</div>
+		<div>
+		</div>
+        <div>
+          <label type="button"><a href="manual.html" target="_blank">User manual</a></label>
+        </div>
+
+
+	  </div>
+      
+      <div id="raceStatus">
       </div>
-      <div id="tab-content1" class="content">
-        <div id="recordlog"></div>
-      </div>
-      <div id="tab-content2" class="content hidden">
-        <div id="friendList"></div>
-      </div>
-      <div id="tab-content3" class="content hidden">
-        <input type="checkbox" id="cb_rawlog">
-        <label>Log messages</label>
-        <button id="bt_clear">Clear log</button>
-        <div style="white-space: pre;" id="rawlog"></div>
-      </div>
-      <div id="tab-content4" class="content hidden">
+	  
+      <ul class="tabs">
+        <li class="tab">
+          <input type="radio" name="tabs" checked="checked" id="ts:1"/>
+          <label for="ts:1">Race Log</label>
+        </li>
+        <li class="tab">
+          <input type="radio" name="tabs" id="ts:2"/>
+          <label for="ts:2">Fleet</label>
+        </li>
+        <li class="tab">
+          <input type="radio" name="tabs" id="ts:4"/>
+          <label for="ts:4">Map</label>
+        </li>
+        <li class="tab">
+          <input type="radio" name="tabs" id="ts:3"/>
+          <label for="ts:3">Raw Log</label>
+        </li>
+      </ul>
+      <div align="center">
+        <fieldset class="fieldset" id="sel_skippers" align="left">
+          <legend>Filters</legend>
+          <ul class="tab2">
+            <li class="tab">
+              <input type="checkbox" id="sel_friends" name="checkbox1" class="content hidden" checked>
+              <label for:"sel_friends" id="lbl_friends">Friends</label>
+            </li>
+            <li class="tab">
+              <input type="checkbox" id="sel_team" name="checkbox3" class="content hidden" checked>
+              <label for:"sel_team" id="lbl_team">Team</label>
+            </li>
+            <li class="tab">
+              <input type="checkbox" id="sel_top" name="checkbox4" class="content hidden" checked>
+              <label for:"sel_top" id="lbl_top">Top VSR</label>
+            </li>
+            <li class="tab">
+              <input type="checkbox" id="sel_opponents" name="checkbox2" class="content hidden" checked>
+              <label for:"sel_opponents" id="lbl_opponents">Opponents</label>
+            </li>
+            <li class="tab">
+              <input type="checkbox" id="sel_sponsors" name="checkbox6" class="content hidden" checked>
+              <label for:"sel_sponsors" id="lbl_sponsors">Sponsors</label>
+            </li>
+            <li class="tab">
+              <input type="checkbox" id="sel_certified" name="checkbox8" class="content hidden" checked>
+              <label for:"sel_certified" id="lbl_certified">Certified</label>
+            </li>
+            <li class="tab">
+              <input type="checkbox" id="sel_reals" name="checkbox5" class="content hidden" checked>
+              <label for:"sel_reals" id="lbl_reals">Reals</label>
+            </li>
+            <li class="tab">
+              <input type="checkbox" id="sel_inrace" name="checkbox7" class="content hidden">
+              <label for:"sel_inrace" id="lbl_inrace">Racing</label>
+            </li>
+          </ul>
+        </fieldset>
       </div>
     </div>
+    <div id="tab-content1" class="content">
+      <div id="recordlog"></div>
+    </div>
+    <div id="tab-content2" class="content hidden">
+      <div id="friendList"></div>
+    </div>
+    <div id="tab-content3" class="content hidden">
+      <input type="checkbox" id="cb_rawlog">
+      <label>Log messages</label>
+      <button id="bt_clear">Clear log</button>
+      <div style="white-space: pre;" id="rawlog"></div>
+    </div>
+    <div id="tab-content4" class="content hidden">
+	  <div id="mapMenu" style="position:absolute; border: 2px solid #505056; border-radius:2px; background:#505056; display:none;">
+		<div style="display: flex; flex-direction: column;">
+		  <button id="bt_setVMC" style="text-align:left;">VMC target</button>
+		  <!--button id="bt_setVMC" style="text-align:left;">Other useful command</button-->
+		</div>
+	  </div>
+	</div>
   </body>
 </html>
