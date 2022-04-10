@@ -95,7 +95,7 @@ import * as NMEA from './nmea.js';
 
     var selRace, selRouter, selNmeaport, selFriends;
     var cbFriends, cbOpponents, cbCertified, cbTeam, cbTop, cbReals, cbSponsors, cbInRace, cbRouter, cbReuseTab, cbMarkers, cbLocalTime, cbRawLog, cbNMEAOutput;
-    var lbBoatname, lbTeamname, lbRace, lbCycle, lbCurTime, lbCurPos, lbHeading, lbTWS, lbTWD, lbTWA, lbDeltaD, lbDeltaT, lbSpeedC, lbSpeedR, lbSpeedT;
+    var lbBoatname, lbTeamname, lbCycle;
     var divPositionInfo, divRaceStatus, divRecordLog, divFriendList, divRawLog;
 
     var initialized = false;
@@ -2501,18 +2501,6 @@ import * as NMEA from './nmea.js';
         cbReuseTab = document.getElementById("reuse_tab");
         cbLocalTime = document.getElementById("local_time");
         cbNMEAOutput = document.getElementById("nmea_output");
-        lbRace = document.getElementById("lb_race");
-        lbCurTime = document.getElementById("lb_curtime");
-        lbCurPos = document.getElementById("lb_curpos");
-        lbHeading = document.getElementById("lb_heading");
-        lbTWS = document.getElementById("lb_tws");
-        lbTWD = document.getElementById("lb_twd");
-        lbTWA = document.getElementById("lb_twa");
-        lbDeltaD = document.getElementById("lb_delta_d");
-        lbDeltaT = document.getElementById("lb_delta_t");
-        lbSpeedC = document.getElementById("lb_curspeed_computed");
-        lbSpeedR = document.getElementById("lb_curspeed_reported");
-        lbSpeedT = document.getElementById("lb_curspeed_theoretical");
         divRaceStatus = document.getElementById("raceStatus");
         divRecordLog = document.getElementById("recordlog");
         divRecordLog.innerHTML = makeTableHTML();
