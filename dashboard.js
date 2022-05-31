@@ -2102,7 +2102,7 @@ import * as NMEA from './nmea.js';
         }
         var baseURL = `http://${host}/router?race=${race.id}`;
         var pos = userInfo.pos
-        var d = new Date(race.curr.lastCalcDate);
+        var d = (race.curr.lastCalcDate)?new Date(race.curr.lastCalcDate):new Date();
 
         var url = baseURL
             + "&starttime=" + d.toISOString().substring(0, 16)
