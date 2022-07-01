@@ -123,9 +123,9 @@ import * as NMEA from './nmea.js';
         + '<th>' + "VMG" + '</th>'
         + '<th>' + "Up" + '</th>'
         + '<th>' + "Down" + '</th>'
-        + '<th>' + "Tack" + '</th>'
-        + '<th>' + "Gybe" + '</th>'
-        + '<th>' + "Sail" + '</th>'
+        + '<th title="Tacking penalty incl. stamina factor">' + "Tack" + '</th>'
+        + '<th title="Gybing penalty incl. stamina factor">' + "Gybe" + '</th>'
+        + '<th title="Sail change penalty incl. stamina factor">' + "Sail" + '</th>'
         + '<th>' + "Options" + '</th>'
         + '<th title="Boat is aground">' + "Agnd" + '</th>'
         + '<th title="Boat is maneuvering, half speed">' + "Mnvr" + '</th>'
@@ -179,6 +179,7 @@ import * as NMEA from './nmea.js';
     function commonHeaders () {
         return '<th>' + "Time" + '</th>'
             + '<th>' + "Rank" + '</th>'
+            + '<th title="Stamina and resulting penalty time factor">' + "Stamina" + '</th>'
             + '<th title="Distance To Leader">' + "DTL" + '</th>'
             + '<th title="Distance To Finish">' + "DTF" + '</th>'
             + '<th>' + "Position" + '</th>'
@@ -244,6 +245,7 @@ import * as NMEA from './nmea.js';
 
         return '<td ' + lastCalcStyle + '>' + formatDate(r.curr.lastCalcDate) + '</td>'
             + '<td>' + (r.rank ? r.rank : "-") + '</td>'
+            + '<td>' + r.curr.stamina.toFixed() + '|' +  mfactor(r.curr.stamina).toFixed(1)
             + '<td>' + Util.roundTo(r.curr.distanceToEnd - r.bestDTF, 1) + '</td>'
             + '<td>' + Util.roundTo(r.curr.distanceToEnd, 1) + '</td>'
             + '<td>' + Util.formatPosition(r.curr.pos.lat, r.curr.pos.lon) + '</td>'
@@ -336,19 +338,24 @@ import * as NMEA from './nmea.js';
             fraction = 1;
         }
         return {
-            "gybe" : penalty(speed, options, fraction, winch.gybe),
-            "tack" : penalty(speed, options, fraction, winch.tack),
-            "sail" : penalty(speed, options, fraction, winch.sailChange)
+            "gybe" : penalty(speed, options, fraction, winch.gybe, record.curr.stamina),
+            "tack" : penalty(speed, options, fraction, winch.tack, record.curr.stamina),
+            "sail" : penalty(speed, options, fraction, winch.sailChange, record.curr.stamina)
         };
     }
 
-    function penalty (speed, options, fraction, spec) {
+    function mfactor (stamina) {
+        // https://virtualregatta.zendesk.com/hc/en-us/articles/5402546102546-Energy-management
+        return  2 - stamina/66.667;
+    }
+    
+    function penalty (speed, options, fraction, spec, stamina) {
         if (options.indexOf("winch") >= 0) {
             spec = spec.pro;
         } else {
             spec = spec.std;
         }
-        var time = spec.lw.timer + (spec.hw.timer - spec.lw.timer) * fraction;
+        var time = mfactor(stamina) * (spec.lw.timer + (spec.hw.timer - spec.lw.timer) * fraction);
         var dist = speed * time / 3600;
         return {
             "time" : time.toFixed(),
