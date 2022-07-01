@@ -463,7 +463,7 @@ import * as NMEA from './nmea.js';
                     + '<td style="' + bi.nameStyle + '">' + bi.name + '</td>'
                     + recordRaceFields(race, r)
                     + '<td>' + formatDateShort(r.lastCalcDate) + '</td>'
-                    + '<td style="display: none;">' + (r.rank ? r.rank : "-") + '</td>'
+                    + '<td>' + (r.rank ? r.rank : "-") + '</td>'
                     + "<td>" + ((r.dtf==r.dtfC) ?"(" + Util.roundTo(r.dtfC, 1) + ")":r.dtf) + "</td>"
                     + '<td>' + (r.distanceToUs ? r.distanceToUs : "-") + '</td>'
                     + '<td>' + (r.bearingFromUs ? r.bearingFromUs + "&#x00B0;" : "-") + '</td>'
@@ -1851,7 +1851,7 @@ import * as NMEA from './nmea.js';
                         var segment = elem.track[i];
                         var pos = new google.maps.LatLng(segment.lat, segment.lon);
                         tpath.push(pos);
-                        if (cbMarkers.checked && ((key = currentUserId)
+                        if (cbMarkers.checked && ((key == currentUserId)
                                                   || elem.isFollowed
                                                   || elem.followed))
                         {
