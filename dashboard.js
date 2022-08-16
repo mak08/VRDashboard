@@ -7,7 +7,39 @@ import * as NMEA from './nmea.js';
 
     var tabId = parseInt(window.location.search.substring(1));
 
+    // Events:
+    var ignoredMessages = [
+        "Ad_getInterstitial",
+        "Ad_GetPOIs",
+        "Game_SaveLastRank",
+        "Game_GetWeather",
+        "Game_GetSettings",
+        "Meta_GetMapInfo",
+        "Meta_GetCountries",
+        "Leg_GetHistory",
+        "Shop_GetPacks",
+        "Shop_GetSubscriptions",
+        "Social_GetCommunityMessages",
+        "Social_getVRmsg",
+        "Social_GetPlayers",
+        "Social_GetNbUnread",
+        "Team_Get",
+        "User_GetInfos"];
+    var handledMessages = [
+        ".AccountDetailsResponse",
+        "getboatinfos",
+        "getfleet",
+        "Game_GetGhostTrack",
+        "Game_AddBoatAction",
+        "Leg_GetList",
+        "Meta_GetPolar",
+        "User_GetCard"];
+
     const LightRed = '#FFA0A0';
+
+    var xhrMap = new Map();
+
+    var currentCycle = 0;
 
     // ToDo: clear stats if user/boat changes
     var currentUserId, currentTeam;
@@ -1851,7 +1883,7 @@ import * as NMEA from './nmea.js';
                         var segment = elem.track[i];
                         var pos = new google.maps.LatLng(segment.lat, segment.lon);
                         tpath.push(pos);
-                        if (cbMarkers.checked && ((key = currentUserId)
+                        if (cbMarkers.checked && ((key == currentUserId)
                                                   || elem.isFollowed
                                                   || elem.followed))
                         {
@@ -2138,6 +2170,9 @@ import * as NMEA from './nmea.js';
         };
     }
 
+    function getUserId (message) {
+        return (message._id)?message._id.user_id:message.userId;
+    }
 
     // Helper function: Invoke debugger command
     function sendDebuggerCommand (debuggeeId, params, command, callback) {
@@ -2152,19 +2187,58 @@ import * as NMEA from './nmea.js';
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    async function handleBoatInfo (debuggeeId, params) {
-        // How does Networl.getResponseBody work, anyway?!
-        await sleep(2500);
-        sendDebuggerCommand(debuggeeId, params, "Network.getResponseBody", _handleBoatInfo);
-    }
-
-    async function handleFleet (debuggeeId, params) {
+    async function handleResponseReceived (debuggeeId, params) {
         // How does Networl.getResponseBody work, anyway?!
         await sleep(3000);
-        sendDebuggerCommand(debuggeeId, params, "Network.getResponseBody", (response) => {_handleFleet(xhrMap.get(params.requestId), response)});
+        sendDebuggerCommand(debuggeeId, params, "Network.getResponseBody", (response) => {_handleResponseReceived(xhrMap.get(params.requestId), response)});
     }
 
-    function _handleBoatInfo (response)  {
+    function _handleResponseReceived(request, response) {
+        var postData = JSON.parse(request.postData);
+        var eventClass = postData['@class'];
+        var body = JSON.parse(response.body.replace(/\bNaN\b|\bInfinity\b/g, "null"));
+        if (eventClass == 'AccountDetailsRequest') {
+            handleAccountDetailsResponse(body);
+        } else if (eventClass == 'LogEventRequest') {
+            var eventKey = postData.eventKey;
+            if (eventKey == 'Leg_GetList') {
+                handleLegGetListResponse(body);
+            } else if (eventKey == 'Meta_GetPolar') {
+                handleMetaGetPolar(body);
+            } else if (eventKey == 'Game_AddBoatAction' ) {
+                handleGameAddBoatAction(postData, body);
+            } else if (eventKey == "Game_GetGhostTrack") {
+                handleGameGetGhostTrack(postData, body);
+            } else if (eventKey == "User_GetCard") {
+                handleUserGetCard(postData, body);
+            }  else if (ignoredMessages.includes(eventKey)) {
+                console.info("Ignored eventKey " + eventKey);
+            } else {
+                console.info("Unhandled logEvent " + JSON.stringify(response) + " with eventKey " + eventKey);
+            }
+        } else {
+            var event = request.url.substring(request.url.lastIndexOf('/') + 1);
+            if (event == 'getboatinfos') {
+                handleBoatInfo(response);
+            } else if (event == 'getfleet') {
+                handleFleet(request, response);
+            } else {
+                console.info("Unhandled request " + request.url + "with response" + JSON.stringify(response));
+            }
+        }
+    }
+
+    function handleAccountDetailsResponse (response) {
+        reInitUI(response.userId);
+        currentUserId = response.userId;
+        lbBoatname.innerHTML = response.displayName;
+        if (response.scriptData.team) {
+            lbTeamname.innerHTML = response.scriptData.team.name;
+            currentTeam = response.scriptData.team.name;
+        }
+    }
+
+    function handleBoatInfo (response)  {
         if (response) {
             if (cbRawLog.checked) {
                 divRawLog.innerHTML = divRawLog.innerHTML + "\n" + "<<< " + JSON.stringify(response);
@@ -2209,7 +2283,7 @@ import * as NMEA from './nmea.js';
         }
     }
 
-    function _handleFleet (request, response) {
+    function handleFleet (request, response) {
         if (response) {
             if (cbRawLog.checked) {
                 divRawLog.innerHTML = divRawLog.innerHTML + "\n" + "<<< " + JSON.stringify(response);
@@ -2243,10 +2317,6 @@ import * as NMEA from './nmea.js';
         var raceId = getRaceLegId(message._id);
         var race = races.get(raceId);
         updateMapMe(race, message.track);
-    }
-
-    function getUserId (message) {
-        return (message._id)?message._id.user_id:message.userId;
     }
 
     function handleFleetBoatInfo (message) {
@@ -2283,206 +2353,203 @@ import * as NMEA from './nmea.js';
         }
     }
 
-    var xhrMap = new Map();
-    var currentCycle = 0;
-
-
-    // Events:
-    var ignoredMessages = [
-        "Ad_getInterstitial",
-        "Ad_GetPOIs",
-        "Game_SaveLastRank",
-        "Game_GetWeather",
-        "Meta_GetMapInfo",
-        "Meta_GetCountries",
-        "Leg_GetHistory",
-        "Shop_GetPacks",
-        "Shop_GetSubscriptions",
-        "Social_GetCommunityMessages",
-        "Social_getVRmsg",
-        "Social_GetPlayers",
-        "Team_Get",
-        "User_GetInfos"];
-    var handledMessages = [
-        ".AccountDetailsResponse",
-        "getboatinfos",
-        "getfleet",
-        "Game_GetGhostTrack",
-        "Game_AddBoatAction",
-        "Leg_GetList",
-        "Meta_GetPolar",
-        "User_GetCard"];
-
-    function onEvent (debuggeeId, message, params) {
-        if ( tabId != debuggeeId.tabId )
-            return;
-
-        if ( message == "Network.requestWillBeSent" && params && params.request ) {
-            if  ((   params.request.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos"
-                     || params.request.url == "https://vro-api-client.prod.virtualregatta.com/getfleet" )
-                 && params.request.method == "POST" ) {
-                if (cbRawLog.checked && params) {
-                    divRawLog.innerHTML = divRawLog.innerHTML + "\n" + ">>> " + JSON.stringify(params.request);
-                }
-                xhrMap.set(params.requestId, params.request);
-            } else if ( params.request.url.substring(0, 45) == "https://static.virtualregatta.com/winds/live/" ) {
-                console.log("Loading wind " + params.request.url.substring(45));
-                if ( params.request.url.endsWith('wnd') ) {
-                    var cycleString = params.request.url.substring(45, 56);
-                    var d = parseInt(cycleString.substring(0, 8));
-                    var c = parseInt(cycleString.substring(9, 11));
-                    var cycle = d * 100 + c;
-                    if (cycle > currentCycle) {
-                        currentCycle = cycle;
-                        lbCycle.innerHTML = cycleString;
-                    }
-                }
+    function noticeGFSCycle (params) {
+        console.log("Loading wind " + params.request.url.substring(45));
+        if ( params.request.url.endsWith('wnd') ) {
+            var cycleString = params.request.url.substring(45, 56);
+            var d = parseInt(cycleString.substring(0, 8));
+            var c = parseInt(cycleString.substring(9, 11));
+            var cycle = d * 100 + c;
+            if (cycle > currentCycle) {
+                currentCycle = cycle;
+                lbCycle.innerHTML = cycleString;
             }
+        }
+    }
 
-        } else if (message == "Network.responseReceived") {
-            if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos" ) {
-                handleBoatInfo(debuggeeId, params);
-            }
-            if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getfleet" ) {
-                handleFleet(debuggeeId, params);
-            }
-
-        } else if (message == "Network.webSocketFrameSent") {
-            // Append message to raw log
-            if (cbRawLog.checked) {
-                divRawLog.innerHTML = divRawLog.innerHTML + "\n" + ">>> " + params.response.payloadData;
-            }
-
-            // Map to request type via requestId
-            var request = JSON.parse(params.response.payloadData);
-            requests.set(request.requestId, request);
-
-            if (request.eventKey == "Game_StartAttempt") {
-                var raceId = getRaceLegId(request);
-                var race = races.get(raceId);
-                if (race) {
-                    race.prev = undefined;
-                    race.curr = undefined;
-                }
-            }
-
-        } else if (message == "Network.webSocketFrameReceived") {
-            // Append message to raw log
-            if (cbRawLog.checked) {
-                divRawLog.innerHTML = divRawLog.innerHTML + "\n" + "<<< " + params.response.payloadData;
-            }
-            // Work around broken message
-            var jsonString = params.response.payloadData.replace(/\bNaN\b|\bInfinity\b/g, "null");
-            var response = JSON.parse(jsonString);
-            if (response == undefined) {
-                console.log("Invalid JSON in payload");
+    function handleLegGetListResponse (response) {
+        // Contains destination coords, ice limits
+        // ToDo: contains Bad Sail warnings. Show in race status table?
+        var legInfos = response.scriptData.res;
+        legInfos.map(function (legInfo) {
+            var rid = legId(legInfo);
+            var race = races.get(rid);
+            if (race === undefined) {
+                race = {
+                    id: rid,
+                    name: legInfo.legName,
+                    legName: legInfo.legName,
+                    source: "vr_leglist"
+                };
+                initRace(race, true);
             } else {
-                var responseClass = response["@class"];
-                if (responseClass == ".AccountDetailsResponse") {
-                    reInitUI(response.userId);
-                    currentUserId = response.userId;
-                    lbBoatname.innerHTML = response.displayName;
-                    if (response.scriptData.team) {
-                        lbTeamname.innerHTML = response.scriptData.team.name;
-                        currentTeam = response.scriptData.team.name;
-                    }
-                } else if (responseClass == ".LogEventResponse") {
-                    // Get the matching request and Dispatch on request type
-                    var request = requests.get(response.requestId);
+                race.legName = legInfo.legName; // no name yet (created by updatePosition)
+                // renameRace(rid, race.name);
+            }
+            race.rank = legInfo.rank;
+            race.type = legInfo.raceType;
+            race.legnum = legInfo.legNum;
+            race.status = legInfo.status;
+            race.record = legInfo.record;
+            if (legInfo.problem == "badSail") {} else if (legInfo.problem == "...") {}
+        });
+        divRaceStatus.innerHTML = makeRaceStatusHTML();
+    }
 
-                    // Dispatch on request type
-                    if (request == undefined) {
-                        // Probably only when debugging.
-                        // -- save and process later ?
-                        console.warn(responseClass + " " + response.requestId + " not found");
-                    } else if (request.eventKey == "Leg_GetList") {
-                        // Contains destination coords, ice limits
-                        // ToDo: contains Bad Sail warnings. Show in race status table?
-                        var legInfos = response.scriptData.res;
-                        legInfos.map(function (legInfo) {
-                            var rid = legId(legInfo);
-                            var race = races.get(rid);
-                            if (race === undefined) {
-                                race = {
-                                    id: rid,
-                                    name: legInfo.legName,
-                                    legName: legInfo.legName,
-                                    source: "vr_leglist"
-                                };
-                                initRace(race, true);
-                            } else {
-                                race.legName = legInfo.legName; // no name yet (created by updatePosition)
-                                // renameRace(rid, race.name);
-                            }
-                            race.rank = legInfo.rank;
-                            race.type = legInfo.raceType;
-                            race.legnum = legInfo.legNum;
-                            race.status = legInfo.status;
-                            race.record = legInfo.record;
-                            if (legInfo.problem == "badSail") {} else if (legInfo.problem == "...") {}
-                        });
-                        divRaceStatus.innerHTML = makeRaceStatusHTML();
-                    } else if (request.eventKey == "Game_AddBoatAction") {
-                        // First boat state message, only sent for the race the UI is displaying
-                        var raceId = getRaceLegId(request);
-                        var race = races.get(raceId);
-                        if (race != undefined) {
-                            race.lastCommand = {
-                                request: request,
-                                rc: response.scriptData.rc
-                            };
-                            addTableCommandLine(race);
-                            divRaceStatus.innerHTML = makeRaceStatusHTML();
-                            clearTrack(race.gmap,"_db_wp");
-                            if (response.scriptData.boatActions) {
-                                handleBoatActions(response.scriptData.boatActions);
-                            }
-                        }
-                    } else if (request.eventKey == "Meta_GetPolar") {
-                        // Always overwrite cached data...
-                        polars[response.scriptData.polar._id] = response.scriptData.polar;
-                        chrome.storage.local.set({
-                            "polars": polars
-                        });
-                        console.info("Stored polars " + response.scriptData.polar.label);
-                    } else if (request.eventKey == "Game_GetGhostTrack") {
-                        var raceId = getRaceLegId(request);
-                        var fleet = raceFleetMap.get(raceId);
-                        var race = races.get(raceId);
-                        var uid = request.user_id;
+    function handleGameAddBoatAction (request, response) {
+        // First boat state message, only sent for the race the UI is displaying
+        var raceId = getRaceLegId(request);
+        var race = races.get(raceId);
+        if (race != undefined) {
+            race.lastCommand = {
+                request: request,
+                rc: response.scriptData.rc
+            };
+            addTableCommandLine(race);
+            divRaceStatus.innerHTML = makeRaceStatusHTML();
+            clearTrack(race.gmap,"_db_wp");
+            if (response.scriptData.boatActions) {
+                handleBoatActions(response.scriptData.boatActions);
+            }
+        }
+    }
 
-                        if (race) {
-                            race.leaderTrack = response.scriptData.leaderTrack;
-                            race.leaderName =  response.scriptData.leaderName;
-                            if (response.scriptData.myTrack) {
-                                race.myTrack = response.scriptData.myTrack;
-                            }
-                            updateMapLeader(race);
-                        }
-                    } else if (request.eventKey == "User_GetCard") {
-                        var raceId = getRaceLegId(request);
-                        var uid = request.user_id;
-                        if ( response.scriptData.baseInfos
-                             && response.scriptData.legInfos
-                             && response.scriptData.legInfos.type) {
-                            mergeBoatInfo(raceId, "usercard", uid, response.scriptData.baseInfos);
-                            mergeBoatInfo(raceId, "usercard", uid, response.scriptData.legInfos);
-                            if (raceId == selRace.value) {
-                                updateFleetHTML(raceFleetMap.get(selRace.value));
-                            }
-                            var race = races.get(raceId);
-                            updateMapFleet(race);
-                        }
-                    } else if (ignoredMessages.includes(request.eventKey)) {
-                        console.info("Ignored eventKey " + request.eventKey);
-                    } else {
-                        console.warn("Unhandled logEvent " + JSON.stringify(response) + " with eventKey " + request.eventKey);
-                    }
+    function handleMetaGetPolar (response) {
+        // Always overwrite cached data...
+        polars[response.scriptData.polar._id] = response.scriptData.polar;
+        chrome.storage.local.set({
+            "polars": polars
+        });
+        console.info("Stored polars " + response.scriptData.polar.label);
+    }
+
+    function handleGameGetGhostTrack (request, response) {
+        var raceId = getRaceLegId(request);
+        var fleet = raceFleetMap.get(raceId);
+        var race = races.get(raceId);
+        var uid = request.user_id;
+        
+        if (race) {
+            race.leaderTrack = response.scriptData.leaderTrack;
+            race.leaderName =  response.scriptData.leaderName;
+            if (response.scriptData.myTrack) {
+                race.myTrack = response.scriptData.myTrack;
+            }
+            updateMapLeader(race);
+        }
+    }
+
+    function handleUserGetCard (request, response) {
+        var raceId = getRaceLegId(request);
+        var uid = request.user_id;
+        if ( response.scriptData.baseInfos
+             && response.scriptData.legInfos
+             && response.scriptData.legInfos.type) {
+            mergeBoatInfo(raceId, "usercard", uid, response.scriptData.baseInfos);
+            mergeBoatInfo(raceId, "usercard", uid, response.scriptData.legInfos);
+            if (raceId == selRace.value) {
+                updateFleetHTML(raceFleetMap.get(selRace.value));
+            }
+            var race = races.get(raceId);
+            updateMapFleet(race);
+        }
+    }
+    
+    function handleWebSocketFrameSent (params) {
+        // Append message to raw log
+        if (cbRawLog.checked) {
+            divRawLog.innerHTML = divRawLog.innerHTML + "\n" + ">>> " + params.response.payloadData;
+        }
+        
+        // Map to request type via requestId
+        var request = JSON.parse(params.response.payloadData);
+        requests.set(request.requestId, request);
+        
+        if (request.eventKey == "Game_StartAttempt") {
+            var raceId = getRaceLegId(request);
+            var race = races.get(raceId);
+            if (race) {
+                race.prev = undefined;
+                race.curr = undefined;
+            }
+        }
+    }
+
+    function handleWebSocketFrameReceived (params) {
+        // Append message to raw log
+        if (cbRawLog.checked) {
+            divRawLog.innerHTML = divRawLog.innerHTML + "\n" + "<<< " + params.response.payloadData;
+        }
+        // Work around broken message
+        var jsonString = params.response.payloadData.replace(/\bNaN\b|\bInfinity\b/g, "null");
+        var response = JSON.parse(jsonString);
+        if (response == undefined) {
+            console.log("Invalid JSON in payload");
+        } else {
+            var responseClass = response["@class"];
+            if (responseClass == ".AccountDetailsResponse") {
+                handleAccountDetailsResponse();
+            } else if (responseClass == ".LogEventResponse") {
+                // Get the matching request and Dispatch on request type
+                var request = requests.get(response.requestId);
+                
+                // Dispatch on request type
+                if (request == undefined) {
+                    // Probably only when debugging.
+                    // -- save and process later ?
+                    console.warn(responseClass + " " + response.requestId + " not found");
+                } else if (request.eventKey == "Leg_GetList") {
+                    handleLegGetListResponse(response);
+                } else if (request.eventKey == "Game_AddBoatAction") {
+                    handleGameAddBoatAction(postData, response);
+                } else if (request.eventKey == "Meta_GetPolar") {
+                    handleMetaGetPolar(response);
+                } else if (request.eventKey == "Game_GetGhostTrack") {
+                    handleGameGetGhostTrack(request, response);
+                } else if (request.eventKey == "User_GetCard") {
+                    handleUserGetCard(request, response);
+                } else if (ignoredMessages.includes(eventKey)) {
+                    console.info("Ignored eventKey " + eventKey);
+                } else {
+                    console.warn("Unhandled logEvent " + JSON.stringify(response) + " with eventKey " + eventKey);
                 }
             }
         }
     }
     
+    function onEvent (debuggeeId, message, params) {
+        if ( tabId != debuggeeId.tabId ) return;
+
+        if ( message == "Network.requestWillBeSent" && params && params.request && params.request.url) {
+            if  ( params.request.method == "POST" &&
+                  ( params.request.url.startsWith("https://prod.vro.sparks.virtualregatta.com")
+                    || params.request.url.startsWith("https://vro-api-ranking.prod.virtualregatta.com")
+                    || params.request.url.startsWith("https://vro-api-client.prod.virtualregatta.com"))
+                ) {
+                if (cbRawLog.checked && params) {
+                    divRawLog.innerHTML = divRawLog.innerHTML + "\n" + ">>> " + JSON.stringify(params.request);
+                }
+                xhrMap.set(params.requestId, params.request);
+            } else if ( params.request.url.substring(0, 45) == "https://static.virtualregatta.com/winds/live/" ) {
+                noticeGFSCycle(params);
+            }
+        } else if (message == "Network.responseReceived") {
+            var request = xhrMap.get(params.requestId);
+            if (request) {
+                // if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos" ) {
+                //     handleBoatInfo(debuggeeId, params);
+                // } else if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getfleet" ) {
+                //     handleFleet(debuggeeId, params);
+                // }
+                handleResponseReceived(debuggeeId, params);
+            }
+        } else if (message == "Network.webSocketFrameSent") {
+            handleWebSocketFrameSent(params);
+        } else if (message == "Network.webSocketFrameReceived") {
+            handleWebSocketFrameReceived(params);
+        }
+    }
+        
     function setUp () {
 
         var manifest = chrome.runtime.getManifest();        
