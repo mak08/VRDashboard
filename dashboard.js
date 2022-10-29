@@ -51,8 +51,6 @@ import * as NMEA from './nmea.js';
     var races = new Map();
     var raceFleetMap = new Map();
 
-    var showMarkers = new Map();
-
     var sortField = "none";
     var currentSortField = "none";
     var currentSortOrder = 0;
@@ -75,13 +73,6 @@ import * as NMEA from './nmea.js';
         // "normal"
         {nameStyle: "color: #2020AA;", bcolor: '#2020AA'}
     ];
-
-    function isShowMarkers (userId) {
-        if (showMarkers.get(userId) == undefined) {
-            showMarkers.set(userId, true);
-        }
-        return showMarkers.get(userId);
-    }
 
     function addSelOption (race, beta, disabled) {
         var option = document.createElement("option");
@@ -1467,6 +1458,47 @@ import * as NMEA from './nmea.js';
         });
     }
 
+    function loadCartoVR (map, north, east, south, west, matchMap) {
+        // S..N:  -90..90
+        // W..E:  -179..180
+        chrome.runtime.getPackageDirectoryEntry(function(directoryEntry) {
+            directoryEntry.getDirectory('cartoVR', {}, function(subDirectoryEntry) {
+                function matchMap (north, east, south, west, lat, lon) {
+                    return (lat < (north+1))
+                        && (lat > (south-1))
+                        && ((west < east && lon > (west-2) && lon < (east+2))
+                            ||
+                            (west > east && (lon > (west-2) || lon < east+2)))
+                };
+                var directoryReader = subDirectoryEntry.createReader();
+                // List of DirectoryEntry and/or FileEntry objects.
+                var filenames = [];
+                (function readNext() {
+                    directoryReader.readEntries(function(entries) {
+                        if (entries.length) {
+                            for (var i = 0; i < entries.length; ++i) {
+                                filenames.push(entries[i].name);
+                            }
+                            readNext();
+                        } else {
+                            // No more entries, so all files in the directory are known.
+                            // Do something, e.g. print all file names:
+                            let k = 0;
+                            for (const f of filenames) {
+                                let spec = f.split('.')[0].split('_');
+                                let lon = Number(spec[1]);
+                                let lat = Number(spec[2]);
+                                if (matchMap(north, east, south, west, lat, lon)) {
+                                    map.data.loadGeoJson(`cartoVR/${f}`);
+                                }
+                            }
+                        }
+                    });
+                })();
+            })
+        });
+    }
+
     function initializeMap (race) {
         if (!race || !race.legdata) return; // no legdata yet;
 
@@ -1486,13 +1518,24 @@ import * as NMEA from './nmea.js';
             var map = new google.maps.Map(divMap, mapOptions);
 
             map.addListener("rightclick", onMapRightClick);
-            
+            map.addListener('zoom_changed', onMapZoomPan);
+            map.addListener('dragend', onMapZoomPan);
+
             map.setTilt(90);
             race.gmap = map;
 
             // Customize & init map
             var bounds = race.gbounds = new google.maps.LatLngBounds();
 
+            chrome.runtime.getPackageDirectoryEntry( (a) => {
+                console.log(a);
+            });
+
+            map.data.setStyle({
+                fillColor: 'red',
+                strokeWeight: 1
+            });
+            
             // start, finish
             var pos = new google.maps.LatLng(race.legdata.start.lat, race.legdata.start.lon);
             addmarker(map, bounds, pos, undefined, {
@@ -1554,7 +1597,7 @@ import * as NMEA from './nmea.js';
                 });
                 icePath.setMap(map);
             }
-
+            
             map.fitBounds(bounds);
         }
 
@@ -2017,9 +2060,28 @@ import * as NMEA from './nmea.js';
         updateMapFleet();
     }
 
-
+    function onMapZoomPan (event) {
+        if (this.zoom >= 7) {
+            let map = this;
+            this.data.forEach(function (feature) {
+                map.data.remove(feature)
+            });
+            let bounds = this.getBounds();
+            let ne = bounds.getNorthEast();
+            let north = ne.lat();
+            let east = ne.lng();
+            let sw = bounds.getSouthWest();
+            let south = sw.lat();
+            let west = sw.lng();
+            loadCartoVR(this, north, east, south, west);
+        } else {
+        }
+    }
+ 
+    
     function onMapRightClick (event) {
-        alert(JSON.stringify(event));
+        alert(JSON.stringify(this.getBounds()));
+        /*
         var windowEvent = window.event;
         var mapMenu = document.getElementById("mapMenu");
         var pageY;
@@ -2036,6 +2098,7 @@ import * as NMEA from './nmea.js';
         mapMenu.style["z-index"] = 400;
         mapMenu.style.top = pageY + "px";
         mapMenu.style.left = pageX + "px";
+        */
         return false;
     }
     
@@ -2194,6 +2257,9 @@ import * as NMEA from './nmea.js';
     }
 
     function _handleResponseReceived(request, response) {
+        if (cbRawLog.checked) {
+            divRawLog.innerHTML = divRawLog.innerHTML + "\n" + "<<< " + JSON.stringify(response);
+        }
         var postData = JSON.parse(request.postData);
         var eventClass = postData['@class'];
         var body = JSON.parse(response.body.replace(/\bNaN\b|\bInfinity\b/g, "null"));
@@ -2240,9 +2306,6 @@ import * as NMEA from './nmea.js';
 
     function handleBoatInfo (response)  {
         if (response) {
-            if (cbRawLog.checked) {
-                divRawLog.innerHTML = divRawLog.innerHTML + "\n" + "<<< " + JSON.stringify(response);
-            }
             try {
                 var message = JSON.parse(response.body).res;
                 if (message.leg) {
@@ -2285,9 +2348,6 @@ import * as NMEA from './nmea.js';
 
     function handleFleet (request, response) {
         if (response) {
-            if (cbRawLog.checked) {
-                divRawLog.innerHTML = divRawLog.innerHTML + "\n" + "<<< " + JSON.stringify(response);
-            }
             try {
                 var requestData = JSON.parse(request.postData);
                 var raceId = getRaceLegId(requestData);
@@ -2536,11 +2596,6 @@ import * as NMEA from './nmea.js';
         } else if (message == "Network.responseReceived") {
             var request = xhrMap.get(params.requestId);
             if (request) {
-                // if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos" ) {
-                //     handleBoatInfo(debuggeeId, params);
-                // } else if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getfleet" ) {
-                //     handleFleet(debuggeeId, params);
-                // }
                 handleResponseReceived(debuggeeId, params);
             }
         } else if (message == "Network.webSocketFrameSent") {
