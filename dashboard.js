@@ -121,13 +121,13 @@ import * as NMEA from './nmea.js';
             divFriendList.innerHTML = "No boats positions received yet";
         }
         xhr.open("GET", "http://zezo.org/races2.json");
-        //xhr.open("GET", "races2.json");
+       //xhr.open("GET", "races2.json");
         xhr.send();
     }
 
-    var selRace, selNmeaport, selFriends;
+    var selRace, selRouter, selNmeaport, selFriends;
     var cbFriends, cbOpponents, cbCertified, cbTeam, cbTop, cbReals, cbSponsors, cbInRace, cbRouter, cbReuseTab, cbMarkers, cbLocalTime, cbRawLog, cbNMEAOutput;
-    var lbBoatname, lbTeamname, lbRace, lbCycle, lbCurTime, lbCurPos, lbHeading, lbTWS, lbTWD, lbTWA, lbDeltaD, lbDeltaT, lbSpeedC, lbSpeedR, lbSpeedT;
+    var lbBoatname, lbTeamname, lbCycle;
     var divPositionInfo, divRaceStatus, divRecordLog, divFriendList, divRawLog;
 
     var initialized = false;
@@ -181,6 +181,7 @@ import * as NMEA from './nmea.js';
             + genth("th_twa", "TWA", "True Wind Angle", sortField == "twa", currentSortOrder)
             + genth("th_tws", "TWS", "True Wind Speed", sortField == "tws", currentSortOrder)
             + genth("th_speed", "Speed", "Boat Speed", sortField == "speed", currentSortOrder)
+            + genth("th_stamina", "Stamina", "Energy level", sortField == "stamina", currentSortOrder)
             + genth("th_factor", "Factor", "Speed factor over no-options boat", undefined)
             + genth("th_foils", "Foils", "Foiling percentage", undefined)
             + genth("th_options", "Options", "Options accordng to user card", sortField == "xoption_options", currentSortOrder)
@@ -328,12 +329,14 @@ import * as NMEA from './nmea.js';
             if (r.id === selRace.value) trstyle += " sel";
             var best = bestVMG(r.curr.tws, polars[r.curr.boat.polar_id], r.curr.options);
             var up = Util.roundTo(best.vmgUp, 2) + "@" + best.twaUp;
-            var down =Util.roundTo(Math.abs(best.vmgDown), 2) + "@" + best.twaDown;
+            var down = Util.roundTo(Math.abs(best.vmgDown), 2) + "@" + best.twaDown;
 
             var penalties = manoeuveringPenalties(r);
-            var tack = penalties.tack.dist + "nm " + penalties.tack.time + "s";
-            var gybe = penalties.gybe.dist + "nm " + penalties.gybe.time + "s";
-            var sail = penalties.sail.dist + "nm " + penalties.sail.time + "s";
+            if (penalties) {
+                var tack = penalties.tack.dist + "nm " + penalties.tack.time + "s";
+                var gybe = penalties.gybe.dist + "nm " + penalties.gybe.time + "s";
+                var sail = penalties.sail.dist + "nm " + penalties.sail.time + "s";
+            }
 
             return '<tr class="' + trstyle + '" id="rs:' + r.id + '">'
                 + (r.url ? ('<td class="tdc"><span id="rt:' + r.id + '">&#x2388;</span></td>') : '<td>&nbsp;</td>')
@@ -357,23 +360,26 @@ import * as NMEA from './nmea.js';
     }
 
     function manoeuveringPenalties (record) {
-        var winch = polars[record.curr.boat.polar_id].winch;
-        var tws = record.curr.tws;
-        var speed = record.curr.speed;
-        var options = record.curr.options;
-        var fraction;
-        if  ((winch.lws <= tws) && (tws <= winch.hws)) {
-            fraction = (tws - winch.lws) / (winch.hws - winch.lws);
-        } else if (tws < winch.lws) {
-            fraction = 0;
-        } else {
-            fraction = 1;
+        let boatPolars = polars[record.curr.boat.polar_id];
+        if (boatPolars) {
+            var winch = boatPolars.winch;
+            var tws = record.curr.tws;
+            var speed = record.curr.speed;
+            var options = record.curr.options;
+            var fraction;
+            if  ((winch.lws <= tws) && (tws <= winch.hws)) {
+                fraction = 1 + ((tws - winch.lws) / (winch.hws - winch.lws));
+            } else if (tws < winch.lws) {
+                fraction = 1;
+            } else {
+                fraction = 2;
+            }
+            return {
+                "gybe" : penalty(speed, options, fraction, winch.gybe, record.curr.stamina),
+                "tack" : penalty(speed, options, fraction, winch.tack, record.curr.stamina),
+                "sail" : penalty(speed, options, fraction, winch.sailChange, record.curr.stamina)
+            };
         }
-        return {
-            "gybe" : penalty(speed, options, fraction, winch.gybe, record.curr.stamina),
-            "tack" : penalty(speed, options, fraction, winch.tack, record.curr.stamina),
-            "sail" : penalty(speed, options, fraction, winch.sailChange, record.curr.stamina)
-        };
     }
 
     function mfactor (stamina) {
@@ -402,16 +408,18 @@ import * as NMEA from './nmea.js';
 
     function bestVMG (tws, polars, options) {
         var best = {"vmgUp": 0, "twaUp": 0, "vmgDown": 0, "twaDown": 0};
-        var twaSteps = polars.twa;
-        for (var twa = twaSteps[0]; twa < twaSteps[twaSteps.length-1]; twa++) {
-            var speed = theoreticalSpeed(tws, twa, options, polars).speed;
-            var vmg = speed * Math.cos(twa / 180 * Math.PI);
-            if (vmg > best.vmgUp) {
-                best.twaUp = twa;
-                best.vmgUp = vmg;
-            } else if (vmg < best.vmgDown) {
-                best.twaDown = twa;
-                best.vmgDown = vmg;
+        if (polars) {
+            var twaSteps = polars.twa;
+            for (var twa = twaSteps[0]; twa < twaSteps[twaSteps.length-1]; twa++) {
+                var speed = theoreticalSpeed(tws, twa, options, polars).speed;
+                var vmg = speed * Math.cos(twa / 180 * Math.PI);
+                if (vmg > best.vmgUp) {
+                    best.twaUp = twa;
+                    best.vmgUp = vmg;
+                } else if (vmg < best.vmgDown) {
+                    best.twaDown = twa;
+                    best.vmgDown = vmg;
+                }
             }
         }
         return  best;
@@ -506,6 +514,7 @@ import * as NMEA from './nmea.js';
                     + '<td ' + bi.twaStyle + '>' + Util.roundTo(bi.twa, 3) + '</td>'
                     + '<td>' + Util.roundTo(bi.tws, 1) + '</td>'
                     + '<td>' + Util.roundTo(bi.speed, 2) + '</td>'
+                    + '<td>' + (r.stamina ? r.stamina.toFixed() : '-') + '</td>'
                     + '<td ' + bi.xfactorStyle + '>' + Util.roundTo(r.xfactor, 4) + '</td>'
                     + '<td>' + (r.xoption_foils || "?") + '</td>'
                     + '<td>' + (r.xoption_options || "?") + '</td>'
@@ -612,6 +621,7 @@ import * as NMEA from './nmea.js';
                     "rank",                                    //  boatinfo, fleet
                     "sail",                                    //  boatinfo, fleet (null)
                     "speed",                                   //  boatinfo, fleet
+                    "stamina",                                 //  UserCard
                     "startDate",                               //  boatinfo, fleet (null)
                     "state",                                   //  boatinfo, fleet, UserCard (!= boatinfo state!)
                     // Don't copy team &  teamnane, special handling.
@@ -1115,6 +1125,9 @@ import * as NMEA from './nmea.js';
         case "th_sail":
             sortField = "sail";
             break;
+        case "th_stamina":
+            sortField = "stamina";
+            break;
         case "th_options":
             sortField = "xoption_options";
             break;
@@ -1467,6 +1480,47 @@ import * as NMEA from './nmea.js';
         });
     }
 
+    function loadCartoVR (map, north, east, south, west, matchMap) {
+        // S..N:  -90..90
+        // W..E:  -179..180
+        chrome.runtime.getPackageDirectoryEntry(function(directoryEntry) {
+            directoryEntry.getDirectory('cartoVR', {}, function(subDirectoryEntry) {
+                function matchMap (north, east, south, west, lat, lon) {
+                    return (lat < (north+1))
+                        && (lat > (south-1))
+                        && ((west < east && lon > (west-2) && lon < (east+2))
+                            ||
+                            (west > east && (lon > (west-2) || lon < east+2)))
+                };
+                var directoryReader = subDirectoryEntry.createReader();
+                // List of DirectoryEntry and/or FileEntry objects.
+                var filenames = [];
+                (function readNext() {
+                    directoryReader.readEntries(function(entries) {
+                        if (entries.length) {
+                            for (var i = 0; i < entries.length; ++i) {
+                                filenames.push(entries[i].name);
+                            }
+                            readNext();
+                        } else {
+                            // No more entries, so all files in the directory are known.
+                            // Do something, e.g. print all file names:
+                            let k = 0;
+                            for (const f of filenames) {
+                                let spec = f.split('.')[0].split('_');
+                                let lon = Number(spec[1]);
+                                let lat = Number(spec[2]);
+                                if (matchMap(north, east, south, west, lat, lon)) {
+                                    map.data.loadGeoJson(`cartoVR/${f}`);
+                                }
+                            }
+                        }
+                    });
+                })();
+            })
+        });
+    }
+
     function initializeMap (race) {
         if (!race || !race.legdata) return; // no legdata yet;
 
@@ -1486,13 +1540,24 @@ import * as NMEA from './nmea.js';
             var map = new google.maps.Map(divMap, mapOptions);
 
             map.addListener("rightclick", onMapRightClick);
-            
+            map.addListener('zoom_changed', onMapZoomPan);
+            map.addListener('dragend', onMapZoomPan);
+
             map.setTilt(90);
             race.gmap = map;
 
             // Customize & init map
             var bounds = race.gbounds = new google.maps.LatLngBounds();
 
+            chrome.runtime.getPackageDirectoryEntry( (a) => {
+                console.log(a);
+            });
+
+            map.data.setStyle({
+                fillColor: 'red',
+                strokeWeight: 1
+            });
+            
             // start, finish
             var pos = new google.maps.LatLng(race.legdata.start.lat, race.legdata.start.lon);
             addmarker(map, bounds, pos, undefined, {
@@ -1855,10 +1920,11 @@ import * as NMEA from './nmea.js';
 
 
     function updateMapFleet (race) {
+        if (!(race && race.gmap)) return; // no map yet
+
         var map = race.gmap;
         var bounds = race.gbounds;
 
-        if (!map) return; // no map yet
         clearTrack(map, "_db_op");
 
         // opponents/followed
@@ -2017,9 +2083,28 @@ import * as NMEA from './nmea.js';
         updateMapFleet();
     }
 
-
+    function onMapZoomPan (event) {
+        if (this.zoom >= 7) {
+            let map = this;
+            this.data.forEach(function (feature) {
+                map.data.remove(feature)
+            });
+            let bounds = this.getBounds();
+            let ne = bounds.getNorthEast();
+            let north = ne.lat();
+            let east = ne.lng();
+            let sw = bounds.getSouthWest();
+            let south = sw.lat();
+            let west = sw.lng();
+            loadCartoVR(this, north, east, south, west);
+        } else {
+        }
+    }
+ 
+    
     function onMapRightClick (event) {
-        alert(JSON.stringify(event));
+        alert(JSON.stringify(this.getBounds()));
+        /*
         var windowEvent = window.event;
         var mapMenu = document.getElementById("mapMenu");
         var pageY;
@@ -2036,6 +2121,7 @@ import * as NMEA from './nmea.js';
         mapMenu.style["z-index"] = 400;
         mapMenu.style.top = pageY + "px";
         mapMenu.style.left = pageX + "px";
+        */
         return false;
     }
     
@@ -2063,8 +2149,11 @@ import * as NMEA from './nmea.js';
             return;
         }
 
-        callRouterZezo(race, userInfo, isMe, auto);
-
+        if (selRouter.value == 'zezo') {
+            callRouterZezo(race, userInfo, isMe, auto);
+        } else {
+            callRouterBitSailor(race, userInfo);
+        }
     }
 
     function callRouterZezo (race, userInfo, isMe, auto) {
@@ -2127,7 +2216,32 @@ import * as NMEA from './nmea.js';
             + "&auto=" + (auto ? "yes" : "no")
         window.open(url, cbReuseTab.checked ? baseURL : "_blank");
     }
-    
+
+    function callRouterBitSailor (race, userInfo) {
+
+        var host;
+        if (selRouter.value == 'bitsailor') {
+            host = 'bitsailor.net';
+        } else if (selRouter.value == 'bitsailor_beta') {
+            host = 'router.sailsphere.net';
+        } else {
+            host = 'localhost:8080';
+        }
+        var baseURL = `http://${host}/router?race=${race.id}`;
+        var pos = userInfo.pos
+        var d = (race.curr.lastCalcDate)?new Date(race.curr.lastCalcDate):new Date();
+        
+        var url = baseURL
+            + `&starttime=${d.toISOString().substring(0, 16)}`
+            + `&slat=${pos.lat}`
+            + `&slon=${pos.lon}`
+            + `&twa=${race.curr.twa}`
+            + `&energy=${race.curr.stamina.toFixed()}`
+            + `&sail=${sailNames[race.curr.sail%10]}`;
+
+        window.open(url, cbReuseTab.checked ? baseURL : "_blank");
+    }
+
     function reInitUI (newId) {
         if (currentUserId != undefined && currentUserId != newId) {
             // Re-initialize statistics
@@ -2171,6 +2285,9 @@ import * as NMEA from './nmea.js';
     }
 
     function _handleResponseReceived(request, response) {
+        if (cbRawLog.checked) {
+            divRawLog.innerHTML = divRawLog.innerHTML + "\n" + "<<< " + JSON.stringify(response);
+        }
         var postData = JSON.parse(request.postData);
         var eventClass = postData['@class'];
         var body = JSON.parse(response.body.replace(/\bNaN\b|\bInfinity\b/g, "null"));
@@ -2217,9 +2334,6 @@ import * as NMEA from './nmea.js';
 
     function handleBoatInfo (response)  {
         if (response) {
-            if (cbRawLog.checked) {
-                divRawLog.innerHTML = divRawLog.innerHTML + "\n" + "<<< " + JSON.stringify(response);
-            }
             try {
                 var message = JSON.parse(response.body).res;
                 if (message.leg) {
@@ -2262,9 +2376,6 @@ import * as NMEA from './nmea.js';
 
     function handleFleet (request, response) {
         if (response) {
-            if (cbRawLog.checked) {
-                divRawLog.innerHTML = divRawLog.innerHTML + "\n" + "<<< " + JSON.stringify(response);
-            }
             try {
                 var requestData = JSON.parse(request.postData);
                 var raceId = getRaceLegId(requestData);
@@ -2513,11 +2624,6 @@ import * as NMEA from './nmea.js';
         } else if (message == "Network.responseReceived") {
             var request = xhrMap.get(params.requestId);
             if (request) {
-                // if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getboatinfos" ) {
-                //     handleBoatInfo(debuggeeId, params);
-                // } else if ( params && params.response && params.response.url == "https://vro-api-client.prod.virtualregatta.com/getfleet" ) {
-                //     handleFleet(debuggeeId, params);
-                // }
                 handleResponseReceived(debuggeeId, params);
             }
         } else if (message == "Network.webSocketFrameSent") {
@@ -2535,6 +2641,7 @@ import * as NMEA from './nmea.js';
         lbBoatname = document.getElementById("lb_boatname");
         lbTeamname = document.getElementById("lb_teamname");
         selRace = document.getElementById("sel_race");
+        selRouter = document.getElementById("sel_router");
         lbCycle = document.getElementById("lb_cycle");
         selNmeaport = document.getElementById("sel_nmeaport");
         selFriends = document.getElementById("sel_skippers");
@@ -2551,18 +2658,6 @@ import * as NMEA from './nmea.js';
         cbReuseTab = document.getElementById("reuse_tab");
         cbLocalTime = document.getElementById("local_time");
         cbNMEAOutput = document.getElementById("nmea_output");
-        lbRace = document.getElementById("lb_race");
-        lbCurTime = document.getElementById("lb_curtime");
-        lbCurPos = document.getElementById("lb_curpos");
-        lbHeading = document.getElementById("lb_heading");
-        lbTWS = document.getElementById("lb_tws");
-        lbTWD = document.getElementById("lb_twd");
-        lbTWA = document.getElementById("lb_twa");
-        lbDeltaD = document.getElementById("lb_delta_d");
-        lbDeltaT = document.getElementById("lb_delta_t");
-        lbSpeedC = document.getElementById("lb_curspeed_computed");
-        lbSpeedR = document.getElementById("lb_curspeed_reported");
-        lbSpeedT = document.getElementById("lb_curspeed_theoretical");
         divRaceStatus = document.getElementById("raceStatus");
         divRecordLog = document.getElementById("recordlog");
         divRecordLog.innerHTML = makeTableHTML();

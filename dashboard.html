@@ -28,6 +28,15 @@
           <select id="sel_race" name="race"></select>
           <button id="bt_router">Go</button>
         </div>
+	    <div style="display: block">
+	      <label>Select Router</label>
+		  <select id="sel_router" name="router">
+			<option value="zezo" selected>Zezo</option>
+			<option value="bitsailor">Bitsailor</option>
+			<option value="bitsailor_beta">Bitsailor beta</option>
+			<option value="local">local</option>
+		  </select>
+	    </div>
         <div>
           <input type="checkbox" id="auto_router" checked>
           <label>Auto router window</label>
@@ -46,13 +55,14 @@
             <option value="8084">8084</option>
           </select>
         </div>
+
         <div>
-          <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">
-            <input type="hidden" name="cmd" value="_s-xclick" />
-            <input type="hidden" name="hosted_button_id" value="ZUPP95R3A3686" />
-            <input type="image" width="70" height="18" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="Donate to VR Dashboard" alt="Donate with PayPal button" />
-          </form>
+		  <form action="https://www.paypal.com/donate" method="post" target="_top">
+			<input type="hidden" name="hosted_button_id" value="ZUPP95R3A3686" />
+			<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
+		  </form>
         </div>
+
         <div>
           <label>Version</label>
           <label id="lb_version"></label>
@@ -62,7 +72,8 @@
           <label><b>Team: </b></label>
           <label id="lb_teamname">-</label>
         </div>
-		
+		<div>
+        </div>
 		<div>
           <label>NOAA Cycle: </label>
           <label id="lb_cycle">-</label>
