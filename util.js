@@ -1,7 +1,7 @@
 // Earth radius in nm, 360*60/(2*Pi);
 var radius = 3437.74683;
 
-function addDistance (pos, distnm, angle, radiusnm) {
+function addDistance (pos, distnm, angle, radiusnm=radius) {
     var posR = {};
     posR.lat = toRad(pos.lat);
     posR.lon = toRad(pos.lon);

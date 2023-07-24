@@ -1444,7 +1444,7 @@ import * as NMEA from './nmea.js';
     }
 
     function callPolars (raceId) {
-        var baseURL = "http://toxcct.free.fr/polars/?race_id=" + raceId;
+        var baseURL = "http://inc.bureauvallee.free.fr/polaires/?race_id=" + raceId;
         var race = races.get(raceId);
 
         var twa = Math.abs(Util.roundTo(race.curr.twa || 20, 0));
@@ -1529,6 +1529,7 @@ import * as NMEA from './nmea.js';
             var divMap = document.createElement('div');
             divMap.style.height = "100%";
             divMap.style.display = "block";
+            divMap.style.background = 'none';
             document.getElementById("tab-content4").appendChild(divMap);
             race.gdiv = divMap;
 
@@ -2219,7 +2220,7 @@ import * as NMEA from './nmea.js';
 
     function callRouterBitSailor (race, userInfo) {
 
-        var host;
+        let host;
         if (selRouter.value == 'bitsailor') {
             host = 'bitsailor.net';
         } else if (selRouter.value == 'bitsailor_beta') {
@@ -2227,14 +2228,16 @@ import * as NMEA from './nmea.js';
         } else {
             host = 'localhost:8080';
         }
-        var baseURL = `http://${host}/router?race=${race.id}`;
-        var pos = userInfo.pos
-        var d = (race.curr.lastCalcDate)?new Date(race.curr.lastCalcDate):new Date();
+        let baseURL = `http://${host}/router?race=${race.id}`;
+        let pos = userInfo.pos
+        let date = (race.curr.lastCalcDate)?new Date(race.curr.lastCalcDate):new Date();
+        let options = encodeURI(JSON.stringify(userInfo.options));
         
-        var url = baseURL
-            + `&starttime=${d.toISOString().substring(0, 16)}`
+        let url = baseURL
+            + `&starttime=${date.toISOString().substring(0, 16)}`
             + `&slat=${pos.lat}`
             + `&slon=${pos.lon}`
+            + `&options=${options}`
             + `&twa=${race.curr.twa}`
             + `&energy=${race.curr.stamina.toFixed()}`
             + `&sail=${sailNames[race.curr.sail%10]}`;
