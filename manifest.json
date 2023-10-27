@@ -2,11 +2,11 @@
     "name": "VR Dashboard",
     "short_name": "VR Dashboard",
     "description": "Monitor boat position & call virtual sailor weather router",
-    "version": "4.21.2",
+    "version": "4.21.3",
     "permissions": [
-        "debugger",
         "tabs",
-        "storage"
+        "storage",
+        "activeTab"
     ],
     "content_security_policy": "script-src 'self' https://maps.googleapis.com/; object-src 'self'",
     "background": {
@@ -17,6 +17,18 @@
         "default_icon": "zicon.png",
         "default_title": "VR Dashboard"
     },
-    "manifest_version": 2
+    "manifest_version": 2,
+    "content_scripts": [
+        {
+            "matches": ["https://www.virtualregatta.com/*/offshore-*/*","https://www.virtualregatta.com/*/offshore-*-iframe/*"],
+            "js": ["loader.js", "listener.js","addDashId.js"],
+            "run_at": "document_start"
+          }
+    ],
+    "web_accessible_resources": ["listener.js"],
+    "externally_connectable": {
+      "ids": ["*"],
+      "matches": ["https://www.virtualregatta.com/*/offshore-*/*","https://www.virtualregatta.com/*/offshore-*-iframe/*"]
+    }
 }
 

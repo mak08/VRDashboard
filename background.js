@@ -8,7 +8,7 @@ var dashboardTab;
 
 function onPageClicked (tab) {
     debuggeeTab = tab;
-    chrome.debugger.attach({tabId:tab.id}, version, onAttach.bind(null, tab.id));
+    onAttach(tab.id);
 }
 
 function checkForValidUrl (tabId, changeInfo, tabInfo) {
@@ -29,15 +29,7 @@ function onTabRemoved (tabId, removeInfo) {
         } catch (e) {
             console.log(JSON.stringify(e));
         }
-    } else if (dashboardTab && (tabId == dashboardTab.id) ) {
-        try {
-            chrome.debugger.detach({
-                tabId: debuggeeTab.id
-            });
-        } catch (e) {
-            console.log(JSON.stringify(e));
-        }
-    }
+    } 
 }
 
 function onAttach (tabId) {
