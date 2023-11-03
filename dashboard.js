@@ -2277,51 +2277,54 @@ import * as NMEA from './nmea.js';
         }
     }
 
-    function sleep (ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+    function handleResponseReceived (debuggeeId, params) {
+        try {
+            sendDebuggerCommand(debuggeeId, params, "Network.getRequestPostData", (response) => {
+                let postData = response.postData;
+                sendDebuggerCommand(debuggeeId, params, "Network.getResponseBody", (response) => {_handleResponseReceived(xhrMap.get(params.requestId), response, postData)});
+            });
+        } catch (e) {
+            sendDebuggerCommand(debuggeeId, params, "Network.getResponseBody", (response) => {_handleResponseReceived(xhrMap.get(params.requestId), response)});
+        }
     }
 
-    async function handleResponseReceived (debuggeeId, params) {
-        // How does Networl.getResponseBody work, anyway?!
-        await sleep(3000);
-        sendDebuggerCommand(debuggeeId, params, "Network.getResponseBody", (response) => {_handleResponseReceived(xhrMap.get(params.requestId), response)});
-    }
-
-    function _handleResponseReceived(request, response) {
+    function _handleResponseReceived(request, response, postData) {
         if (cbRawLog.checked) {
             divRawLog.innerHTML = divRawLog.innerHTML + "\n" + "<<< " + JSON.stringify(response);
         }
-        var postData = JSON.parse(request.postData);
-        var eventClass = postData['@class'];
-        var body = JSON.parse(response.body.replace(/\bNaN\b|\bInfinity\b/g, "null"));
-        if (eventClass == 'AccountDetailsRequest') {
+        let eventClass = request.url.substring(request.url.lastIndexOf('/') + 1);
+        let body = JSON.parse(response.body.replace(/\bNaN\b|\bInfinity\b/g, "null"));
+        if (eventClass == 'getboatinfos') {
+            handleBoatInfo(response);
+        } else if (eventClass == 'getfleet') {
+            handleFleet(request, response, postData);
+        } else if (eventClass == 'AccountDetailsRequest') {
             handleAccountDetailsResponse(body);
         } else if (eventClass == 'LogEventRequest') {
-            var eventKey = postData.eventKey;
-            if (eventKey == 'Leg_GetList') {
-                handleLegGetListResponse(body);
-            } else if (eventKey == 'Meta_GetPolar') {
-                handleMetaGetPolar(body);
-            } else if (eventKey == 'Game_AddBoatAction' ) {
-                handleGameAddBoatAction(postData, body);
-            } else if (eventKey == "Game_GetGhostTrack") {
-                handleGameGetGhostTrack(postData, body);
-            } else if (eventKey == "User_GetCard") {
-                handleUserGetCard(postData, body);
-            }  else if (ignoredMessages.includes(eventKey)) {
-                console.info("Ignored eventKey " + eventKey);
+            if (postData) {
+                let postDataJSON = JSON.parse(postData);
+                let event = postDataJSON['@class'];
+                var eventKey = postDataJSON.eventKey;
+                if (eventKey == 'Leg_GetList') {
+                    handleLegGetListResponse(body);
+                } else if (eventKey == 'Meta_GetPolar') {
+                    handleMetaGetPolar(body);
+                } else if (eventKey == 'Game_AddBoatAction' ) {
+                    handleGameAddBoatAction(postDataJSON, body);
+                } else if (eventKey == "Game_GetGhostTrack") {
+                    handleGameGetGhostTrack(postDataJSON, body);
+                } else if (eventKey == "User_GetCard") {
+                    handleUserGetCard(postDataJSON, body);
+                }  else if (ignoredMessages.includes(eventKey)) {
+                    console.info("Ignored eventKey " + eventKey);
+                } else {
+                    console.info("Unhandled logEvent " + JSON.stringify(response) + " with eventKey " + eventKey);
+                }
             } else {
-                console.info("Unhandled logEvent " + JSON.stringify(response) + " with eventKey " + eventKey);
+                console.log("Can't determine event type for {}", response);
             }
         } else {
-            var event = request.url.substring(request.url.lastIndexOf('/') + 1);
-            if (event == 'getboatinfos') {
-                handleBoatInfo(response);
-            } else if (event == 'getfleet') {
-                handleFleet(request, response);
-            } else {
-                console.info("Unhandled request " + request.url + "with response" + JSON.stringify(response));
-            }
+            console.info("Unhandled request " + request.url + "with response" + JSON.stringify(response));
         }
     }
 
@@ -2377,10 +2380,10 @@ import * as NMEA from './nmea.js';
         }
     }
 
-    function handleFleet (request, response) {
+    function handleFleet (request, response, postData) {
         if (response) {
             try {
-                var requestData = JSON.parse(request.postData);
+                var requestData = JSON.parse(postData);
                 var raceId = getRaceLegId(requestData);
                 var race = races.get(raceId);
                 var message = JSON.parse(response.body).res;
@@ -2607,7 +2610,8 @@ import * as NMEA from './nmea.js';
             }
         }
     }
-    
+
+
     function onEvent (debuggeeId, message, params) {
         if ( tabId != debuggeeId.tabId ) return;
 
