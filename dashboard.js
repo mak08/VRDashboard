@@ -1839,13 +1839,6 @@ import * as NMEA from './nmea.js';
             map._db_me.push(ttpath);
         }
 
-        var bounds = race.gbounds;
-        // boat
-        if (race.curr && race.curr.pos) {
-            var pos = new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon);
-            var title =  "HDG: " + Util.roundTo(race.curr.heading, 1) + " | TWA: " + Util.roundTo(race.curr.twa, 1) + " | SPD: " + Util.roundTo(race.curr.speed, 2)
-            map._db_me.push(addmarker(map, bounds, pos, pinSymbol("#44FF44", "B", 0.7, race.curr.heading), undefined, title, 'me', 20, 0.7));
-        }
     }
 
     function updateMapLeader (race) {
@@ -2405,6 +2398,19 @@ import * as NMEA from './nmea.js';
         }
         // Add own info on Fleet tab
         mergeBoatInfo(raceId, "usercard", message._id.user_id, message);
+        // Update boat position on map
+        if (race.curr && race.curr.pos) {
+            var bounds = race.gbounds;
+            var pos = new google.maps.LatLng(race.curr.pos.lat, race.curr.pos.lon);
+            var title =  "HDG: " + Util.roundTo(race.curr.heading, 1) + " | TWA: " + Util.roundTo(race.curr.twa, 1) + " | SPD: " + Util.roundTo(race.curr.speed, 2)
+            var map = race.gmap;
+            var marker = addmarker(map, bounds, pos, pinSymbol("#44FF44", "B", 0.7, race.curr.heading), undefined, title, 'me', 20, 0.7);
+            if (map._my_boat_marker) {
+                map._my_boat_marker.setMap(null);
+            }
+            map._my_boat_marker = marker;
+        }
+
     }
 
     function handleOwnTrackInfo (message) {
